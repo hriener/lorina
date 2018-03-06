@@ -47,5 +47,6 @@ public:
   }
 }; /* diagnostics */
 
-read_bench( filename, reader(), diagnostics() );
+diagnostics diag;
+read_bench( filename, reader(), &diag );
 ```
