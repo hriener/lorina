@@ -38,6 +38,7 @@
 #include <memory>
 #include <string>
 #include <numeric>
+#include <functional>
 
 #include <fmt/format.h>
 
