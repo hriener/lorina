@@ -68,7 +68,7 @@ class diagnostic_engine
 {
 public:
   virtual inline diagnostic_builder report( diagnostic_level level, const std::string& message );
-  virtual inline void emit( diagnostic_level level, const std::string& message );
+  virtual inline void emit( diagnostic_level level, const std::string& message ) const;
 
   mutable unsigned number_of_diagnostics = 0;
 }; /* diagnostic_engine */
@@ -89,7 +89,7 @@ diagnostic_builder diagnostic_engine::report( diagnostic_level level, const std:
   return diagnostic_builder( *this, level, message );
 }
 
-void diagnostic_engine::emit( diagnostic_level level, const std::string& message )
+void diagnostic_engine::emit( diagnostic_level level, const std::string& message ) const
 {
   using color::modifier;
 
@@ -125,20 +125,11 @@ void diagnostic_engine::emit( diagnostic_level level, const std::string& message
 class silent_diagnostic_engine : public diagnostic_engine
 {
 public:
-  virtual diagnostic_builder report( diagnostic_level level, const std::string& message )
-  {
-    (void)message;
-    ++number_of_diagnostics;
-    return diagnostic_builder( *this, level, std::string() );
-  };
-
-  virtual void emit( diagnostic_level level, const std::string& message )
+  virtual void emit( diagnostic_level level, const std::string& message ) const override
   {
     (void)level;
     (void)message;
   }
-
-  mutable unsigned number_of_diagnostics = 0;
 }; /* silent_diagnostic_engine */
 
 } // namespace lorina
