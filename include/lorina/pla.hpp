@@ -73,7 +73,7 @@ public:
 namespace pla_regex
 {
 static std::regex keyword( R"(^\.([^\s]*)(?:\s+(.+))?$)" );
-static std::regex term( R"(^([01\-]+)\s+([01-]+)$])" );
+static std::regex term( R"(^([01\-]+)\s+([01\-]+)$)" );
 
 } // namespace pla_regex
 
@@ -124,7 +124,7 @@ inline return_code read_pla( std::istream& in, const pla_reader& reader, diagnos
       }
     }
 
-    /* [01-]+ [01] */
+    /* [01-]+ [01-]+ */
     if ( std::regex_match( line, m, pla_regex::term ) )
     {
       std::string out = m[2];
