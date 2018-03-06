@@ -5,21 +5,43 @@ language: cpp
 script:
   - mkdir build
   - cd build
-  - cmake -DLORINA_TEST=ON ..
-  - make
+  - cmake -DCMAKE_CXX_COMPILER=$COMPILER -DLORINA_TEST=ON -DLORINA_EXAMPLES=ON ..
+  - make run_tests
   - ./test/run_tests
 
 matrix:
   include:
-    - os: linux
+    - compiler: gcc
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
           packages:
             - g++-4.9
-      env:
-         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
-
-before_install:
-  - eval "${MATRIX_EVAL}"
+      env: COMPILER=g++-4.9
+    - compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+      env: COMPILER=g++-5
+    - compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+      env: COMPILER=g++-6
+    - compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-4.0
+          packages:
+            - clang-4.0
+            - g++-5
+      env: COMPILER=clang++-4.0
