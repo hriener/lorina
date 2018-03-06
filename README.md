@@ -18,16 +18,34 @@ The following code snipped parses the bench file `filename` and calls the method
 class reader : public bench_reader
 {
 public:
-  void on_input( const std::string& name ) const
+  void on_input( const std::string& name ) const override
   {
     /* ... */
   }
 
-  void on_gate( const std::vector<std::string>& inputs, const std::vector<std::string>& output, const std::string& type ) const
+  void on_gate( const std::vector<std::string>& inputs, const std::string& output,
+                const std::string& type ) const override
   {
     /* ... */
   }
 }; /* reader */
 
 read_bench( filename, reader() );
+```
+
+Besides parsing, the readers supports a mechanism to react on parse errors.
+
+```c++
+#include <lorina/diagnostics.hpp>
+
+class diagnostics : public diagnostic_engine
+{
+public:
+  void emit( diagnostic_level level, const std::string& message ) const override
+  {
+    /* ... */
+  }
+}; /* diagnostics */
+
+read_bench( filename, reader(), diagnostics() );
 ```
