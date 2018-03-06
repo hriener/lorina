@@ -4,7 +4,7 @@
 
 # lorina
 
-lorina is a C++ parsing library.  It provides implementations of parsers for various simple file formats used in logci synthesis.
+lorina is a C++ parsing library.  It provides implementations of parsers for various simple file formats used in logic synthesis and formal verification.
 
 [Read the full documentation.](http://lorina.readthedocs.io/en/latest/?badge=latest)
 
