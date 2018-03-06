@@ -9,6 +9,7 @@ Welcome to lorina's documentation!
 .. toctree::
    :maxdepth: 2
 
+   introduction
    changelog
 
 .. toctree::
