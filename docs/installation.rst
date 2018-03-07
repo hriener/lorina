@@ -20,8 +20,8 @@ following commands from the base directory of lorina::
   cmake ..
   make
 
-Building test
--------------
+Building tests
+--------------
 
 In order to run the tests, you need to enable them in CMake::
 
