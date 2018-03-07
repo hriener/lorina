@@ -4,6 +4,7 @@
 
 # lorina
 
+<img src="https://cdn.rawgit.com/hriener/lorina/master/lorina.svg" width="64" height="64" align="left" style="margin-right: 12pt" />
 lorina is a C++ parsing library.  It provides implementations of parsers for various simple file formats used in logic synthesis and formal verification.
 
 [Read the full documentation.](http://lorina.readthedocs.io/en/latest/?badge=latest)
