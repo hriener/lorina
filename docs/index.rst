@@ -14,6 +14,13 @@ Welcome to lorina's documentation!
    changelog
 
 .. toctree::
+
+   AIGER parser
+   BENCH parser
+   BLIF parser
+   PLA parser
+   reference
+
    :maxdepth: 2
    :caption: Reference
 
