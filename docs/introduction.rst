@@ -17,11 +17,12 @@ be customized by overriden the `on_<primitive>` methods.
 
 The `read_<format>` function can either be used to open and parse a
 file provided by name (`const std::string& filename`) or to parse
-tokens from an input stream (`std::istream& in`).
-C++::
+tokens from an input stream (`std::istream& in`)::
+
+  /* read file */
   const std::string filename = ...;
   read_<format>( filename, read_<format>() );
 
-C++::
+  /* read istream */
   std::ifstream in( filename.c_str(), std::ifstream::in );
   read_<format>( in, read_<format>() );
