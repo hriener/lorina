@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <iostream>
+
 // https://stackoverflow.com/questions/2616906/how-do-i-output-coloured-text-to-a-linux-terminal
 
 namespace color
