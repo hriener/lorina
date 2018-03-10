@@ -44,6 +44,9 @@ namespace lorina
 class blif_reader
 {
 public:
+  using output_cover_t = std::vector<std::pair<std::string, std::string>>;
+
+public:
   virtual void on_model( const std::string& model_name ) const
   {
     (void)model_name;
@@ -59,7 +62,7 @@ public:
     (void)name;
   }
 
-  virtual void on_gate( const std::vector<std::string>& inputs, const std::string& output, const std::vector<std::pair<std::string, std::string>>& tt ) const
+  virtual void on_gate( const std::vector<std::string>& inputs, const std::string& output, const output_cover_t& tt ) const
   {
     (void)inputs;
     (void)output;
@@ -95,6 +98,7 @@ inline return_code read_blif( std::istream& in, const blif_reader& reader, diagn
       if ( line.empty() || line[0] == '#' )
         return true;
 
+      /* names */
       if ( std::regex_search( line, m, blif_regex::names ) )
       {
         auto args = detail::split( detail::trim_copy( m[1] ), " " );
