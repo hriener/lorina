@@ -45,6 +45,14 @@ namespace lorina
 class aig_reader
 {
 public:
+  enum latch_init_value
+  {
+    ZERO = 0
+  , ONE
+  , NONDETERMINISTIC
+  };
+
+public:
   virtual void on_header( std::size_t m, std::size_t i, std::size_t l, std::size_t o, std::size_t a ) const
   {
     (void)m;
@@ -68,6 +76,12 @@ public:
   {
     (void)index;
     (void)lit;
+  }
+
+  virtual void on_latch( unsigned index, latch_init_value init_value ) const
+  {
+    (void)index;
+    (void)init_value;
   }
 
   virtual void on_and( unsigned index, unsigned left_lit, unsigned right_lit ) const
@@ -177,10 +191,25 @@ inline return_code read_aig( std::istream& in, const aig_reader& reader, diagnos
 
   std::string line;
 
-  /* ignore latches */
+  /* latches */
   for ( auto i = 0ul; i < _l; ++i )
   {
     std::getline( in, line );
+    const auto tokens = detail::split( line, " " );
+    const auto next = std::atoi( tokens[0u].c_str() );
+    aig_reader::latch_init_value init_value = aig_reader::latch_init_value::NONDETERMINISTIC;
+    if ( tokens.size() == 2u )
+    {
+      if ( tokens[2u] == "0" )
+      {
+        init_value = aig_reader::latch_init_value::ZERO;
+      }
+      else if ( tokens[2u] == "1" )
+      {
+        init_value = aig_reader::latch_init_value::ONE;
+      }
+    }
+    reader.on_latch( next, init_value );
   }
 
   for ( auto i = 0ul; i < _o; ++i )
