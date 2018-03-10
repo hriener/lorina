@@ -34,7 +34,7 @@ public:
 read_bench( filename, reader() );
 ```
 
-Besides parsing, the readers supports a mechanism to react on parse errors.
+Besides parsing, the reader supports a mechanism to react on parse errors.
 
 ```c++
 #include <lorina/diagnostics.hpp>
