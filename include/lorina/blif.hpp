@@ -62,11 +62,11 @@ public:
     (void)name;
   }
 
-  virtual void on_gate( const std::vector<std::string>& inputs, const std::string& output, const output_cover_t& tt ) const
+  virtual void on_gate( const std::vector<std::string>& inputs, const std::string& output, const output_cover_t& cover ) const
   {
     (void)inputs;
     (void)output;
-    (void)tt;
+    (void)cover;
   }
 
   virtual void on_end() const {}
@@ -83,7 +83,7 @@ static std::regex model( R"(.model\s+(.*))" );
 static std::regex inputs( R"(.inputs\s+(.*))" );
 static std::regex outputs( R"(.outputs\s+(.*))" );
 static std::regex names( R"(.names\s+(.*))" );
-static std::regex line_of_truthtable( R"(([01]*)\s*([01]))" );
+static std::regex line_of_truthtable( R"(([01\-]*)\s*([01\-]))" );
 static std::regex end( R"(.end)" );
 } // namespace blif_regex
 
