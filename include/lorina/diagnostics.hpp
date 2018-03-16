@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include <lorina/colors.hpp>
+#include <rang.hpp>
 #include <map>
 #include <iostream>
 #include <cassert>
@@ -91,31 +91,32 @@ diagnostic_builder diagnostic_engine::report( diagnostic_level level, const std:
 
 void diagnostic_engine::emit( diagnostic_level level, const std::string& message ) const
 {
-  using color::modifier;
+  using rang::style;
+  using rang::fg;
 
   switch ( level )
   {
   case diagnostic_level::ignore:
     break;
   case diagnostic_level::note:
-    std::cout << modifier( color::FF_BOLD ) << modifier( color::FG_RED ) << "[i] " << modifier( color::FG_DEFAULT )
-              << message << modifier( color::RESET ) << std::endl;
+    std::cout << style::bold << fg::red << "[i] " << fg::reset
+              << message << style::reset << std::endl;
     break;
   case diagnostic_level::remark:
-    std::cerr << modifier( color::FF_BOLD ) << modifier( color::FG_RED ) << "[i] " << modifier( color::FG_DEFAULT )
-              << message << modifier( color::RESET ) << std::endl;
+    std::cerr << style::bold << fg::red << "[i] " << fg::reset
+              << message << style::reset << std::endl;
     break;
   case diagnostic_level::warning:
-    std::cerr << modifier( color::FF_BOLD ) << modifier( color::FG_RED ) << "[w] " << modifier( color::FG_DEFAULT )
-              << message << modifier( color::RESET ) << std::endl;
+    std::cerr << style::bold << fg::red << "[w] " << fg::reset
+              << message << style::reset << std::endl;
     break;
   case diagnostic_level::error:
-    std::cerr << modifier( color::FF_BOLD ) << modifier( color::FG_RED ) << "[e] " << modifier( color::FG_DEFAULT )
-              << message << modifier( color::RESET ) << std::endl;
+    std::cerr << style::bold << fg::red << "[e] " << fg::reset
+              << message << style::reset << std::endl;
     break;
   case diagnostic_level::fatal:
-    std::cerr << modifier( color::FF_BOLD ) << modifier( color::FG_RED ) << "[E] " << modifier( color::FG_DEFAULT )
-              << message << modifier( color::RESET ) << std::endl;
+    std::cerr << style::bold << fg::red << "[E] " << fg::reset
+              << message << style::reset << std::endl;
     break;
   default:
     assert( false );
