@@ -11,7 +11,7 @@ lorina is a C++ parsing library.  It provides implementations of parsers for var
 
 ## Example
 
-The following code snipped parses the bench file `filename` and calls the methods `on_input` and `on_gate` for each input and gate declaration in the file, respectively.
+The following code snipped parses the bench file `network.bench` and calls the methods `on_input` and `on_gate` for each input and gate declaration in the file, respectively.
 
 ```c++
 #include <lorina/lorina.hpp>
@@ -31,7 +31,7 @@ public:
   }
 }; /* reader */
 
-read_bench( filename, reader() );
+read_bench( "network.bench", reader() );
 ```
 
 Besides parsing, the reader supports a mechanism to react on parse errors.
@@ -49,5 +49,5 @@ public:
 }; /* diagnostics */
 
 diagnostics diag;
-read_bench( filename, reader(), &diag );
+read_bench( "network.bench", reader(), &diag );
 ```
