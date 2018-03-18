@@ -69,6 +69,37 @@ public:
   }
 }; /* bench_reader */
 
+class bench_pretty_printer : public bench_reader
+{
+public:
+  bench_pretty_printer( std::ostream& os = std::cout )
+      : _os( os )
+  {
+  }
+
+  virtual void on_input( const std::string& name ) const override
+  {
+    _os << fmt::format( "INPUT({0})", name ) << std::endl;
+  }
+
+  virtual void on_output( const std::string& name ) const override
+  {
+    _os << fmt::format( "OUTPUT({0})", name ) << std::endl;
+  }
+
+  virtual void on_gate( const std::vector<std::string>& inputs, const std::string& output, const std::string& type ) const override
+  {
+    _os << fmt::format( "{0} = {1}({2})", output, type, detail::join( inputs, "," ) ) << std::endl;
+  }
+
+  virtual void on_assign( const std::string& input, const std::string& output ) const override
+  {
+    _os << fmt::format( "{0} = {1}", output, input ) << std::endl;
+  }
+
+  std::ostream& _os;
+}; /* bench_pretty_printer */
+
 namespace bench_regex
 {
 static std::regex input( R"(INPUT\((.*)\))" );

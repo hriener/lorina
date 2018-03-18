@@ -70,6 +70,42 @@ public:
   }
 }; /* pla_reader */
 
+class pla_pretty_printer : public pla_reader
+{
+public:
+  pla_pretty_printer( std::ostream& os = std::cout )
+      : _os( os )
+  {
+  }
+
+  virtual void on_number_of_inputs( std::size_t number_of_inputs ) const override
+  {
+    _os << ".i " << number_of_inputs << std::endl;
+  }
+
+  virtual void on_number_of_outputs( std::size_t number_of_outputs ) const override
+  {
+    _os << ".o " << number_of_outputs << std::endl;
+  }
+
+  virtual void on_number_of_terms( std::size_t number_of_terms ) const override
+  {
+    _os << ".p " << number_of_terms << std::endl;
+  }
+
+  virtual void on_end() const override
+  {
+    _os << ".e" << std::endl;
+  }
+
+  virtual void on_term( const std::string& term, const std::string& out ) const override
+  {
+    _os << term << ' ' << out << std::endl;
+  }
+
+  std::ostream& _os;
+}; /* pla_pretty_printer */
+
 namespace pla_regex
 {
 static std::regex keyword( R"(^\.([^\s]*)(?:\s+(.+))?$)" );

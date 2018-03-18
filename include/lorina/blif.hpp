@@ -77,6 +77,57 @@ public:
   }
 }; /* blif_reader */
 
+class blif_pretty_printer : public blif_reader
+{
+public:
+  blif_pretty_printer( std::ostream& os = std::cout )
+      : _os( os )
+  {
+  }
+
+  virtual void on_model( const std::string& model_name ) const
+  {
+    _os << ".model " << model_name << std::endl;
+  }
+
+  virtual void on_input( const std::string& name ) const
+  {
+    if ( first_input ) _os << std::endl << ".inputs ";
+    _os << name << " ";
+    first_input = false;
+  }
+
+  virtual void on_output( const std::string& name ) const
+  {
+    if ( first_output ) _os << std::endl << ".output ";
+    _os << name << " ";
+    first_output = false;
+  }
+
+  virtual void on_gate( const std::vector<std::string>& inputs, const std::string& output, const output_cover_t& cover ) const
+  {
+    _os << std::endl << fmt::format( ".names {0} {1}", detail::join( inputs, "," ), output ) << std::endl;
+    for ( const auto& c : cover )
+    {
+      _os << c.first << ' ' << c.second << std::endl;
+    }
+  }
+
+  virtual void on_end() const
+  {
+    _os << std::endl << ".end" << std::endl;
+  }
+
+  virtual void on_comment( const std::string& comment ) const
+  {
+    _os << std::endl << "# " << comment << std::endl;
+  }
+
+  mutable bool first_input = true;
+  mutable bool first_output = true;
+  std::ostream& _os;
+}; /* blif_pretty_printer */
+
 namespace blif_regex
 {
 static std::regex model( R"(.model\s+(.*))" );

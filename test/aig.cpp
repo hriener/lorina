@@ -24,7 +24,7 @@ struct aig_statistics
   std::string comment;
 };
 
-class aig_statistics_reader : public aig_reader
+class aig_statistics_reader : public aiger_reader
 {
 public:
   aig_statistics_reader( aig_statistics& stats )

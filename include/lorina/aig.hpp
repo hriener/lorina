@@ -42,7 +42,7 @@
 namespace lorina
 {
 
-class aig_reader
+class aiger_reader
 {
 public:
   enum latch_init_value
@@ -131,7 +131,77 @@ public:
   {
     (void)comment;
   }
-}; /* aig_reader */
+}; /* aiger_reader */
+
+class ascii_aiger_pretty_printer : public aiger_reader
+{
+public:
+  ascii_aiger_pretty_printer( std::ostream& os = std::cout )
+      : _os( os )
+  {
+  }
+
+  virtual void on_header( std::size_t m, std::size_t i, std::size_t l, std::size_t o, std::size_t a,
+                          std::size_t b, std::size_t c, std::size_t j, std::size_t f ) const
+  {
+    _os << fmt::format( "aag {0} {1} {2} {3} {4} {5} {6} {7} {8} ",
+                        m, i, l, o, a, b, c, j, f )
+        << std::endl;
+    for ( auto index = 1u; index < i; ++index )
+    {
+      _os << ( 2u * index ) << std::endl;
+    }
+  }
+
+  virtual void on_output( unsigned index, unsigned lit ) const
+  {
+    (void)index;
+    _os << lit << std::endl;
+  }
+
+  virtual void on_and( unsigned index, unsigned left_lit, unsigned right_lit ) const
+  {
+    _os << ( 2u * index ) << ' ' << left_lit << ' ' << right_lit << std::endl;
+  }
+
+  virtual void on_input_name( unsigned index, const std::string& name ) const
+  {
+    _os << "i" << index << ' ' << name << std::endl;
+  }
+
+  virtual void on_latch_name( unsigned index, const std::string& name ) const
+  {
+    _os << "l" << index << ' ' << name << std::endl;
+  }
+
+  virtual void on_output_name( unsigned index, const std::string& name ) const
+  {
+    _os << "o" << index << ' ' << name << std::endl;
+  }
+
+  virtual void on_bad_state_name( unsigned index, const std::string& name ) const
+  {
+    _os << "b" << index << ' ' << name << std::endl;
+  }
+
+  virtual void on_constraint_name( unsigned index, const std::string& name ) const
+  {
+    _os << "c" << index << ' ' << name << std::endl;
+  }
+
+  virtual void on_fairness_name( unsigned index, const std::string& name ) const
+  {
+    _os << "f" << index << ' ' << name << std::endl;
+  }
+
+  virtual void on_comment( const std::string& comment ) const
+  {
+    _os << "c" << std::endl
+        << comment << std::endl;
+  }
+
+  std::ostream& _os;
+}; /* ascii_aiger_pretty_printer */
 
 namespace aig_regex
 {
@@ -144,7 +214,7 @@ static std::regex constraint( R"(^c(\d+) (.*)$)" );
 static std::regex fairness( R"(^f(\d+) (.*)$)" );
 } // namespace aig_regex
 
-inline return_code read_aig( std::istream& in, const aig_reader& reader, diagnostic_engine* diag = nullptr )
+inline return_code read_aig( std::istream& in, const aiger_reader& reader, diagnostic_engine* diag = nullptr )
 {
   return_code result = return_code::success;
 
@@ -197,16 +267,16 @@ inline return_code read_aig( std::istream& in, const aig_reader& reader, diagnos
     std::getline( in, line );
     const auto tokens = detail::split( line, " " );
     const auto next = std::atoi( tokens[0u].c_str() );
-    aig_reader::latch_init_value init_value = aig_reader::latch_init_value::NONDETERMINISTIC;
+    aiger_reader::latch_init_value init_value = aiger_reader::latch_init_value::NONDETERMINISTIC;
     if ( tokens.size() == 2u )
     {
       if ( tokens[2u] == "0" )
       {
-        init_value = aig_reader::latch_init_value::ZERO;
+        init_value = aiger_reader::latch_init_value::ZERO;
       }
       else if ( tokens[2u] == "1" )
       {
-        init_value = aig_reader::latch_init_value::ONE;
+        init_value = aiger_reader::latch_init_value::ONE;
       }
     }
     reader.on_latch( next, init_value );
@@ -309,7 +379,7 @@ inline return_code read_aig( std::istream& in, const aig_reader& reader, diagnos
   return result;
 }
 
-inline return_code read_aig( const std::string& filename, const aig_reader& reader, diagnostic_engine* diag = nullptr )
+inline return_code read_aig( const std::string& filename, const aiger_reader& reader, diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( filename.c_str(), std::ifstream::in );
   return read_aig( in, reader, diag );
