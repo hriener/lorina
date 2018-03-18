@@ -19,7 +19,7 @@ or gate definition.
 
 The ``read_<format>`` function can either be used to open and parse a
 file provided by name (``const std::string& filename``) or to parse
-tokens from an input stream `(`std::istream& in``)::
+tokens from an input stream (``std::istream& in``)::
 
   /* read file */
   const std::string filename = ...;
