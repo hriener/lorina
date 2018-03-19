@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include <rang.hpp>
+#include <rang/rang.hpp>
 #include <map>
 #include <iostream>
 #include <cassert>
