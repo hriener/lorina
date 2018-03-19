@@ -12,6 +12,7 @@ Welcome to lorina's documentation!
    introduction
    installation
    changelog
+   acknowledgments
 
 .. toctree::
    :maxdepth: 2
