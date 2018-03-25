@@ -78,9 +78,10 @@ public:
     (void)lit;
   }
 
-  virtual void on_latch( unsigned index, latch_init_value init_value ) const
+  virtual void on_latch( unsigned index, unsigned next, latch_init_value init_value ) const
   {
     (void)index;
+    (void)next;
     (void)init_value;
   }
 
@@ -141,60 +142,77 @@ public:
   {
   }
 
-  virtual void on_header( std::size_t m, std::size_t i, std::size_t l, std::size_t o, std::size_t a,
-                          std::size_t b, std::size_t c, std::size_t j, std::size_t f ) const
+  void on_header( std::size_t m, std::size_t i, std::size_t l, std::size_t o, std::size_t a,
+                          std::size_t b, std::size_t c, std::size_t j, std::size_t f ) const override
   {
     _os << fmt::format( "aag {0} {1} {2} {3} {4} {5} {6} {7} {8} ",
                         m, i, l, o, a, b, c, j, f )
         << std::endl;
-    for ( auto index = 1u; index < i; ++index )
+    for ( auto index = 1u; index <= i; ++index )
     {
       _os << ( 2u * index ) << std::endl;
     }
   }
 
-  virtual void on_output( unsigned index, unsigned lit ) const
+  void on_output( unsigned index, unsigned lit ) const override
   {
     (void)index;
     _os << lit << std::endl;
   }
 
-  virtual void on_and( unsigned index, unsigned left_lit, unsigned right_lit ) const
+  void on_latch( unsigned index, unsigned next, latch_init_value init_value ) const override
+  {
+    _os << ( 2u * index ) << ' ' << next;
+    switch( init_value )
+    {
+    case 0:
+      _os << '0';
+      break;
+    case 1:
+      _os << '1';
+      break;
+    default:
+      break;
+    }
+    _os << std::endl;
+  }
+
+  void on_and( unsigned index, unsigned left_lit, unsigned right_lit ) const override
   {
     _os << ( 2u * index ) << ' ' << left_lit << ' ' << right_lit << std::endl;
   }
 
-  virtual void on_input_name( unsigned index, const std::string& name ) const
+  void on_input_name( unsigned index, const std::string& name ) const override
   {
     _os << "i" << index << ' ' << name << std::endl;
   }
 
-  virtual void on_latch_name( unsigned index, const std::string& name ) const
+  void on_latch_name( unsigned index, const std::string& name ) const override
   {
     _os << "l" << index << ' ' << name << std::endl;
   }
 
-  virtual void on_output_name( unsigned index, const std::string& name ) const
+  void on_output_name( unsigned index, const std::string& name ) const override
   {
     _os << "o" << index << ' ' << name << std::endl;
   }
 
-  virtual void on_bad_state_name( unsigned index, const std::string& name ) const
+  void on_bad_state_name( unsigned index, const std::string& name ) const override
   {
     _os << "b" << index << ' ' << name << std::endl;
   }
 
-  virtual void on_constraint_name( unsigned index, const std::string& name ) const
+  void on_constraint_name( unsigned index, const std::string& name ) const override
   {
     _os << "c" << index << ' ' << name << std::endl;
   }
 
-  virtual void on_fairness_name( unsigned index, const std::string& name ) const
+  void on_fairness_name( unsigned index, const std::string& name ) const override
   {
     _os << "f" << index << ' ' << name << std::endl;
   }
 
-  virtual void on_comment( const std::string& comment ) const
+  void on_comment( const std::string& comment ) const override
   {
     _os << "c" << std::endl
         << comment << std::endl;
@@ -279,7 +297,8 @@ inline return_code read_aig( std::istream& in, const aiger_reader& reader, diagn
         init_value = aiger_reader::latch_init_value::ONE;
       }
     }
-    reader.on_latch( next, init_value );
+
+    reader.on_latch( _i + i + 1u, next, init_value );
   }
 
   for ( auto i = 0ul; i < _o; ++i )
@@ -334,7 +353,7 @@ inline return_code read_aig( std::istream& in, const aiger_reader& reader, diagn
     const auto d1 = decode();
     const auto d2 = decode();
     const auto g = i << 1;
-    reader.on_and( i, ( g - d1 - d2 ), ( g - d1 ) );
+    reader.on_and( i, ( g - d1 ), ( g - d1 - d2 ) );
   }
 
   /* parse names and comments */

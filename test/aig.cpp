@@ -18,6 +18,7 @@ struct aig_statistics
 
   std::size_t output_count = 0;
   std::size_t and_count = 0;
+  std::size_t latch_count = 0;
 
   std::map<unsigned, std::string> input_names;
   std::map<unsigned, std::string> output_names;
@@ -54,6 +55,14 @@ public:
     (void)left_lit;
     (void)right_lit;
     ++_stats.and_count;
+  }
+
+  virtual void on_latch( unsigned index, unsigned next, latch_init_value init_value ) const override
+  {
+    (void)index;
+    (void)next;
+    (void)init_value;
+    ++_stats.latch_count;
   }
 
   virtual void on_input_name( unsigned index, const std::string& name ) const override
@@ -150,5 +159,6 @@ TEST_CASE( "sequential", "[aig]" )
   CHECK( stats.number_of_outputs == 2 );
   CHECK( stats.number_of_ands == 4 );
   CHECK( stats.and_count == 4 );
+  CHECK( stats.latch_count == 1 );
   CHECK( stats.output_count == 2 );
 }
