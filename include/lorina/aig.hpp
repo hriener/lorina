@@ -308,7 +308,7 @@ inline return_code read_aig( std::istream& in, const aiger_reader& reader, diagn
   }
 
   /* ignore b */
-  for ( auto i = 0ul; i < _c; ++i )
+  for ( auto i = 0ul; i < _b; ++i )
   {
     std::getline( in, line );
   }
