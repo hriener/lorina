@@ -236,10 +236,10 @@ inline std::vector<std::string> split( const std::string& str, const std::string
   size_t next = 0;
   while ( ( next = str.find( sep, last ) ) != std::string::npos )
   {
-    result.push_back( str.substr( last, next - last ) );
+    result.push_back( trim_copy( str.substr( last, next - last ) ) );
     last = next + 1;
   }
-  result.push_back( str.substr( last ) );
+  result.push_back( trim_copy( str.substr( last ) ) );
 
   return result;
 }
