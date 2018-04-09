@@ -35,9 +35,7 @@ public:
 
   virtual void on_gate( const std::vector<std::string>& inputs, const std::string& output, const std::string& type ) const override
   {
-    (void)inputs;
-    (void)output;
-    (void)type;
+    gate_lines.push_back( std::make_tuple( inputs,output,type ) );
     ++_stats.number_of_lines;
   }
 
@@ -49,6 +47,7 @@ public:
   }
 
   bench_statistics& _stats;
+  mutable std::vector<std::tuple<std::vector<std::string>,std::string,std::string>> gate_lines;
 }; /* bench_statistics_reader */
 
 TEST_CASE( "bench_parse", "[bench]" )
@@ -77,4 +76,34 @@ TEST_CASE( "bench_parse", "[bench]" )
   CHECK( stats.number_of_inputs == 2 );
   CHECK( stats.number_of_outputs == 2 );
   CHECK( stats.number_of_lines == 9 );
+  CHECK( reader.gate_lines.size() == 7 );
+}
+
+TEST_CASE( "whitespaces", "[bench]" )
+{
+  std::string bench_file =
+      "INPUT(x0)\n"
+      "INPUT(x1)\n"
+      "INPUT(x2)\n"
+      "OUTPUT(out)\n"
+      "G16         = LUT 0xba ( x0, x1, x2 )\n"
+      "out         = G16\n";
+
+  std::istringstream iss( bench_file );
+
+  bench_statistics stats;
+  bench_statistics_reader reader( stats );
+  auto result = read_bench( iss, reader );
+  CHECK( result == return_code::success );
+  CHECK( stats.number_of_inputs == 3 );
+  CHECK( stats.number_of_outputs == 1 );
+  CHECK( stats.number_of_lines == 2 );
+  CHECK( reader.gate_lines.size() == 1 );
+
+  const auto& gate_lines = reader.gate_lines;
+  CHECK( std::get<0>( gate_lines[0u] )[0] == "x0" );
+  CHECK( std::get<0>( gate_lines[0u] )[1] == "x1" );
+  CHECK( std::get<0>( gate_lines[0u] )[2] == "x2" );
+  CHECK( std::get<1>( gate_lines[0u] ) == "G16" );
+  CHECK( std::get<2>( gate_lines[0u] ) == "0xba" );
 }
