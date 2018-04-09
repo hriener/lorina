@@ -23,11 +23,11 @@ tokens from an input stream (``std::istream& in``)::
 
   /* read file */
   const std::string filename = ...;
-  read_<format>( filename, read_<format>() );
+  read_<format>( filename, <format>_reader() );
 
   /* read istream */
   std::ifstream in( filename.c_str(), std::ifstream::in );
-  read_<format>( in, read_<format>() );
+  read_<format>( in, <format>_reader() );
 
 The default behavior of any parser can be customized by deriving a new
 class from a reader visitor and overloading its virtual callback
