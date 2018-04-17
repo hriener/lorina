@@ -59,7 +59,7 @@ public:
 
   virtual void on_latch( unsigned index, unsigned next, latch_init_value init_value ) const override
   {
-    latches.push_back( {index,next,init_value} );
+    latches.push_back( std::make_tuple(index,next,init_value) );
     ++_stats.latch_count;
   }
 
