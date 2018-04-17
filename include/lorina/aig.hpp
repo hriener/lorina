@@ -288,11 +288,11 @@ inline return_code read_aig( std::istream& in, const aiger_reader& reader, diagn
     aiger_reader::latch_init_value init_value = aiger_reader::latch_init_value::NONDETERMINISTIC;
     if ( tokens.size() == 2u )
     {
-      if ( tokens[2u] == "0" )
+      if ( tokens[1u] == "0" )
       {
         init_value = aiger_reader::latch_init_value::ZERO;
       }
-      else if ( tokens[2u] == "1" )
+      else if ( tokens[1u] == "1" )
       {
         init_value = aiger_reader::latch_init_value::ONE;
       }

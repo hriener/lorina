@@ -59,9 +59,7 @@ public:
 
   virtual void on_latch( unsigned index, unsigned next, latch_init_value init_value ) const override
   {
-    (void)index;
-    (void)next;
-    (void)init_value;
+    latches.push_back( {index,next,init_value} );
     ++_stats.latch_count;
   }
 
@@ -81,6 +79,7 @@ public:
   }
 
   aig_statistics& _stats;
+  mutable std::vector<std::tuple<unsigned,unsigned,latch_init_value>> latches;
 }; /* aig_statistics_reader */
 
 TEST_CASE( "combinational", "[aig]" )
@@ -161,4 +160,34 @@ TEST_CASE( "sequential", "[aig]" )
   CHECK( stats.and_count == 4 );
   CHECK( stats.latch_count == 1 );
   CHECK( stats.output_count == 2 );
+
+  CHECK( reader.latches.size() == 1u );
+  CHECK( std::get<2>( reader.latches[0u] ) == aiger_reader::latch_init_value::NONDETERMINISTIC );
+}
+
+TEST_CASE( "latch_initialization", "[aig]" )
+{
+  char aig_file[] = {
+      0x61, 0x69, 0x67, 0x20, 0x37, 0x20, 0x32, 0x20, 0x31, 0x20, 0x32,
+      0x20, 0x34, 0x0a, 0x31, 0x34, 0x20, 0x31, 0x0a, 0x36, 0x0a, 0x37,
+      0x0a, 0x02, 0x04, 0x03, 0x04, 0x01, 0x02, 0x02, 0x08}; /* aig_file */
+
+  std::istringstream iss( aig_file );
+
+  aig_statistics stats;
+  aig_statistics_reader reader( stats );
+
+  auto result = read_aig( iss, reader );
+  CHECK( result == return_code::success );
+  CHECK( stats.maximum_variable_index == 7 );
+  CHECK( stats.number_of_inputs == 2 );
+  CHECK( stats.number_of_latches == 1 );
+  CHECK( stats.number_of_outputs == 2 );
+  CHECK( stats.number_of_ands == 4 );
+  CHECK( stats.and_count == 4 );
+  CHECK( stats.latch_count == 1 );
+  CHECK( stats.output_count == 2 );
+
+  CHECK( reader.latches.size() == 1u );
+  CHECK( std::get<2>( reader.latches[0u] ) == aiger_reader::latch_init_value::ONE );
 }
