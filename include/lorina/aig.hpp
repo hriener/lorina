@@ -286,7 +286,7 @@ inline return_code read_aig( std::istream& in, const aiger_reader& reader, diagn
     const auto tokens = detail::split( line, " " );
     const auto next = std::atoi( tokens[0u].c_str() );
     aiger_reader::latch_init_value init_value = aiger_reader::latch_init_value::NONDETERMINISTIC;
-    if ( tokens.size() == 2u )
+    if ( tokens.size() == 3u )
     {
       if ( tokens[2u] == "0" )
       {
