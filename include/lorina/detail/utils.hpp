@@ -58,13 +58,7 @@ inline std::string join( const T& t, const std::string& sep )
 
 inline bool file_exists( const std::string& filename )
 {
-  std::ifstream f( filename );
-  if ( !f.is_open() )
-  {
-    return false;
-  }
-  f.close();
-  return true;
+  return std::ifstream( filename ).good();
 }
 
 /* string utils are from https://stackoverflow.com/a/217605 */

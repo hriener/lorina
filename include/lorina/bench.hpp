@@ -179,7 +179,7 @@ inline return_code read_bench( std::istream& in, const bench_reader& reader, dia
 
 inline return_code read_bench( const std::string& filename, const bench_reader& reader, diagnostic_engine* diag = nullptr )
 {
-  std::ifstream in( filename.c_str(), std::ifstream::in );
+  std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );
   return read_bench( in, reader, diag );
 }
 
