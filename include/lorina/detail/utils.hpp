@@ -39,6 +39,7 @@
 #include <string>
 #include <numeric>
 #include <functional>
+#include <libgen.h>
 
 #include <fmt/format.h>
 
@@ -300,6 +301,12 @@ inline std::string word_exp_filename( const std::string& filename )
 
   return result;
 }
+
+inline std::string basename( const std::string& filepath )
+{
+  return std::string( ::basename( const_cast<char*>( filepath.c_str() ) ) );
+}
+
 } // namespace detail
 } // namespace lorina
 
