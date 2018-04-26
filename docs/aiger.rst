@@ -1,7 +1,7 @@
 AIGER parser
 ============
 
-The header ``<lorina/aig.hpp>`` implements methods to parse the binary AIGER format.
+The header ``<lorina/aiger.hpp>`` implements methods to parse the binary AIGER format.
 
 The class :cpp:class:`lorina::aiger_reader` provides the following public
 member functions.
