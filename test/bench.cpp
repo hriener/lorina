@@ -57,15 +57,15 @@ TEST_CASE( "bench_parse", "[bench]" )
       "INPUT(input_x[1])\n"
       "OUTPUT(outport[0])\n"
       "OUTPUT(outport[1])\n"
+      "n4 = LUT 0x1 ( n1 )\n"
+      "n3 = NOT(input_x[1])\n"
+      "n5 = AND(n0, n4)\n"
+      "outport[1] = BUFF(outport[0])\n"
       "n0 = vdd\n"
       "n1 = NOT(vdd)\n"
-      "n2 = NOT(input_x[0])\n"
-      "n3 = NOT(input_x[1])\n"
-      "n4 = LUT 0x1 ( n1 )\n"
-      "n5 = AND(n0, n4)\n"
       "n6 = OR(n2, n5)\n"
-      "outport[0] = n6\n"
-      "outport[1] = BUFF(outport[0])\n";
+      "n2 = NOT(input_x[0])\n"
+      "outport[0] = n6\n";
 
   std::istringstream iss( bench_file );
 

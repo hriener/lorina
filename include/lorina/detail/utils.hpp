@@ -27,27 +27,117 @@
 
 #pragma once
 
-#include <cstdio>
-#include <cstdlib>
-#include <wordexp.h>
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <cctype>
+#include <cstdio>
+#include <cstdlib>
 #include <fstream>
-#include <locale>
-#include <memory>
-#include <string>
-#include <numeric>
+#include <functional>
 #include <functional>
 #include <libgen.h>
-
-#include <fmt/format.h>
+#include <locale>
+#include <memory>
+#include <numeric>
+#include <stack>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <wordexp.h>
 
 namespace lorina
 {
 
 namespace detail
 {
+
+template<typename... Args>
+class call_in_topological_order
+{
+public:
+  call_in_topological_order( std::function<void(Args...)> f )
+    : f( f )
+  {
+  }
+
+  void declare_known( const std::string& known )
+  {
+    _waits_for[ known ];
+  }
+  
+  void call_deferred( const std::vector<std::string>& inputs, const std::string& output, Args... params )
+  {
+    /* do we have all inputs */
+    std::unordered_set<std::string> unknown;
+    for ( const auto& input : inputs )
+    {
+      auto it = _waits_for.find( input );
+      if ( it == _waits_for.end() || !it->second.empty() )
+      {
+        unknown.insert( input );
+      }
+    }
+
+    std::tuple<Args...> args = std::make_tuple( params... );
+    _stored_params.emplace( output, args );
+
+    if ( !unknown.empty() )
+    {
+      /* defer computation */
+      for ( const auto& input : unknown )
+      {
+        _triggers[input].insert( output );
+        _waits_for[output].insert( input );
+      }
+      return;
+    }
+
+    /* trigger computation */
+    _waits_for[output]; /* init empty, makes sure nothing is waiting for this output */
+    std::stack<std::string> computed;
+    computed.push( output );
+    while ( !computed.empty() )
+    {
+      auto next = computed.top();
+      computed.pop();
+
+      std::apply( f, _stored_params[next] );
+
+      for ( const auto& other : _triggers[next] )
+      {
+        _waits_for[other].erase( next );
+        if ( _waits_for[other].empty() )
+        {
+          computed.push( other );
+        }
+      }
+      _triggers[next].clear();
+    }
+  }
+
+  std::vector<std::pair<std::string,std::string>> unresolved_dependencies()
+  {
+    std::vector<std::pair<std::string,std::string>> deps;
+    for ( const auto& w : _waits_for )
+    {
+      if ( !w.second.empty() )
+      {
+        for ( const auto& v : w.second )
+        {
+          deps.push_back( std::make_pair( w.first, v ) );
+        }
+      }
+    }
+    return deps;
+  }
+  
+private:
+  std::unordered_map<std::string, std::unordered_set<std::string>> _triggers;
+  std::unordered_map<std::string, std::unordered_set<std::string>> _waits_for;
+  std::function<void(Args...)> f;
+  std::unordered_map<std::string, std::tuple<Args...>> _stored_params;
+}; /* call_in_topological_order */
 
 template<typename T>
 inline std::string join( const T& t, const std::string& sep )

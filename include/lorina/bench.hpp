@@ -155,6 +155,22 @@ inline return_code read_bench( std::istream& in, const bench_reader& reader, dia
 {
   return_code result = return_code::success;
 
+  const auto dispatch_function = [&]( std::vector<std::string> inputs, std::string output, std::string type )
+    {
+      if ( type == "" )
+      {
+        reader.on_assign( inputs.front(), output );
+      }
+      else
+      {
+        reader.on_gate( inputs, output, type );
+      }
+    };
+
+  detail::call_in_topological_order<std::vector<std::string>, std::string, std::string> on_action( dispatch_function );
+  on_action.declare_known( "vdd" );
+  on_action.declare_known( "gnd" );
+
   std::smatch m;
   detail::foreach_line_in_file_escape( in, [&]( const std::string& line ) {
     /* empty line or comment */
@@ -164,7 +180,9 @@ inline return_code read_bench( std::istream& in, const bench_reader& reader, dia
     /* INPUT(<string>) */
     if ( std::regex_search( line, m, bench_regex::input ) )
     {
-      reader.on_input( detail::trim_copy( m[1] ) );
+      const auto s = detail::trim_copy( m[1] );
+      on_action.declare_known( s );
+      reader.on_input( s );
       return true;
     }
 
@@ -182,7 +200,7 @@ inline return_code read_bench( std::istream& in, const bench_reader& reader, dia
       const auto type = detail::trim_copy( m[2] );
       const auto args = detail::trim_copy( m[3] );
       const auto inputs = detail::split( args, "," );
-      reader.on_gate( inputs, output, type );
+      on_action.call_deferred( inputs, output, inputs, output, type );
       return true;
     }
 
@@ -193,7 +211,7 @@ inline return_code read_bench( std::istream& in, const bench_reader& reader, dia
       const auto type = detail::trim_copy( m[2] );
       const auto args = detail::trim_copy( m[3] );
       const auto inputs = detail::split( args, "," );
-      reader.on_gate( inputs, output, type );
+      on_action.call_deferred( inputs, output, inputs, output, type );
       return true;
     }
 
@@ -202,7 +220,7 @@ inline return_code read_bench( std::istream& in, const bench_reader& reader, dia
     {
       const auto output = detail::trim_copy( m[1] );
       const auto input = detail::trim_copy( m[2] );
-      reader.on_assign( input, output );
+      on_action.call_deferred( { input }, output, { input }, output, "" );
       return true;
     }
 
@@ -215,6 +233,18 @@ inline return_code read_bench( std::istream& in, const bench_reader& reader, dia
     result = return_code::parse_error;
     return true;
   } );
+
+  /* check dangling objects */
+  const auto& deps = on_action.unresolved_dependencies();
+  result = deps.size() > 0 ? return_code::parse_error : return_code::success;
+  for ( const auto& r : on_action.unresolved_dependencies() )
+  {
+    if ( diag )
+    {
+      diag->report( diagnostic_level::error,
+                    fmt::format( "unresolved dependencies: `{0}` requires `{1}`",  r.first, r.second ) );
+    }
+  }
 
   return result;
 }
