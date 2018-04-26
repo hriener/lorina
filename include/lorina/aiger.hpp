@@ -25,7 +25,7 @@
 
 /*!
   \file aig.hpp
-  \brief Implements aig parser
+  \brief Implements aiger parser
 
   \author Heinz Riener
 */
@@ -189,7 +189,7 @@ public:
     (void)name;
   }
 
-  /*! \brief Callback method for a parsed name of fairness constraint.
+  /*! \brief Callback method for a parsed name of a fairness constraint.
    *
    * \param index Index of the fairness constraint
    * \param name Name of the fairness constraint
@@ -327,7 +327,7 @@ static std::regex fairness( R"(^f(\d+) (.*)$)" );
  * \param diag An optional diagnostic engine with callback methods for parse errors
  * \return Success if parsing have been successful, or parse error if parsing have failed
  */
-inline return_code read_aig( std::istream& in, const aiger_reader& reader, diagnostic_engine* diag = nullptr )
+inline return_code read_aiger( std::istream& in, const aiger_reader& reader, diagnostic_engine* diag = nullptr )
 {
   return_code result = return_code::success;
 
@@ -503,10 +503,10 @@ inline return_code read_aig( std::istream& in, const aiger_reader& reader, diagn
  * \param diag An optional diagnostic engine with callback methods for parse errors
  * \return Success if parsing have been successful, or parse error if parsing have failed
  */
-inline return_code read_aig( const std::string& filename, const aiger_reader& reader, diagnostic_engine* diag = nullptr )
+inline return_code read_aiger( const std::string& filename, const aiger_reader& reader, diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );
-  return read_aig( in, reader, diag );
+  return read_aiger( in, reader, diag );
 }
 
 } // namespace lorina

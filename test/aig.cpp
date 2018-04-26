@@ -1,6 +1,6 @@
 #include <catch.hpp>
 
-#include <lorina/aig.hpp>
+#include <lorina/aiger.hpp>
 #include <fmt/format.h>
 #include <fmt/printf.h>
 #include <map>
@@ -8,7 +8,7 @@
 
 using namespace lorina;
 
-struct aig_statistics
+struct aiger_statistics
 {
   std::size_t maximum_variable_index = 0;
   std::size_t number_of_inputs = 0;
@@ -25,10 +25,10 @@ struct aig_statistics
   std::string comment;
 };
 
-class aig_statistics_reader : public aiger_reader
+class aiger_statistics_reader : public aiger_reader
 {
 public:
-  aig_statistics_reader( aig_statistics& stats )
+  aiger_statistics_reader( aiger_statistics& stats )
       : _stats( stats )
   {
   }
@@ -78,23 +78,23 @@ public:
     _stats.comment = comment;
   }
 
-  aig_statistics& _stats;
+  aiger_statistics& _stats;
   mutable std::vector<std::tuple<unsigned,unsigned,latch_init_value>> latches;
-}; /* aig_statistics_reader */
+}; /* aiger_statistics_reader */
 
-TEST_CASE( "combinational", "[aig]" )
+TEST_CASE( "combinational", "[aiger]" )
 {
-  char aig_file[] = {
+  char aiger_file[] = {
       0x61, 0x69, 0x67, 0x20, 0x36, 0x20, 0x32, 0x20, 0x30, 0x20, 0x32,
       0x20, 0x34, 0x0a, 0x31, 0x30, 0x0a, 0x31, 0x32, 0x0a, 0x02, 0x02,
-      0x03, 0x02, 0x01, 0x02, 0x07, 0x03}; /* aig_file */
+      0x03, 0x02, 0x01, 0x02, 0x07, 0x03}; /* aiger_file */
 
-  std::istringstream iss( aig_file );
+  std::istringstream iss( aiger_file );
 
-  aig_statistics stats;
-  aig_statistics_reader reader( stats );
+  aiger_statistics stats;
+  aiger_statistics_reader reader( stats );
 
-  auto result = read_aig( iss, reader );
+  auto result = read_aiger( iss, reader );
   CHECK( result == return_code::success );
   CHECK( stats.maximum_variable_index == 6 );
   CHECK( stats.number_of_inputs == 2 );
@@ -105,23 +105,23 @@ TEST_CASE( "combinational", "[aig]" )
   CHECK( stats.output_count == 2 );
 }
 
-TEST_CASE( "symbol_table", "[aig]" )
+TEST_CASE( "symbol_table", "[aiger]" )
 {
-  char aig_file[] = {
+  char aiger_file[] = {
       0x61, 0x69, 0x67, 0x20, 0x35, 0x20, 0x32, 0x20, 0x30, 0x20,
       0x32, 0x20, 0x33, 0x0a, 0x31, 0x30, 0x0a, 0x36, 0x0a, 0x02,
       0x02, 0x03, 0x02, 0x01, 0x02, 0x69, 0x30, 0x20, 0x78, 0x0a,
       0x69, 0x31, 0x20, 0x79, 0x0a, 0x6f, 0x30, 0x20, 0x73, 0x0a,
       0x6f, 0x31, 0x20, 0x63, 0x0a, 0x63, 0x0a, 0x68, 0x61, 0x6c,
       0x66, 0x20, 0x61, 0x64, 0x64, 0x65, 0x72, 0x0a, 0x00};
-      /* aig_file */
+      /* aiger_file */
 
-  std::istringstream iss( aig_file );
+  std::istringstream iss( aiger_file );
 
-  aig_statistics stats;
-  aig_statistics_reader reader( stats );
+  aiger_statistics stats;
+  aiger_statistics_reader reader( stats );
 
-  auto result = read_aig( iss, reader );
+  auto result = read_aiger( iss, reader );
   CHECK( result == return_code::success );
   CHECK( stats.maximum_variable_index == 5 );
   CHECK( stats.number_of_inputs == 2 );
@@ -138,19 +138,19 @@ TEST_CASE( "symbol_table", "[aig]" )
   CHECK( stats.output_names[1] == "c" );
 }
 
-TEST_CASE( "sequential", "[aig]" )
+TEST_CASE( "sequential", "[aiger]" )
 {
-  char aig_file[] = {
+  char aiger_file[] = {
       0x61, 0x69, 0x67, 0x20, 0x37, 0x20, 0x32, 0x20, 0x31, 0x20, 0x32,
       0x20, 0x34, 0x0a, 0x31, 0x34, 0x0a, 0x36, 0x0a, 0x37, 0x0a, 0x02,
-      0x04, 0x03, 0x04, 0x01, 0x02, 0x02, 0x08}; /* aig_file */
+      0x04, 0x03, 0x04, 0x01, 0x02, 0x02, 0x08}; /* aiger_file */
 
-  std::istringstream iss( aig_file );
+  std::istringstream iss( aiger_file );
 
-  aig_statistics stats;
-  aig_statistics_reader reader( stats );
+  aiger_statistics stats;
+  aiger_statistics_reader reader( stats );
 
-  auto result = read_aig( iss, reader );
+  auto result = read_aiger( iss, reader );
   CHECK( result == return_code::success );
   CHECK( stats.maximum_variable_index == 7 );
   CHECK( stats.number_of_inputs == 2 );
@@ -165,19 +165,19 @@ TEST_CASE( "sequential", "[aig]" )
   CHECK( std::get<2>( reader.latches[0u] ) == aiger_reader::latch_init_value::NONDETERMINISTIC );
 }
 
-TEST_CASE( "latch_initialization", "[aig]" )
+TEST_CASE( "latch_initialization", "[aiger]" )
 {
-  char aig_file[] = {
+  char aiger_file[] = {
       0x61, 0x69, 0x67, 0x20, 0x37, 0x20, 0x32, 0x20, 0x31, 0x20, 0x32,
       0x20, 0x34, 0x0a, 0x31, 0x34, 0x20, 0x31, 0x0a, 0x36, 0x0a, 0x37,
-      0x0a, 0x02, 0x04, 0x03, 0x04, 0x01, 0x02, 0x02, 0x08}; /* aig_file */
+      0x0a, 0x02, 0x04, 0x03, 0x04, 0x01, 0x02, 0x02, 0x08}; /* aiger_file */
 
-  std::istringstream iss( aig_file );
+  std::istringstream iss( aiger_file );
 
-  aig_statistics stats;
-  aig_statistics_reader reader( stats );
+  aiger_statistics stats;
+  aiger_statistics_reader reader( stats );
 
-  auto result = read_aig( iss, reader );
+  auto result = read_aiger( iss, reader );
   CHECK( result == return_code::success );
   CHECK( stats.maximum_variable_index == 7 );
   CHECK( stats.number_of_inputs == 2 );

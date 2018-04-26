@@ -17,7 +17,7 @@ Welcome to lorina's documentation!
 .. toctree::
    :maxdepth: 2
 
-   aig
+   aiger
    bench
    blif
    pla

@@ -29,7 +29,7 @@ member functions.
 +------------------------------------------+-------------------------------------------------------------------------+
 | ``on_constraint_name(index, name)``      | Callback method for a parsed name of an invariant constraint            |
 +------------------------------------------+-------------------------------------------------------------------------+
-| ``on_fairness_name(index, name)``        | Callback method for a parsed name of fairness constraint                |
+| ``on_fairness_name(index, name)``        | Callback method for a parsed name of a fairness constraint              |
 +------------------------------------------+-------------------------------------------------------------------------+
 | ``on_comment(comment)``                  | Callback method for parsed comment                                      |
 +------------------------------------------+-------------------------------------------------------------------------+

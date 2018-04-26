@@ -24,7 +24,7 @@
  */
 
 #include <cli11/CLI11.hpp>
-#include <lorina/aig.hpp>
+#include <lorina/aiger.hpp>
 #include <lorina/bench.hpp>
 #include <lorina/blif.hpp>
 #include <lorina/pla.hpp>
@@ -95,7 +95,7 @@ int main( int argc, char** argv )
   case format::aig:
   {
     ascii_aiger_pretty_printer reader;
-    result = read_aig( filename, reader, &diag );
+    result = read_aiger( filename, reader, &diag );
     break;
   }
   case format::bench:
