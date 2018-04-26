@@ -42,19 +42,37 @@
 namespace lorina
 {
 
+/*! \brief A reader visitor for the BENCH format.
+ *
+ * Callbacks for the BENCH format.
+ */
 class bench_reader
 {
 public:
+  /*! \brief Callback method for parsed input.
+   *
+   * \param name Name of the input
+   */
   virtual void on_input( const std::string& name ) const
   {
     (void)name;
   }
 
+  /*! \brief Callback method for parsed output.
+   *
+   * \param name Name of the output
+   */
   virtual void on_output( const std::string& name ) const
   {
     (void)name;
   }
 
+  /*! \brief Callback method for parsed gate.
+   *
+   * \param inputs A list of inputs
+   * \param output An output
+   * \param type Either a name that specified the gate or a hexadecimal number that describes the logic function of the gate.
+   */
   virtual void on_gate( const std::vector<std::string>& inputs, const std::string& output, const std::string& type ) const
   {
     (void)inputs;
@@ -62,6 +80,11 @@ public:
     (void)type;
   }
 
+  /*! \brief Callback method for parsed gate assignment.
+   *
+   * \param input An input
+   * \param output An output
+   */
   virtual void on_assign( const std::string& input, const std::string& output ) const
   {
     (void)input;
@@ -69,9 +92,18 @@ public:
   }
 }; /* bench_reader */
 
+/*! \brief A BENCH reader for prettyprinting BENCH.
+ *
+ * Callbacks for prettyprinting of BENCH.
+ *
+ */
 class bench_pretty_printer : public bench_reader
 {
 public:
+  /*! \brief Constructor of the BENCH pretty printer.
+   *
+   * \param os Output stream
+   */
   bench_pretty_printer( std::ostream& os = std::cout )
       : _os( os )
   {
@@ -97,7 +129,7 @@ public:
     _os << fmt::format( "{0} = {1}", output, input ) << std::endl;
   }
 
-  std::ostream& _os;
+  std::ostream& _os; /*!< Output stream */
 }; /* bench_pretty_printer */
 
 namespace bench_regex
@@ -109,6 +141,16 @@ static std::regex lut( R"((.*)\s+=\s+LUT\s+(.*)\((.*)\))" );
 static std::regex gate_asgn( R"((.*)\s+=\s+(.*))" );
 } // namespace bench_regex
 
+/*! \brief Reader function for the BENCH format.
+ *
+ * Reads BENCH format from a stream and invokes a callback
+ * method for each parsed primitive and each detected parse error.
+ *
+ * \param in Input stream
+ * \param reader A BENCH reader with callback methods invoked for parsed primitives
+ * \param diag An optional diagnostic engine with callback methods for parse errors
+ * \return Success if parsing have been successful, or parse error if parsing have failed
+ */
 inline return_code read_bench( std::istream& in, const bench_reader& reader, diagnostic_engine* diag = nullptr )
 {
   return_code result = return_code::success;
@@ -177,6 +219,16 @@ inline return_code read_bench( std::istream& in, const bench_reader& reader, dia
   return result;
 }
 
+/*! \brief Reader function for BENCH format.
+ *
+ * Reads BENCH format from a file and invokes a callback
+ * method for each parsed primitive and each detected parse error.
+ *
+ * \param filename Name of the file
+ * \param reader A BENCH reader with callback methods invoked for parsed primitives
+ * \param diag An optional diagnostic engine with callback methods for parse errors
+ * \return Success if parsing have been successful, or parse error if parsing have failed
+ */
 inline return_code read_bench( const std::string& filename, const bench_reader& reader, diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );

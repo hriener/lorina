@@ -43,26 +43,50 @@
 namespace lorina
 {
 
+/*! \brief A reader visitor for the PLA format.
+ *
+ * Callbacks for the PLA format.
+ */
 class pla_reader
 {
 public:
+  /*! \brief Callback method for parsed number of inputs.
+   *
+   * \param number_of_inputs Number of inputs
+   */
   virtual void on_number_of_inputs( std::size_t number_of_inputs ) const
   {
     (void)number_of_inputs;
   }
 
+  /*! \brief Callback method for parsed number of outputs.
+   *
+   * \param number_of_outputs Number of outputs
+   */
   virtual void on_number_of_outputs( std::size_t number_of_outputs ) const
   {
     (void)number_of_outputs;
   }
 
+  /*! \brief Callback method for parsed number of terms.
+   *
+   * \param number_of_terms Number of terms
+   */
   virtual void on_number_of_terms( std::size_t number_of_terms ) const
   {
     (void)number_of_terms;
   }
 
+  /*! \brief Callback method for parsed end.
+   *
+   */
   virtual void on_end() const {}
 
+  /*! \brief Callback method for parsed term.
+   *
+   * \param term A term of a logic function
+   * \param out Output bit of term
+   */
   virtual void on_term( const std::string& term, const std::string& out ) const
   {
     (void)term;
@@ -70,9 +94,18 @@ public:
   }
 }; /* pla_reader */
 
+/*! \brief A PLA reader for prettyprinting PLA.
+ *
+ * Callbacks for prettyprinting of PLA.
+ *
+ */
 class pla_pretty_printer : public pla_reader
 {
 public:
+  /*! \brief Constructor of the PLA pretty printer.
+   *
+   * \param os Output stream
+   */
   pla_pretty_printer( std::ostream& os = std::cout )
       : _os( os )
   {
@@ -103,7 +136,7 @@ public:
     _os << term << ' ' << out << std::endl;
   }
 
-  std::ostream& _os;
+  std::ostream& _os; /*!< Output stream */
 }; /* pla_pretty_printer */
 
 namespace pla_regex
@@ -113,6 +146,16 @@ static std::regex term( R"(^([01\-]+)\s+([01\-]+)$)" );
 
 } // namespace pla_regex
 
+/*! \brief Reader function for the PLA format.
+ *
+ * Reads PLA format from a stream and invokes a callback
+ * method for each parsed primitive and each detected parse error.
+ *
+ * \param in Input stream
+ * \param reader A PLA reader with callback methods invoked for parsed primitives
+ * \param diag An optional diagnostic engine with callback methods for parse errors
+ * \return Success if parsing have been successful, or parse error if parsing have failed
+ */
 inline return_code read_pla( std::istream& in, const pla_reader& reader, diagnostic_engine* diag = nullptr )
 {
   auto loc = 0ul;
@@ -187,6 +230,16 @@ inline return_code read_pla( std::istream& in, const pla_reader& reader, diagnos
   }
 }
 
+/*! \brief Reader function for PLA format.
+ *
+ * Reads PLA format from a file and invokes a callback method for each
+ * parsed primitive and each detected parse error.
+ *
+ * \param filename Name of the file
+ * \param reader A PLA reader with callback methods invoked for parsed primitives
+ * \param diag An optional diagnostic engine with callback methods for parse errors
+ * \return Success if parsing have been successful, or parse error if parsing have failed
+ */
 inline return_code read_pla( const std::string& filename, const pla_reader& reader, diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );

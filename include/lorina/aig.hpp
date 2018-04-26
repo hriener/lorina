@@ -42,17 +42,30 @@
 namespace lorina
 {
 
+/*! \brief A reader visitor for the binary AIGER format.
+ *
+ * Callbacks for the AIGER format.
+ */
 class aiger_reader
 {
 public:
+  /*! Latch input values */
   enum latch_init_value
   {
-    ZERO = 0
-  , ONE
-  , NONDETERMINISTIC
+    ZERO = 0 /*!< Initialized with 0 */
+  , ONE /*!< Initialized with 1 */
+  , NONDETERMINISTIC /*!< Not initialized (non-deterministic value) */
   };
 
 public:
+  /*! \brief Callback method for parsed header.
+   *
+   * \param m Maximum variable index
+   * \param i Number of inputs
+   * \param l Number of latches
+   * \param o Number of outputs
+   * \param a Number of AND gates
+   */
   virtual void on_header( std::size_t m, std::size_t i, std::size_t l, std::size_t o, std::size_t a ) const
   {
     (void)m;
@@ -62,6 +75,18 @@ public:
     (void)a;
   }
 
+  /*! \brief Callback method for parsed header.
+   *
+   * \param m Maximum variable index
+   * \param i Number of inputs
+   * \param l Number of latches
+   * \param o Number of outputs
+   * \param a Number of AND gates
+   * \param b Number of bad states properties
+   * \param c Number of invariant constraints
+   * \param j Number of justice properties
+   * \param f Number of fairness constraints
+   */
   virtual void on_header( std::size_t m, std::size_t i, std::size_t l, std::size_t o, std::size_t a,
                           std::size_t b, std::size_t c, std::size_t j, std::size_t f ) const
   {
@@ -72,19 +97,36 @@ public:
     (void)f;
   }
 
+  /*! \brief Callback method for parsed output.
+   *
+   * \param index Index of the output
+   * \param lit Assigned literal
+   */
   virtual void on_output( unsigned index, unsigned lit ) const
   {
     (void)index;
     (void)lit;
   }
 
-  virtual void on_latch( unsigned index, unsigned next, latch_init_value init_value ) const
+  /*! \brief Callback method for parsed latch.
+   *
+   * \param index Index of the latch
+   * \param next Assigned (next) literal
+   * \param reset Initial value of the latch
+   */
+  virtual void on_latch( unsigned index, unsigned next, latch_init_value reset ) const
   {
     (void)index;
     (void)next;
-    (void)init_value;
+    (void)reset;
   }
 
+  /*! \brief Callback method for parsed AND gate.
+   *
+   * \param index Index of the AND gate
+   * \param left_lit Assigned left literal
+   * \param right_lit Assigned right literal
+   */
   virtual void on_and( unsigned index, unsigned left_lit, unsigned right_lit ) const
   {
     (void)index;
@@ -92,58 +134,101 @@ public:
     (void)right_lit;
   }
 
+  /*! \brief Callback method for parsed input name.
+   *
+   * \param index Index of the input
+   * \param name Input name
+   */
   virtual void on_input_name( unsigned index, const std::string& name ) const
   {
     (void)index;
     (void)name;
   }
 
+  /*! \brief Callback method for parsed latch name.
+   *
+   * \param index Index of the latch
+   * \param name Latch name
+   */
   virtual void on_latch_name( unsigned index, const std::string& name ) const
   {
     (void)index;
     (void)name;
   }
 
+  /*! \brief Callback method for parsed output name.
+   *
+   * \param index Index of the output
+   * \param name Output name
+   */
   virtual void on_output_name( unsigned index, const std::string& name ) const
   {
     (void)index;
     (void)name;
   }
 
+  /*! \brief Callback method for a parsed name of a bad state property.
+   *
+   * \param index Index of the bad state
+   * \param name Name of the bad state property
+   */
   virtual void on_bad_state_name( unsigned index, const std::string& name ) const
   {
     (void)index;
     (void)name;
   }
 
+  /*! \brief Callback method for a parsed name of an invariant constraint.
+   *
+   * \param index Index of the constraint
+   * \param name Constraint name
+   */
   virtual void on_constraint_name( unsigned index, const std::string& name ) const
   {
     (void)index;
     (void)name;
   }
 
+  /*! \brief Callback method for a parsed name of fairness constraint.
+   *
+   * \param index Index of the fairness constraint
+   * \param name Name of the fairness constraint
+   */
   virtual void on_fairness_name( unsigned index, const std::string& name ) const
   {
     (void)index;
     (void)name;
   }
 
+  /*! \brief Callback method for parsed comment.
+   *
+   * \param comment Comment
+   */
   virtual void on_comment( const std::string& comment ) const
   {
     (void)comment;
   }
 }; /* aiger_reader */
 
+/*! \brief An AIGER reader for prettyprinting ASCII AIGER.
+ *
+ * Callbacks for prettyprinting of ASCII AIGER.
+ *
+ */
 class ascii_aiger_pretty_printer : public aiger_reader
 {
 public:
+  /*! \brief Constructor of the ASCII AIGER pretty printer.
+   *
+   * \param os Output stream
+   */
   ascii_aiger_pretty_printer( std::ostream& os = std::cout )
       : _os( os )
   {
   }
 
   void on_header( std::size_t m, std::size_t i, std::size_t l, std::size_t o, std::size_t a,
-                          std::size_t b, std::size_t c, std::size_t j, std::size_t f ) const override
+                  std::size_t b, std::size_t c, std::size_t j, std::size_t f ) const override
   {
     _os << fmt::format( "aag {0} {1} {2} {3} {4} {5} {6} {7} {8} ",
                         m, i, l, o, a, b, c, j, f )
@@ -218,7 +303,7 @@ public:
         << comment << std::endl;
   }
 
-  std::ostream& _os;
+  std::ostream& _os; /*!< Output stream */
 }; /* ascii_aiger_pretty_printer */
 
 namespace aig_regex
@@ -232,6 +317,16 @@ static std::regex constraint( R"(^c(\d+) (.*)$)" );
 static std::regex fairness( R"(^f(\d+) (.*)$)" );
 } // namespace aig_regex
 
+/*! \brief Reader function for binary AIGER format.
+ *
+ * Reads binary AIGER format from a stream and invokes a callback
+ * method for each parsed primitive and each detected parse error.
+ *
+ * \param in Input stream
+ * \param reader An AIGER reader with callback methods invoked for parsed primitives
+ * \param diag An optional diagnostic engine with callback methods for parse errors
+ * \return Success if parsing have been successful, or parse error if parsing have failed
+ */
 inline return_code read_aig( std::istream& in, const aiger_reader& reader, diagnostic_engine* diag = nullptr )
 {
   return_code result = return_code::success;
@@ -398,6 +493,16 @@ inline return_code read_aig( std::istream& in, const aiger_reader& reader, diagn
   return result;
 }
 
+/*! \brief Reader function for binary AIGER format.
+ *
+ * Reads binary AIGER format from a file and invokes a callback
+ * method for each parsed primitive and each detected parse error.
+ *
+ * \param filename Name of the file
+ * \param reader An AIGER reader with callback methods invoked for parsed primitives
+ * \param diag An optional diagnostic engine with callback methods for parse errors
+ * \return Success if parsing have been successful, or parse error if parsing have failed
+ */
 inline return_code read_aig( const std::string& filename, const aiger_reader& reader, diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );

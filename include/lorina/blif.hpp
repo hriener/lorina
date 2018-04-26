@@ -41,27 +41,50 @@
 namespace lorina
 {
 
+/*! \brief A reader visitor for the BLIF format.
+ *
+ * Callbacks for the BLIF (Berkeley Logic Interchange Format) format.
+ */
 class blif_reader
 {
 public:
+  /*! \brief Type of the output cover as truth table. */
   using output_cover_t = std::vector<std::pair<std::string, std::string>>;
 
 public:
+  /*! \brief Callback method for parsed model.
+   *
+   * \param model_name Name of the model
+   */
   virtual void on_model( const std::string& model_name ) const
   {
     (void)model_name;
   }
 
+  /*! \brief Callback method for parsed input.
+   *
+   * \param name Input name
+   */
   virtual void on_input( const std::string& name ) const
   {
     (void)name;
   }
 
+  /*! \brief Callback method for parsed output.
+   *
+   * \param name Output name
+   */
   virtual void on_output( const std::string& name ) const
   {
     (void)name;
   }
 
+  /*! \brief Callback method for parsed gate.
+   *
+   * \param inputs A list of input names
+   * \param output Name of output of the gate
+   * \param cover N-input, 1-output PLA description of the logic function corresponding to the logic gate
+   */
   virtual void on_gate( const std::vector<std::string>& inputs, const std::string& output, const output_cover_t& cover ) const
   {
     (void)inputs;
@@ -69,17 +92,33 @@ public:
     (void)cover;
   }
 
+  /*! \brief Callback method for parsed end.
+   *
+   */
   virtual void on_end() const {}
 
+  /*! \brief Callback method for parsed comment.
+   *
+   * \param comment Comment
+   */
   virtual void on_comment( const std::string& comment ) const
   {
     (void)comment;
   }
 }; /* blif_reader */
 
+/*! \brief A BLIF reader for prettyprinting BLIF.
+ *
+ * Callbacks for prettyprinting of BLIF.
+ *
+ */
 class blif_pretty_printer : public blif_reader
 {
 public:
+  /*! \brief Constructor of the BLIF pretty printer.
+   *
+   * \param os Output stream
+   */
   blif_pretty_printer( std::ostream& os = std::cout )
       : _os( os )
   {
@@ -123,9 +162,9 @@ public:
     _os << std::endl << "# " << comment << std::endl;
   }
 
-  mutable bool first_input = true;
-  mutable bool first_output = true;
-  std::ostream& _os;
+  mutable bool first_input = true; /*!< Predicate that is true until the first input was parsed */
+  mutable bool first_output = true; /*!< Predicate that is true until the first output was parsed */
+  std::ostream& _os; /*!< Output stream */
 }; /* blif_pretty_printer */
 
 namespace blif_regex
@@ -138,6 +177,16 @@ static std::regex line_of_truthtable( R"(([01\-]*)\s*([01\-]))" );
 static std::regex end( R"(.end)" );
 } // namespace blif_regex
 
+/*! \brief Reader function for the BLIF format.
+ *
+ * Reads BLIF format from a stream and invokes a callback
+ * method for each parsed primitive and each detected parse error.
+ *
+ * \param in Input stream
+ * \param reader A BLIF reader with callback methods invoked for parsed primitives
+ * \param diag An optional diagnostic engine with callback methods for parse errors
+ * \return Success if parsing have been successful, or parse error if parsing have failed
+ */
 inline return_code read_blif( std::istream& in, const blif_reader& reader, diagnostic_engine* diag = nullptr )
 {
   return_code result = return_code::success;
@@ -239,6 +288,16 @@ inline return_code read_blif( std::istream& in, const blif_reader& reader, diagn
   return result;
 }
 
+/*! \brief Reader function for BLIF format.
+ *
+ * Reads binary BLIF format from a file and invokes a callback
+ * method for each parsed primitive and each detected parse error.
+ *
+ * \param filename Name of the file
+ * \param reader A BLIF reader with callback methods invoked for parsed primitives
+ * \param diag An optional diagnostic engine with callback methods for parse errors
+ * \return Success if parsing have been successful, or parse error if parsing have failed
+ */
 inline return_code read_blif( const std::string& filename, const blif_reader& reader, diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );
