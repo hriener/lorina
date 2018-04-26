@@ -169,7 +169,7 @@ public:
 
   /*! \brief Callback method for a parsed name of a bad state property.
    *
-   * \param index Index of the bad state
+   * \param index Index of the bad state property
    * \param name Name of the bad state property
    */
   virtual void on_bad_state_name( unsigned index, const std::string& name ) const
