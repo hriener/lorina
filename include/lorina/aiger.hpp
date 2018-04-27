@@ -244,10 +244,12 @@ public:
     _os << fmt::format( "aag {0} {1} {2} {3} {4} {5} {6} {7} {8} ",
                         m, i, l, o, a, b, c, j, f )
         << std::endl;
-    for ( auto index = 1u; index <= i; ++index )
-    {
-      _os << ( 2u * index ) << std::endl;
-    }
+  }
+
+  void on_input( unsigned index, unsigned lit ) const override
+  {
+    (void)index;
+    _os << lit << std::endl;
   }
 
   void on_output( unsigned index, unsigned lit ) const override
