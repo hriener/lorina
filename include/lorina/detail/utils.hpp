@@ -52,6 +52,20 @@ namespace lorina
 namespace detail
 {
 
+/* std::apply in C++14 taken from https://stackoverflow.com/a/36656413 */
+template<typename Function, typename Tuple, size_t ... I>
+auto apply(Function f, Tuple t, std::index_sequence<I ...>)
+{
+  return f(std::get<I>(t) ...);
+}
+
+template<typename Function, typename Tuple>
+auto apply(Function f, Tuple t)
+{
+  static constexpr auto size = std::tuple_size<Tuple>::value;
+  return apply(f, t, std::make_index_sequence<size>{});
+}
+
 template<typename... Args>
 class call_in_topological_order
 {
@@ -102,7 +116,8 @@ public:
       auto next = computed.top();
       computed.pop();
 
-      std::apply( f, _stored_params[next] );
+      // C++17: std::apply( f, _stored_params[next] );
+      apply( f, _stored_params[next] );
 
       for ( const auto& other : _triggers[next] )
       {
