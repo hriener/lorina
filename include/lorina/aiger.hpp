@@ -97,6 +97,17 @@ public:
     (void)f;
   }
 
+  /*! \brief Callback method for parsed input.
+   *
+   * \param index Index of the input
+   * \param lit Assigned literal
+   */
+  virtual void on_input( unsigned index, unsigned lit ) const
+  {
+    (void)index;
+    (void)lit;
+  }
+
   /*! \brief Callback method for parsed output.
    *
    * \param index Index of the output
@@ -309,6 +320,7 @@ public:
 namespace aig_regex
 {
 static std::regex header( R"(^aig (\d+) (\d+) (\d+) (\d+) (\d+)( \d+)?( \d+)?( \d+)?( \d+)?$)" );
+static std::regex ascii_header( R"(^aag (\d+) (\d+) (\d+) (\d+) (\d+)( \d+)?( \d+)?( \d+)?( \d+)?$)" );
 static std::regex input( R"(^i(\d+) (.*)$)" );
 static std::regex latch( R"(^l(\d+) (.*)$)" );
 static std::regex output( R"(^o(\d+) (.*)$)" );
@@ -316,6 +328,175 @@ static std::regex bad_state( R"(^b(\d+) (.*)$)" );
 static std::regex constraint( R"(^c(\d+) (.*)$)" );
 static std::regex fairness( R"(^f(\d+) (.*)$)" );
 } // namespace aig_regex
+
+/*! \brief Reader function for ASCII AIGER format.
+ *
+ * Reads ASCII AIGER format from a stream and invokes a callback
+ * method for each parsed primitive and each detected parse error.
+ *
+ * \param in Input stream
+ * \param reader An AIGER reader with callback methods invoked for parsed primitives
+ * \param diag An optional diagnostic engine with callback methods for parse errors
+ * \return Success if parsing have been successful, or parse error if parsing have failed
+ */
+inline return_code read_ascii_aiger( std::istream& in, const aiger_reader& reader, diagnostic_engine* diag = nullptr )
+{
+  return_code result = return_code::success;
+
+  std::smatch m;
+  std::string header_line;
+  std::getline( in, header_line );
+
+  std::size_t _m, _i, _l, _o, _a, _b, _c, _j, _f;
+
+  /* header */
+  if ( std::regex_search( header_line, m, aig_regex::ascii_header ) )
+  {
+    std::vector<std::size_t> header;
+    for ( const auto& i : m )
+    {
+      if ( i == "" )
+        continue;
+      header.push_back( std::atol( std::string( i ).c_str() ) );
+    }
+
+    assert( header.size() >= 6u );
+    assert( header.size() <= 10u );
+
+    _m = header[1u];
+    _i = header[2u];
+    _l = header[3u];
+    _o = header[4u];
+    _a = header[5u];
+    _b = header.size() > 6 ? header[6u] : 0ul;
+    _c = header.size() > 7 ? header[7u] : 0ul;
+    _j = header.size() > 8 ? header[8u] : 0ul;
+    _f = header.size() > 9 ? header[9u] : 0ul;
+    reader.on_header( _m, _i, _l, _o, _a, _b, _c, _j, _f );
+  }
+  else
+  {
+    if ( diag )
+    {
+      diag->report( diagnostic_level::fatal,
+                    fmt::format( "could not parse AIGER header `{0}`", header_line ) );
+    }
+    return return_code::parse_error;
+  }
+
+  std::string line;
+
+  /* inputs */
+  for ( auto i = 0ul; i < _i; ++i )
+  {
+    std::getline( in, line );
+    const auto index = std::atol( line.c_str() )/2u;
+    reader.on_input( i, index );
+  }
+
+  /* latches */
+  for ( auto i = 0ul; i < _l; ++i )
+  {
+    std::getline( in, line );
+    const auto tokens = detail::split( line,  " " );
+    assert( tokens.size() <= 3u );
+
+    const auto index = std::atol( std::string(tokens[0u]).c_str() ) / 2u;
+    const auto next_lit = std::atol( std::string(tokens[1u]).c_str() );
+
+    aiger_reader::latch_init_value init_value = aiger_reader::latch_init_value::NONDETERMINISTIC;
+    if ( tokens.size() == 3u )
+    {
+      if ( tokens[2u] == "0" )
+      {
+        init_value = aiger_reader::latch_init_value::ZERO;
+      }
+      else if ( tokens[1u] == "1" )
+      {
+        init_value = aiger_reader::latch_init_value::ONE;
+      }
+    }
+
+    reader.on_latch( index, next_lit, init_value );
+  }
+
+  /* outputs */
+  for ( auto i = 0ul; i < _i; ++i )
+  {
+    std::getline( in, line );
+    const auto lit = std::atol( line.c_str() );
+    reader.on_output( i, lit );
+  }
+
+  /* ands */
+  for ( auto i = 0ul; i < _a; ++i )
+  {
+    std::getline( in, line );
+    const auto tokens = detail::split( line, " " );
+    assert( tokens.size() == 3u );
+    const auto index = std::atol( std::string(tokens[0u]).c_str() )/2u;
+    const auto left_lit = std::atol( std::string(tokens[1u]).c_str() );
+    const auto right_lit = std::atol( std::string(tokens[2u]).c_str() );
+    reader.on_and( index, left_lit, right_lit );
+  }
+
+  /* parse names and comments */
+  while ( std::getline( in, line ) )
+  {
+    if ( std::regex_search( line, m, aig_regex::input ) )
+    {
+      reader.on_input_name( std::atol( std::string( m[1u] ).c_str() ), m[2u] );
+    }
+    else if ( std::regex_search( line, m, aig_regex::latch ) )
+    {
+      reader.on_latch_name( std::atol( std::string( m[1u] ).c_str() ), m[2u] );
+    }
+    else if ( std::regex_search( line, m, aig_regex::output ) )
+    {
+      reader.on_output_name( std::atol( std::string( m[1u] ).c_str() ), m[2u] );
+    }
+    else if ( std::regex_search( line, m, aig_regex::bad_state ) )
+    {
+      reader.on_bad_state_name( std::atol( std::string( m[1u] ).c_str() ), m[2u] );
+    }
+    else if ( std::regex_search( line, m, aig_regex::constraint ) )
+    {
+      reader.on_constraint_name( std::atol( std::string( m[1u] ).c_str() ), m[2u] );
+    }
+    else if ( std::regex_search( line, m, aig_regex::fairness ) )
+    {
+      reader.on_fairness_name( std::atol( std::string( m[1u] ).c_str() ), m[2u] );
+    }
+    else if ( line == "c" )
+    {
+      std::string comment = "";
+      while ( std::getline( in, line ) )
+      {
+        comment += line;
+      }
+      reader.on_comment( comment );
+      break;
+    }
+  }
+
+  return result;
+}
+
+/*! \brief Reader function for ASCII AIGER format.
+ *
+ * Reads ASCII AIGER format from a file and invokes a callback
+ * method for each parsed primitive and each detected parse error.
+ *
+ * \param filename Name of the file
+ * \param reader An AIGER reader with callback methods invoked for parsed primitives
+ * \param diag An optional diagnostic engine with callback methods for parse errors
+ * \return Success if parsing have been successful, or parse error if parsing have failed
+ */
+inline return_code read_ascii_aiger( const std::string& filename, const aiger_reader& reader, diagnostic_engine* diag = nullptr )
+{
+  std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );
+  return read_ascii_aiger( in, reader, diag );
+}
 
 /*! \brief Reader function for binary AIGER format.
  *
@@ -337,7 +518,7 @@ inline return_code read_aiger( std::istream& in, const aiger_reader& reader, dia
 
   std::size_t _m, _i, _l, _o, _a, _b, _c, _j, _f;
 
-  /*** parse header ***/
+  /* parse header */
   if ( std::regex_search( header_line, m, aig_regex::header ) )
   {
     std::vector<std::size_t> header;
@@ -373,6 +554,12 @@ inline return_code read_aiger( std::istream& in, const aiger_reader& reader, dia
   }
 
   std::string line;
+
+  /* inputs */
+  for ( auto i = 0ul; i < _i; ++i )
+  {
+    reader.on_input( i, 2u*(i+1) );
+  }
 
   /* latches */
   for ( auto i = 0ul; i < _l; ++i )
