@@ -1,7 +1,7 @@
 AIGER parser
 ============
 
-The header ``<lorina/aiger.hpp>`` implements methods to parse the binary AIGER format.
+The header ``<lorina/aiger.hpp>`` implements methods to parse the AIGER format (see http://fmv.jku.at/aiger/).
 
 The class :cpp:class:`lorina::aiger_reader` provides the following public
 member functions.
@@ -35,3 +35,16 @@ member functions.
 +------------------------------------------+-------------------------------------------------------------------------+
 | ``on_comment(comment)``                  | Callback method for parsed comment                                      |
 +------------------------------------------+-------------------------------------------------------------------------+
+
+The following reader functions are available.
+
+.. doc_overview_table:: namespacelorina
+   :column: Function
+
+   read_ascii_aiger
+   read_aiger
+
+.. doxygenfunction:: lorina::read_ascii_aiger(const std::string&, const aiger_reader&, diagnostic_engine *)
+.. doxygenfunction:: lorina::read_ascii_aiger(std::istream&, const aiger_reader&, diagnostic_engine *)
+.. doxygenfunction:: lorina::read_aiger(const std::string&, const aiger_reader&, diagnostic_engine *)
+.. doxygenfunction:: lorina::read_aiger(std::istream&, const aiger_reader&, diagnostic_engine *)

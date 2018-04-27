@@ -18,3 +18,12 @@ member functions.
 | ``on_assign(input, output)``           | Callback method for parsed gate assignment                              |
 +----------------------------------------+-------------------------------------------------------------------------+
 
+The following reader functions are available.
+
+.. doc_overview_table:: namespacelorina
+   :column: Function
+
+   read_bench
+
+.. doxygenfunction:: lorina::read_bench(std::istream&, const bench_reader&, diagnostic_engine *)
+.. doxygenfunction:: lorina::read_bench(const std::string&, const bench_reader&, diagnostic_engine *)

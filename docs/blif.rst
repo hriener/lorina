@@ -20,3 +20,12 @@ member functions.
 | ``on_comment(comment)``                | Callback method for parsed comment                                      |
 +----------------------------------------+-------------------------------------------------------------------------+
 
+The following reader functions are available.
+
+.. doc_overview_table:: namespacelorina
+   :column: Function
+
+   read_blif
+
+.. doxygenfunction:: lorina::read_blif(std::istream&, const blif_reader&, diagnostic_engine *)
+.. doxygenfunction:: lorina::read_blif(const std::string&, const blif_reader&, diagnostic_engine *)

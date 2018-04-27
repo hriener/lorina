@@ -20,3 +20,12 @@ member functions.
 | ``on_term(term, out)``                       | Callback method for parsed term                                         |
 +----------------------------------------------+-------------------------------------------------------------------------+
 
+The following reader functions are available.
+
+.. doc_overview_table:: namespacelorina
+   :column: Function
+
+   read_pla
+
+.. doxygenfunction:: lorina::read_pla(std::istream&, const pla_reader&, diagnostic_engine *)
+.. doxygenfunction:: lorina::read_pla(const std::string&, const pla_reader&, diagnostic_engine *)
