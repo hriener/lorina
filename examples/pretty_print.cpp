@@ -56,17 +56,13 @@ int main( int argc, char** argv )
 
   CLI::App app{ "pretty printing" };
 
-  app.add_option( "filename", filename, "file to read" );
+  app.add_option( "filename", filename, "file to read" )
+    ->required()
+    ->check(CLI::ExistingFile);
   app.add_option( "--format", kind_string, "file format" );
 
   /* parse arguments */
   CLI11_PARSE( app, argc, argv );
-
-  if ( !detail::file_exists( filename ) )
-  {
-    std::cerr << fmt::format( "[e] file `{0}` does not exist or no read permissions", filename ) << std::endl;
-    return -1;
-  }
 
   if ( kind_string == "" )
   {
@@ -74,7 +70,7 @@ int main( int argc, char** argv )
     const auto pos = filename.find_last_of( "." );
     if ( pos == std::string::npos )
     {
-      std::cerr << "[e] could not auto-detect file-kind" << std::endl;
+      std::cerr << "[e] could not auto-detect input format by file extension" << std::endl;
       return -1;
     }
 
@@ -84,7 +80,7 @@ int main( int argc, char** argv )
   const auto it = ext_to_format.find( kind_string );
   if ( it == ext_to_format.end() )
   {
-    std::cerr << fmt::format( "[e] unsupported kind `{0}`", kind_string ) << std::endl;
+    std::cerr << fmt::format( "[e] unsupported input format `{0}`", kind_string ) << std::endl;
     return -1;
   }
 
