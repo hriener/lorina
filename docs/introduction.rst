@@ -1,6 +1,9 @@
 Introduction
 ============
 
+Synopsis
+--------
+
 The C++ library `lorina` implements parsers for simple file formats
 used in logic synthesis and formal verification.  A callback mechanism
 in form of overloadable visitor classes allows users to react on
@@ -29,6 +32,44 @@ tokens from an input stream (``std::istream& in``)::
   std::ifstream in( filename.c_str(), std::ifstream::in );
   read_<format>( in, <format>_reader() );
 
-The default behavior of any parser can be customized by deriving a new
-class from a reader visitor and overloading its virtual callback
-methods.
+Customization
+-------------
+
+The default behavior of any reader visitor can be customized by
+deriving a new class from a reader visitor and overloading its virtual
+callback methods.  In the following code snippet, the class
+``print_bench_input_decl`` derives from ``bench_reader`` and customizes
+the behavior of the ``on_input`` event point::
+
+  class print_bench_input_decl : public bench_reader
+  {
+  public:
+    void on_input( const std::string& name ) const override
+    {
+      std::cout << "INPUT: " << name << std::endl;
+    }
+  };
+
+Diagnostics
+-----------
+
+To reduce code and executable size, error handling is implemented via
+return codes and a lightweight callback visitor mechanism (instead of
+C++ exceptions).  This allows users to embed lorina into their
+projects even when C++ exceptions are globally disabled.
+
+All reader functions ``read<format>`` either return
+``return_code::success`` if parsing has been successful or otherwise
+``return_code::parse_error``.  The `diagnostic engine` additionally
+allows users to react on parse errors and can be activated by
+providing a pointer to a ``diagnostic_engine`` as a third parameter to
+a reader function::
+
+  diagnostic_engine diag;
+  return_code result = read_<format>( filename, <format>_reader(), &diag );
+
+The `parse error` event points and the corresponding `error messages`
+are specified by the respective parsing algorithm.  The default
+behavior of the diagnostic engine can be customized (similarly to the
+reader visitors) by deriving a new class from `diagnostic_engine` and
+overloading its callback method ``emit``.
