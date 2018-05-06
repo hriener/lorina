@@ -34,14 +34,16 @@ using namespace lorina;
 
 enum class format
 {
-  aig,
+  binary_aiger,
+  ascii_aiger,
   bench,
   blif,
   pla,
 }; /* format */
 
 std::unordered_map<std::string, format> ext_to_format( {
-    {"aig", format::aig},
+    {"aig", format::binary_aiger},
+    {"aag", format::ascii_aiger},
     {"bench", format::bench},
     {"blif", format::blif},
     {"pla", format::pla},
@@ -92,7 +94,13 @@ int main( int argc, char** argv )
   return_code result;
   switch ( kind )
   {
-  case format::aig:
+  case format::ascii_aiger:
+  {
+    ascii_aiger_pretty_printer reader;
+    result = read_ascii_aiger( filename, reader, &diag );
+    break;
+  }
+  case format::binary_aiger:
   {
     ascii_aiger_pretty_printer reader;
     result = read_aiger( filename, reader, &diag );
