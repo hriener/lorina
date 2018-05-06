@@ -241,7 +241,7 @@ public:
   void on_header( std::size_t m, std::size_t i, std::size_t l, std::size_t o, std::size_t a,
                   std::size_t b, std::size_t c, std::size_t j, std::size_t f ) const override
   {
-    _os << fmt::format( "aag {0} {1} {2} {3} {4} {5} {6} {7} {8} ",
+    _os << fmt::format( "aag {0} {1} {2} {3} {4} {5} {6} {7} {8}",
                         m, i, l, o, a, b, c, j, f )
         << std::endl;
   }
@@ -392,7 +392,7 @@ inline return_code read_ascii_aiger( std::istream& in, const aiger_reader& reade
   for ( auto i = 0ul; i < _i; ++i )
   {
     std::getline( in, line );
-    const auto index = std::atol( line.c_str() )/2u;
+    const auto index = std::atol( line.c_str() );
     reader.on_input( i, index );
   }
 
@@ -423,7 +423,7 @@ inline return_code read_ascii_aiger( std::istream& in, const aiger_reader& reade
   }
 
   /* outputs */
-  for ( auto i = 0ul; i < _i; ++i )
+  for ( auto i = 0ul; i < _o; ++i )
   {
     std::getline( in, line );
     const auto lit = std::atol( line.c_str() );
