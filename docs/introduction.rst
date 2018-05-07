@@ -58,7 +58,7 @@ return codes and a lightweight callback visitor mechanism (instead of
 C++ exceptions).  This allows users to embed lorina into their
 projects even when C++ exceptions are globally disabled.
 
-All reader functions ``read<format>`` either return
+All reader functions ``read_<format>`` either return
 ``return_code::success`` if parsing has been successful or otherwise
 ``return_code::parse_error``.  The `diagnostic engine` additionally
 allows users to react on parse errors and can be activated by
