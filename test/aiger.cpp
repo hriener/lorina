@@ -21,10 +21,9 @@ struct aiger_statistics
   std::size_t number_of_justice = 0;
   std::size_t number_of_fairness = 0;
 
-  std::size_t output_count = 0;
-  std::size_t and_count = 0;
-  std::size_t latch_count = 0;
-
+  std::vector<std::tuple<unsigned, unsigned>> outputs;
+  std::vector<std::tuple<unsigned,unsigned,aiger_reader::latch_init_value>> latches;
+  std::vector<std::tuple<unsigned,unsigned,unsigned>> ands;
   std::vector<std::tuple<unsigned, unsigned>> bad_states;
   std::vector<std::tuple<unsigned, unsigned>> constraints;
   std::vector<std::tuple<unsigned, std::vector<unsigned>>> justice;
@@ -43,8 +42,8 @@ public:
   {
   }
 
-  virtual void on_header( std::size_t m, std::size_t i, std::size_t l, std::size_t o, std::size_t a,
-                          std::size_t b, std::size_t c, std::size_t j, std::size_t f ) const override
+  void on_header( std::size_t m, std::size_t i, std::size_t l, std::size_t o, std::size_t a,
+                  std::size_t b, std::size_t c, std::size_t j, std::size_t f ) const override
   {
     _stats.maximum_variable_index = m;
     _stats.number_of_inputs = i;
@@ -57,64 +56,62 @@ public:
     _stats.number_of_fairness = f;
   }
 
-  virtual void on_output( unsigned index, unsigned lit ) const override
+  void on_output( unsigned index, unsigned lit ) const override
   {
     (void)index;
     (void)lit;
-    ++_stats.output_count;
+    _stats.outputs.emplace_back( std::make_tuple(index, lit) );
   }
 
-  virtual void on_and( unsigned index, unsigned left_lit, unsigned right_lit ) const override
+  void on_and( unsigned index, unsigned left_lit, unsigned right_lit ) const override
   {
     (void)index;
     (void)left_lit;
     (void)right_lit;
-    ++_stats.and_count;
+    _stats.ands.emplace_back( std::make_tuple(index, left_lit, right_lit) );
   }
 
-  virtual void on_latch( unsigned index, unsigned next, latch_init_value init_value ) const override
+  void on_latch( unsigned index, unsigned next, latch_init_value init_value ) const override
   {
-    latches.push_back( std::make_tuple(index,next,init_value) );
-    ++_stats.latch_count;
+    _stats.latches.emplace_back( std::make_tuple(index, next, init_value) );
   }
 
-  virtual void on_bad_state( unsigned index, unsigned lit ) const override
+  void on_bad_state( unsigned index, unsigned lit ) const override
   {
     _stats.bad_states.emplace_back( std::make_tuple(index, lit) );
   }
 
-  virtual void on_constraint( unsigned index, unsigned lit ) const override
+  void on_constraint( unsigned index, unsigned lit ) const override
   {
     _stats.constraints.emplace_back( std::make_tuple(index, lit) );
   }
 
-  virtual void on_justice( unsigned index, const std::vector<unsigned>& lits ) const override
+  void on_justice( unsigned index, const std::vector<unsigned>& lits ) const override
   {
     _stats.justice.emplace_back( std::make_tuple(index, lits) );
   }
 
-  virtual void on_fairness( unsigned index, unsigned lit ) const override
+  void on_fairness( unsigned index, unsigned lit ) const override
   {
     _stats.fairness.emplace_back( std::make_tuple(index, lit) );
   }
 
-  virtual void on_input_name( unsigned index, const std::string& name ) const override
+  void on_input_name( unsigned index, const std::string& name ) const override
   {
     _stats.input_names.insert( std::make_pair( index, name ) );
   }
 
-  virtual void on_output_name( unsigned index, const std::string& name ) const override
+  void on_output_name( unsigned index, const std::string& name ) const override
   {
     _stats.output_names.insert( std::make_pair( index, name ) );
   }
 
-  virtual void on_comment( const std::string& comment ) const override
+  void on_comment( const std::string& comment ) const override
   {
     _stats.comment = comment;
   }
 
   aiger_statistics& _stats;
-  mutable std::vector<std::tuple<unsigned,unsigned,latch_init_value>> latches;
 }; /* aiger_statistics_reader */
 
 TEST_CASE( "combinational", "[aiger]" )
@@ -136,8 +133,8 @@ TEST_CASE( "combinational", "[aiger]" )
   CHECK( stats.number_of_latches == 0 );
   CHECK( stats.number_of_outputs == 2 );
   CHECK( stats.number_of_ands == 4 );
-  CHECK( stats.and_count == 4 );
-  CHECK( stats.output_count == 2 );
+  CHECK( stats.ands.size()== stats.number_of_ands );
+  CHECK( stats.outputs.size() == stats.number_of_outputs );
 }
 
 TEST_CASE( "symbol_table", "[aiger]" )
@@ -163,8 +160,8 @@ TEST_CASE( "symbol_table", "[aiger]" )
   CHECK( stats.number_of_latches == 0 );
   CHECK( stats.number_of_outputs == 2 );
   CHECK( stats.number_of_ands == 3 );
-  CHECK( stats.and_count == 3 );
-  CHECK( stats.output_count == 2 );
+  CHECK( stats.ands.size() == stats.number_of_ands );
+  CHECK( stats.outputs.size() == stats.number_of_outputs );
 
   CHECK( stats.comment == "half adder" );
   CHECK( stats.input_names[0] == "x" );
@@ -192,12 +189,11 @@ TEST_CASE( "sequential", "[aiger]" )
   CHECK( stats.number_of_latches == 1 );
   CHECK( stats.number_of_outputs == 2 );
   CHECK( stats.number_of_ands == 4 );
-  CHECK( stats.and_count == 4 );
-  CHECK( stats.latch_count == 1 );
-  CHECK( stats.output_count == 2 );
+  CHECK( stats.ands.size() == stats.number_of_ands );
+  CHECK( stats.latches.size() == stats.number_of_latches );
+  CHECK( stats.outputs.size() == stats.number_of_outputs );
 
-  CHECK( reader.latches.size() == 1u );
-  CHECK( std::get<2>( reader.latches[0u] ) == aiger_reader::latch_init_value::NONDETERMINISTIC );
+  CHECK( std::get<2>( stats.latches[0u] ) == aiger_reader::latch_init_value::NONDETERMINISTIC );
 }
 
 TEST_CASE( "latch_initialization", "[aiger]" )
@@ -219,12 +215,11 @@ TEST_CASE( "latch_initialization", "[aiger]" )
   CHECK( stats.number_of_latches == 1 );
   CHECK( stats.number_of_outputs == 2 );
   CHECK( stats.number_of_ands == 4 );
-  CHECK( stats.and_count == 4 );
-  CHECK( stats.latch_count == 1 );
-  CHECK( stats.output_count == 2 );
+  CHECK( stats.ands.size() == stats.number_of_ands );
+  CHECK( stats.latches.size() == stats.number_of_latches );
+  CHECK( stats.outputs.size() == stats.number_of_outputs );
 
-  CHECK( reader.latches.size() == 1u );
-  CHECK( std::get<2>( reader.latches[0u] ) == aiger_reader::latch_init_value::ONE );
+  CHECK( std::get<2>( stats.latches[0u] ) == aiger_reader::latch_init_value::ONE );
 }
 
 TEST_CASE( "ascii_format", "[aiger]" )
@@ -259,9 +254,9 @@ TEST_CASE( "ascii_format", "[aiger]" )
   CHECK( stats.number_of_latches == 0 );
   CHECK( stats.number_of_outputs == 2 );
   CHECK( stats.number_of_ands == 3 );
-  CHECK( stats.and_count == 3 );
-  CHECK( stats.latch_count == 0 );
-  CHECK( stats.output_count == 2 );
+  CHECK( stats.ands.size() == stats.number_of_ands );
+  CHECK( stats.latches.size() == stats.number_of_latches );
+  CHECK( stats.outputs.size() == stats.number_of_outputs );
 }
 
 TEST_CASE( "ascii_format_sequential", "[aiger]" )
@@ -291,9 +286,9 @@ TEST_CASE( "ascii_format_sequential", "[aiger]" )
   CHECK( stats.number_of_latches == 1 );
   CHECK( stats.number_of_outputs == 2 );
   CHECK( stats.number_of_ands == 4 );
-  CHECK( stats.and_count == 4 );
-  CHECK( stats.latch_count == 1 );
-  CHECK( stats.output_count == 2 );
+  CHECK( stats.ands.size() == stats.number_of_ands );
+  CHECK( stats.latches.size() == stats.number_of_latches );
+  CHECK( stats.outputs.size() == stats.number_of_outputs );
 }
 
 TEST_CASE( "ascii_format_bad_state", "[aiger]" )
