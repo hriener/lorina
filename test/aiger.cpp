@@ -337,3 +337,127 @@ TEST_CASE( "ascii_format_invariants", "[aiger]" )
   CHECK( stats.number_of_constraints == 1u );
   CHECK( stats.constraints.size() == stats.number_of_constraints );
 }
+
+TEST_CASE( "ascii_format_justice", "[aiger]" )
+{
+  /**
+   * Generated with AIGER tools and NuSMV2:
+   *   `smv2aig -L ltl2smv prio.smv > prio.aig; aigtoaig prio.aag`
+   */
+  std::string aiger_file =
+    "aag 72 10 12 0 50 0 0 1\n"
+    "2\n"
+    "4\n"
+    "6\n"
+    "8\n"
+    "10\n"
+    "12\n"
+    "14\n"
+    "16\n"
+    "18\n"
+    "20\n"
+    "22 2\n"
+    "24 4\n"
+    "26 6\n"
+    "28 8\n"
+    "30 10\n"
+    "32 12\n"
+    "34 14\n"
+    "36 16\n"
+    "38 18\n"
+    "40 20\n"
+    "42 122\n"
+    "44 1\n"
+    "3\n"
+    "138\n"
+    "142\n"
+    "144\n"
+    "46 8 6\n"
+    "48 13 9\n"
+    "50 48 4\n"
+    "52 51 47\n"
+    "54 11 2\n"
+    "56 55 52\n"
+    "58 56 15\n"
+    "60 59 35\n"
+    "62 58 34\n"
+    "64 63 61\n"
+    "66 10 9\n"
+    "68 67 7\n"
+    "70 69 31\n"
+    "72 68 30\n"
+    "74 73 71\n"
+    "76 74 64\n"
+    "78 49 33\n"
+    "80 48 32\n"
+    "82 81 79\n"
+    "84 82 76\n"
+    "86 17 2\n"
+    "88 87 19\n"
+    "90 89 39\n"
+    "92 88 38\n"
+    "94 93 91\n"
+    "96 94 84\n"
+    "98 87 37\n"
+    "100 86 36\n"
+    "102 101 99\n"
+    "104 102 96\n"
+    "106 105 41\n"
+    "108 40 21\n"
+    "110 109 107\n"
+    "112 110 42\n"
+    "114 113 44\n"
+    "116 88 59\n"
+    "118 117 21\n"
+    "120 118 45\n"
+    "122 121 115\n"
+    "124 28 26\n"
+    "126 33 29\n"
+    "128 126 24\n"
+    "130 129 125\n"
+    "132 31 22\n"
+    "134 133 130\n"
+    "136 134 34\n"
+    "138 137 42\n"
+    "140 36 22\n"
+    "142 141 42\n"
+    "144 42 41\n"
+    "i0 AIGER_NEXT_r_m\n"
+    "i1 AIGER_NEXT_r_0\n"
+    "i2 AIGER_NEXT_g_m\n"
+    "i3 AIGER_NEXT_g_0\n"
+    "i4 AIGER_NEXT_LTL_1_SPECF_8\n"
+    "i5 AIGER_NEXT_LTL_1_SPECF_7\n"
+    "i6 AIGER_NEXT_LTL_1_SPECF_5\n"
+    "i7 AIGER_NEXT_LTL_1_SPECF_3\n"
+    "i8 AIGER_NEXT_LTL_1_SPECF_1\n"
+    "i9 AIGER_NEXT_IGNORE_LTL_1\n"
+    "l0 r_m\n"
+    "l1 r_0\n"
+    "l2 g_m\n"
+    "l3 g_0\n"
+    "l4 LTL_1_SPECF_8\n"
+    "l5 LTL_1_SPECF_7\n"
+    "l6 LTL_1_SPECF_5\n"
+    "l7 LTL_1_SPECF_3\n"
+    "l8 LTL_1_SPECF_1\n"
+    "l9 IGNORE_LTL_1\n"
+    "l10 AIGER_VALID\n"
+    "l11 AIGER_INITIALIZED\n"
+    "j0 AIGER_JUST_0\n"
+    "c\n"
+    "smvtoaig\n"
+    "1.9\n"
+    "prio.smv\n";
+
+  std::istringstream iss( aiger_file );
+
+  aiger_statistics stats;
+  aiger_statistics_reader reader( stats );
+
+  diagnostic_engine diag;
+  auto result = read_ascii_aiger( iss, reader, &diag );
+  CHECK( result == return_code::success );
+  CHECK( stats.number_of_justice == 1u );
+  CHECK( stats.justice.size() == stats.number_of_justice );
+}

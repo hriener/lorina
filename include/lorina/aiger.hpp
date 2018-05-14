@@ -25,7 +25,7 @@
 
 /*!
   \file aiger.hpp
-  \brief Implements aiger parser
+  \brief Implements Aiger parser
 
   \author Heinz Riener
 */
@@ -510,17 +510,13 @@ inline return_code read_ascii_aiger( std::istream& in, const aiger_reader& reade
 
   for ( auto i = 0ul; i < _j; ++i )
   {
-    std::getline( in, line );
-    const auto tokens = detail::split( line,  " " );
-    assert( tokens.size() == justice_sizes[i] );
-
     std::vector<unsigned> lits;
-    for ( const auto& t : tokens )
+    for ( auto j = 0ul; j < justice_sizes[i]; ++j )
     {
-      const auto lit = std::atol( std::string(t).c_str() );
+      std::getline( in, line );
+      const auto lit = std::atol( line.c_str() );
       lits.emplace_back( lit );
     }
-
     reader.on_justice( i, lits );
   }
 
