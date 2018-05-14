@@ -24,7 +24,7 @@
  */
 
 /*!
-  \file aig.hpp
+  \file aiger.hpp
   \brief Implements aiger parser
 
   \author Heinz Riener
