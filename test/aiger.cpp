@@ -10,15 +10,22 @@ using namespace lorina;
 
 struct aiger_statistics
 {
+  /* header information AIGER v1.9 */
   std::size_t maximum_variable_index = 0;
   std::size_t number_of_inputs = 0;
   std::size_t number_of_latches = 0;
   std::size_t number_of_outputs = 0;
   std::size_t number_of_ands = 0;
+  std::size_t number_of_bad_states = 0;
+  std::size_t number_of_constraints = 0;
+  std::size_t number_of_justice = 0;
+  std::size_t number_of_fairness = 0;
 
   std::size_t output_count = 0;
   std::size_t and_count = 0;
   std::size_t latch_count = 0;
+
+  std::vector<std::tuple<unsigned, unsigned>> bad_states;
 
   std::map<unsigned, std::string> input_names;
   std::map<unsigned, std::string> output_names;
@@ -33,13 +40,18 @@ public:
   {
   }
 
-  virtual void on_header( std::size_t m, std::size_t i, std::size_t l, std::size_t o, std::size_t a ) const override
+  virtual void on_header( std::size_t m, std::size_t i, std::size_t l, std::size_t o, std::size_t a,
+                          std::size_t b, std::size_t c, std::size_t j, std::size_t f ) const override
   {
     _stats.maximum_variable_index = m;
     _stats.number_of_inputs = i;
     _stats.number_of_latches = l;
     _stats.number_of_outputs = o;
     _stats.number_of_ands = a;
+    _stats.number_of_bad_states = b;
+    _stats.number_of_constraints = c;
+    _stats.number_of_justice = j;
+    _stats.number_of_fairness = f;
   }
 
   virtual void on_output( unsigned index, unsigned lit ) const override
@@ -61,6 +73,11 @@ public:
   {
     latches.push_back( std::make_tuple(index,next,init_value) );
     ++_stats.latch_count;
+  }
+
+  virtual void on_bad_state( unsigned index, unsigned lit ) const override
+  {
+    _stats.bad_states.emplace_back( std::make_tuple(index, lit) );
   }
 
   virtual void on_input_name( unsigned index, const std::string& name ) const override
@@ -259,4 +276,27 @@ TEST_CASE( "ascii_format_sequential", "[aiger]" )
   CHECK( stats.and_count == 4 );
   CHECK( stats.latch_count == 1 );
   CHECK( stats.output_count == 2 );
+}
+
+TEST_CASE( "ascii_format_bad_state", "[aiger]" )
+{
+  std::string aiger_file =
+    "aag 5 1 1 0 3 1\n"
+    "2\n"
+    "4 10 0\n"
+    "4\n"
+    "6 5 3\n"
+    "8 4 2\n"
+    "10 9 7\n";
+
+  std::istringstream iss( aiger_file );
+
+  aiger_statistics stats;
+  aiger_statistics_reader reader( stats );
+
+  diagnostic_engine diag;
+  auto result = read_ascii_aiger( iss, reader, &diag );
+  CHECK( result == return_code::success );
+  CHECK( stats.number_of_bad_states == 1u );
+  CHECK( stats.bad_states.size() == stats.number_of_bad_states );
 }

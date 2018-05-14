@@ -145,6 +145,17 @@ public:
     (void)right_lit;
   }
 
+  /*! \brief Callback method for parsed bad state property.
+   *
+   * \param index Index of the bad state property
+   * \param lit Assigned literal
+   */
+  virtual void on_bad_state( unsigned index, unsigned lit ) const
+  {
+    (void)index;
+    (void)lit;
+  }
+
   /*! \brief Callback method for parsed input name.
    *
    * \param index Index of the input
@@ -437,6 +448,14 @@ inline return_code read_ascii_aiger( std::istream& in, const aiger_reader& reade
     std::getline( in, line );
     const auto lit = std::atol( line.c_str() );
     reader.on_output( i, lit );
+  }
+
+  /* bad state properties */
+  for ( auto i = 0ul; i < _b; ++i )
+  {
+    std::getline( in, line );
+    const auto lit = std::atol( line.c_str() );
+    reader.on_bad_state( i, lit );
   }
 
   /* ands */
