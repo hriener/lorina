@@ -167,6 +167,28 @@ public:
     (void)lit;
   }
 
+  /*! \brief Callback method for parsed fairness constraints.
+   *
+   * \param index Index of the fairness constraint
+   * \param lit Assigned literal
+   */
+  virtual void on_fairness( unsigned index, unsigned lit ) const
+  {
+    (void)index;
+    (void)lit;
+  }
+
+  /*! \brief Callback method for parsed justice property.
+   *
+   * \param index Index of the justice property
+   * \param lit Assigned literal
+   */
+  virtual void on_justice( unsigned index, const std::vector<unsigned>& lits ) const
+  {
+    (void)index;
+    (void)lits;
+  }
+
   /*! \brief Callback method for parsed input name.
    *
    * \param index Index of the input
@@ -475,6 +497,39 @@ inline return_code read_ascii_aiger( std::istream& in, const aiger_reader& reade
     std::getline( in, line );
     const auto lit = std::atol( line.c_str() );
     reader.on_constraint( i, lit );
+  }
+
+  /* justice properties */
+  std::vector<std::size_t> justice_sizes;
+  for ( auto i = 0ul; i < _j; ++i )
+  {
+    std::getline( in, line );
+    const auto justice_size = std::atol( line.c_str() );
+    justice_sizes.emplace_back( justice_size );
+  }
+
+  for ( auto i = 0ul; i < _j; ++i )
+  {
+    std::getline( in, line );
+    const auto tokens = detail::split( line,  " " );
+    assert( tokens.size() == justice_sizes[i] );
+
+    std::vector<unsigned> lits;
+    for ( const auto& t : tokens )
+    {
+      const auto lit = std::atol( std::string(t).c_str() );
+      lits.emplace_back( lit );
+    }
+
+    reader.on_justice( i, lits );
+  }
+
+  /* fairness */
+  for ( auto i = 0ul; i < _f; ++i )
+  {
+    std::getline( in, line );
+    const auto lit = std::atol( line.c_str() );
+    reader.on_fairness( i, lit );
   }
 
   /* ands */

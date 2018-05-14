@@ -27,6 +27,8 @@ struct aiger_statistics
 
   std::vector<std::tuple<unsigned, unsigned>> bad_states;
   std::vector<std::tuple<unsigned, unsigned>> constraints;
+  std::vector<std::tuple<unsigned, std::vector<unsigned>>> justice;
+  std::vector<std::tuple<unsigned, unsigned>> fairness;
 
   std::map<unsigned, std::string> input_names;
   std::map<unsigned, std::string> output_names;
@@ -84,6 +86,16 @@ public:
   virtual void on_constraint( unsigned index, unsigned lit ) const override
   {
     _stats.constraints.emplace_back( std::make_tuple(index, lit) );
+  }
+
+  virtual void on_justice( unsigned index, const std::vector<unsigned>& lits ) const override
+  {
+    _stats.justice.emplace_back( std::make_tuple(index, lits) );
+  }
+
+  virtual void on_fairness( unsigned index, unsigned lit ) const override
+  {
+    _stats.fairness.emplace_back( std::make_tuple(index, lit) );
   }
 
   virtual void on_input_name( unsigned index, const std::string& name ) const override
