@@ -1,12 +1,15 @@
 cmake_minimum_required(VERSION 3.1)
 project(lorina LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # Options
 option(LORINA_EXAMPLES "Build examples" ON)
 option(LORINA_TEST "Build tests" OFF)
+
+# CXX standard
+if(NOT "${CMAKE_CXX_STANDARD}")
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # some specific compiler definitions
 include(CheckCXXCompilerFlag)

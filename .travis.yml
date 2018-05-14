@@ -5,7 +5,7 @@ language: cpp
 script:
   - mkdir build
   - cd build
-  - cmake -DCMAKE_CXX_COMPILER=$COMPILER -DCMAKE_CXX_FLAGS=$CXX_FLAGS -DLORINA_TEST=ON -DLORINA_EXAMPLES=ON ..
+  - cmake -DCMAKE_CXX_COMPILER=$COMPILER -DCMAKE_CXX_STANDARD=$CXX_STANDARD -DLORINA_TEST=ON -DLORINA_EXAMPLES=ON ..
   - make run_tests
   - ./test/run_tests
 
@@ -42,7 +42,7 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-7
-      env: COMPILER=g++-7 CXX_FLAGS="-std=c++17"
+      env: COMPILER=g++-7 CXX_STANDARD=17
     - compiler: clang
       addons:
         apt:
@@ -62,4 +62,4 @@ matrix:
           packages:
             - clang-6.0
             - g++-5
-      env: COMPILER=clang++-6.0 CXX_FLAGS="-std=c++17"
+      env: COMPILER=clang++-6.0 CXX_STANDARD=17
