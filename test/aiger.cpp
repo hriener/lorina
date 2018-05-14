@@ -26,6 +26,7 @@ struct aiger_statistics
   std::size_t latch_count = 0;
 
   std::vector<std::tuple<unsigned, unsigned>> bad_states;
+  std::vector<std::tuple<unsigned, unsigned>> constraints;
 
   std::map<unsigned, std::string> input_names;
   std::map<unsigned, std::string> output_names;
@@ -78,6 +79,11 @@ public:
   virtual void on_bad_state( unsigned index, unsigned lit ) const override
   {
     _stats.bad_states.emplace_back( std::make_tuple(index, lit) );
+  }
+
+  virtual void on_constraint( unsigned index, unsigned lit ) const override
+  {
+    _stats.constraints.emplace_back( std::make_tuple(index, lit) );
   }
 
   virtual void on_input_name( unsigned index, const std::string& name ) const override
@@ -299,4 +305,28 @@ TEST_CASE( "ascii_format_bad_state", "[aiger]" )
   CHECK( result == return_code::success );
   CHECK( stats.number_of_bad_states == 1u );
   CHECK( stats.bad_states.size() == stats.number_of_bad_states );
+}
+
+TEST_CASE( "ascii_format_invariants", "[aiger]" )
+{
+  std::string aiger_file =
+    "aag 5 1 1 0 3 1 1\n"
+    "2\n"
+    "4 10 0\n"
+    "4\n"
+    "3\n"
+    "6 5 3\n"
+    "8 4 2\n"
+    "10 9 7\n";
+
+  std::istringstream iss( aiger_file );
+
+  aiger_statistics stats;
+  aiger_statistics_reader reader( stats );
+
+  diagnostic_engine diag;
+  auto result = read_ascii_aiger( iss, reader, &diag );
+  CHECK( result == return_code::success );
+  CHECK( stats.number_of_constraints == 1u );
+  CHECK( stats.constraints.size() == stats.number_of_constraints );
 }

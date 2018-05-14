@@ -156,6 +156,17 @@ public:
     (void)lit;
   }
 
+  /*! \brief Callback method for parsed constraint.
+   *
+   * \param index Index of the constraint
+   * \param lit Assigned literal
+   */
+  virtual void on_constraint( unsigned index, unsigned lit ) const
+  {
+    (void)index;
+    (void)lit;
+  }
+
   /*! \brief Callback method for parsed input name.
    *
    * \param index Index of the input
@@ -456,6 +467,14 @@ inline return_code read_ascii_aiger( std::istream& in, const aiger_reader& reade
     std::getline( in, line );
     const auto lit = std::atol( line.c_str() );
     reader.on_bad_state( i, lit );
+  }
+
+  /* constraints */
+  for ( auto i = 0ul; i < _c; ++i )
+  {
+    std::getline( in, line );
+    const auto lit = std::atol( line.c_str() );
+    reader.on_constraint( i, lit );
   }
 
   /* ands */
