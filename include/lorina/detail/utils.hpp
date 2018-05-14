@@ -117,7 +117,7 @@ public:
       computed.pop();
 
       // C++17: std::apply( f, _stored_params[next] );
-      apply( f, _stored_params[next] );
+      detail::apply( f, _stored_params[next] );
 
       for ( const auto& other : _triggers[next] )
       {
