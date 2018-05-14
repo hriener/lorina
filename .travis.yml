@@ -53,3 +53,12 @@ matrix:
             - clang-4.0
             - g++-5
       env: COMPILER=clang++-4.0
+    - compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-6.0
+          packages:
+            - clang-6.0
+      env: COMPILER=clang++-6.0
