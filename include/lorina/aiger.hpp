@@ -401,7 +401,16 @@ inline return_code read_ascii_aiger( std::istream& in, const aiger_reader& reade
   {
     std::getline( in, line );
     const auto tokens = detail::split( line,  " " );
-    assert( tokens.size() <= 3u );
+
+    if ( !(tokens.size() <= 3u) )
+    {
+      if ( diag )
+      {
+        diag->report( diagnostic_level::fatal,
+                      fmt::format( "could not parse declaration of LATCH `{0}`", line ) );
+      }
+      return return_code::parse_error;
+    }
 
     const auto index = std::atol( std::string(tokens[0u]).c_str() ) / 2u;
     const auto next_lit = std::atol( std::string(tokens[1u]).c_str() );
@@ -435,7 +444,17 @@ inline return_code read_ascii_aiger( std::istream& in, const aiger_reader& reade
   {
     std::getline( in, line );
     const auto tokens = detail::split( line, " " );
-    assert( tokens.size() == 3u );
+
+    if ( !(tokens.size() == 3u) )
+    {
+      if ( diag )
+      {
+        diag->report( diagnostic_level::fatal,
+                      fmt::format( "could not parse declaration of AND gate `{0}`", line ) );
+      }
+      return return_code::parse_error;
+    }
+
     const auto index = std::atol( std::string(tokens[0u]).c_str() )/2u;
     const auto left_lit = std::atol( std::string(tokens[1u]).c_str() );
     const auto right_lit = std::atol( std::string(tokens[2u]).c_str() );
