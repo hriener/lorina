@@ -42,19 +42,43 @@
 namespace lorina
 {
 
+/*! \brief A reader visitor for the LIBERTY format.
+ *
+ * Callbacks for the LIBERTY format.
+ */
 class liberty_reader
 {
 public:
 }; // liberty_reader
-  
-inline return_code read_liberty( std::istream& in, const liberty_reader& reader )
+
+/*! \brief Reader function for the LIBERTY format.
+ *
+ * Reads LIBERTY format from a stream and invokes a callback
+ * method for each parsed primitive and each detected parse error.
+ *
+ * \param in Input stream
+ * \param reader A LIBERTY reader with callback methods invoked for parsed primitives
+ * \param diag An optional diagnostic engine with callback methods for parse errors
+ * \return Success if parsing have been successful, or parse error if parsing have failed
+ */
+inline return_code read_liberty( std::istream& in, const liberty_reader& reader, diagnostic_engine* diag = nullptr )
 {
   (void)in;
   (void)reader;
   return return_code::parse_error;
 }
 
-inline return_code read_liberty( const std::string& filename, const liberty_reader& reader )
+/*! \brief Reader function for LIBERTY format.
+ *
+ * Reads LIBERTY format from a file and invokes a callback method for each
+ * parsed primitive and each detected parse error.
+ *
+ * \param filename Name of the file
+ * \param reader A LIBERTY reader with callback methods invoked for parsed primitives
+ * \param diag An optional diagnostic engine with callback methods for parse errors
+ * \return Success if parsing have been successful, or parse error if parsing have failed
+ */
+inline return_code read_liberty( const std::string& filename, const liberty_reader& reader, diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );
   return read_liberty( in, reader );
