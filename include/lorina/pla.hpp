@@ -77,6 +77,19 @@ public:
     (void)number_of_terms;
   }
 
+  /*! \brief Callback method for parsed keyword-value pair.
+   *
+   * \param keyword Parsed keyword
+   * \param value Parsed value
+   * \return true if keyword is recognized and handled, false if keyword is not supported
+   */
+  virtual bool on_keyword( const std::string& keyword, const std::string& value ) const
+  {
+    (void)keyword;
+    (void)value;
+    return false;
+  }
+
   /*! \brief Callback method for parsed end.
    *
    */
@@ -124,6 +137,12 @@ public:
   virtual void on_number_of_terms( std::size_t number_of_terms ) const override
   {
     _os << ".p " << number_of_terms << std::endl;
+  }
+
+  virtual bool on_keyword( const std::string& keyword, const std::string& value ) const override
+  {
+    _os << fmt::format( ".{} {}", keyword, value ) << std::endl;
+    return true;
   }
 
   virtual void on_end() const override
@@ -193,6 +212,11 @@ inline return_code read_pla( std::istream& in, const pla_reader& reader, diagnos
       }
       else
       {
+        if ( reader.on_keyword( std::string( m[1] ), std::string( m[2] ) ) )
+        {
+          return true;
+        }
+
         if ( diag )
           diag->report( diagnostic_level::error,
                         fmt::format( "Unsupported keyword `{2}`\n"
