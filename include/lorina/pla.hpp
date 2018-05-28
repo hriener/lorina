@@ -45,7 +45,7 @@ namespace lorina
 
 /*! \brief A reader visitor for the PLA format.
  *
- * Callbacks for the PLA format.
+ * Callbacks for reading the PLA format.
  */
 class pla_reader
 {
@@ -106,6 +106,77 @@ public:
     (void)out;
   }
 }; /* pla_reader */
+
+/*! \brief A writer for the PLA format.
+ *
+ * Callbacks for writing the PLA format.
+ *
+ */
+class pla_writer
+{
+public:
+  pla_writer( std::ostream& os )
+    : _os( os )
+  {}
+
+  /*! \brief Callback method for writing number of inputs.
+   *
+   * \param number_of_outputs Number of outputs
+   */
+  virtual void on_number_of_inputs( std::size_t number_of_inputs ) const
+  {
+    _os << fmt::format( ".i {}\n", number_of_inputs );
+  }
+
+  /*! \brief Callback method for writing number of outputs.
+   *
+   * \param number_of_outputs Number of outputs
+   */
+  virtual void on_number_of_outputs( std::size_t number_of_outputs ) const
+  {
+    _os << fmt::format( ".o {}\n", number_of_outputs );
+  }
+
+  /*! \brief Callback method for writing number of terms.
+   *
+   * \param number_of_terms Number of terms
+   */
+  virtual void on_number_of_terms( std::size_t number_of_terms ) const
+  {
+    _os << fmt::format( ".p {}\n", number_of_terms );
+  }
+
+  /*! \brief Callback method for writing keyword-value pair.
+   *
+   * \param keyword Keyword
+   * \param value Value
+   */
+  virtual void on_keyword( const std::string& keyword, const std::string& value ) const
+  {
+    _os << fmt::format( ".{} {}\n", keyword, value );
+  }
+
+  /*! \brief Callback method for writing end.
+   *
+   */
+  virtual void on_end() const
+  {
+    _os << ".e\n";
+  }
+
+  /*! \brief Callback method for writing term.
+   *
+   * \param term A term of a logic function
+   * \param out Output bit of term
+   */
+  virtual void on_term( const std::string& term, const std::string& out ) const
+  {
+    _os << term << ' ' << out << '\n';
+  }
+
+protected:
+  std::ostream& _os;
+}; /* pla_writer */
 
 /*! \brief A PLA reader for prettyprinting PLA.
  *
