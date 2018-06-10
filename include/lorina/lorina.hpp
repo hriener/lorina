@@ -25,14 +25,14 @@
 
 /*!
   \file lorina.hpp
-  \brief Common data structures.
+  \brief Main header for lorina
 
   \author Heinz Riener
 */
 
 #pragma once
 
-#include <lorina/aig.hpp>
+#include <lorina/aiger.hpp>
 #include <lorina/bench.hpp>
 #include <lorina/blif.hpp>
 #include <lorina/pla.hpp>
