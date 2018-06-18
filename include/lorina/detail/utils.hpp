@@ -36,7 +36,6 @@
 #include <fstream>
 #include <functional>
 #include <functional>
-#include <libgen.h>
 #include <locale>
 #include <memory>
 #include <numeric>
@@ -46,6 +45,7 @@
 #include <unordered_set>
 
 #ifndef _WIN32
+#include <libgen.h>
 #include <wordexp.h>
 #endif
 
