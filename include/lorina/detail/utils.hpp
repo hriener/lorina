@@ -388,7 +388,14 @@ inline std::string word_exp_filename( const std::string& filename )
 
   return result;
 }
+#else
+inline const std::string& word_exp_filename( const std::string& filename )
+{
+  return filename;
+}
+#endif
 
+#ifndef _WIN32
 inline std::string basename( const std::string& filepath )
 {
   return std::string( ::basename( const_cast<char*>( filepath.c_str() ) ) );
