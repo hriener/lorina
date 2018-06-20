@@ -2,7 +2,6 @@
 
 #include <lorina/aiger.hpp>
 #include <fmt/format.h>
-#include <fmt/printf.h>
 #include <map>
 #include <iostream>
 
