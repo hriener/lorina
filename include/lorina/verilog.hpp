@@ -475,13 +475,13 @@ public:
     if ( std::regex_match( s, sm, verilog_regex::immediate_assign ) )
     {
       assert( sm.size() == 3u );
-      reader.on_assign( lhs, {sm[2],sm[1] == "~"} );
+      reader.on_assign( lhs, {sm[2], detail::trim_copy(sm[1]) == "~"} );
     }
     else if ( std::regex_match( s, sm, verilog_regex::binary_expression ) )
     {
       assert( sm.size() == 6u );
-      std::pair<std::string,bool> arg0 = {sm[2],sm[1] == "~"};
-      std::pair<std::string,bool> arg1 = {sm[5],sm[4] == "~"};
+      std::pair<std::string,bool> arg0 = {sm[2], detail::trim_copy(sm[1]) == "~"};
+      std::pair<std::string,bool> arg1 = {sm[5], detail::trim_copy(sm[4]) == "~"};
       auto op = sm[3];
 
       if ( op == "&" )
@@ -504,12 +504,12 @@ public:
     else if ( std::regex_match( s, sm, verilog_regex::maj3_expression ) )
     {
       assert( sm.size() == 13u );
-      std::pair<std::string,bool> a0 = {sm[2],  sm[1]  == "~"};
-      std::pair<std::string,bool> b0 = {sm[4],  sm[3]  == "~"};
-      std::pair<std::string,bool> a1 = {sm[6],  sm[5]  == "~"};
-      std::pair<std::string,bool> c0 = {sm[8],  sm[7]  == "~"};
-      std::pair<std::string,bool> b1 = {sm[10], sm[9]  == "~"};
-      std::pair<std::string,bool> c1 = {sm[12], sm[11] == "~"};
+      std::pair<std::string,bool> a0 = {sm[2],  detail::trim_copy(sm[1]) == "~"};
+      std::pair<std::string,bool> b0 = {sm[4],  detail::trim_copy(sm[3]) == "~"};
+      std::pair<std::string,bool> a1 = {sm[6],  detail::trim_copy(sm[5]) == "~"};
+      std::pair<std::string,bool> c0 = {sm[8],  detail::trim_copy(sm[7]) == "~"};
+      std::pair<std::string,bool> b1 = {sm[10], detail::trim_copy(sm[9]) == "~"};
+      std::pair<std::string,bool> c1 = {sm[12], detail::trim_copy(sm[11]) == "~"};
 
       if ( a0 != a1 || b0 != b1 || c0 != c1 ) return false;
 
