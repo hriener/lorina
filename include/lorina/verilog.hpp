@@ -270,10 +270,10 @@ public:
 
 namespace verilog_regex
 {
-static std::regex immediate_assign( R"(^(~)?([[:digit:][:alpha:]]+)$)" );
-static std::regex binary_expression( R"(^(~)?([[:digit:][:alpha:]]+)\s+([&|^])\s+(~)?([[:digit:][:alpha:]]+)$)" );
-static std::regex maj3_expression( R"(^\(\s+(~)?([[:digit:][:alpha:]]+)\s+&\s+(~)?([[:digit:][:alpha:]]+)\s+\)\s+\|\s+\(\s+(~)?([[:digit:][:alpha:]]+)\s+&\s+(~)?([[:digit:][:alpha:]]+)\s+\)\s+\|\s+\(\s+(~)?([[:digit:][:alpha:]]+)\s+&\s+(~)?([[:digit:][:alpha:]]+)\s+\)$)" );
-} // namespace blif_regex
+static std::regex immediate_assign( R"(^(~\s+)?([[:digit:][:alpha:]]+)$)" );
+static std::regex binary_expression( R"(^(~\s+)?([[:digit:][:alpha:]]+)\s+([&|^])\s+(~\s+)?([[:digit:][:alpha:]]+)$)" );
+static std::regex maj3_expression( R"(^\(\s+(~\s+)?([[:digit:][:alpha:]]+)\s+&\s+(~\s+)?([[:digit:][:alpha:]]+)\s+\)\s+\|\s+\(\s+(~\s+)?([[:digit:][:alpha:]]+)\s+&\s+(~\s+)?([[:digit:][:alpha:]]+)\s+\)\s+\|\s+\(\s+(~\s+)?([[:digit:][:alpha:]]+)\s+&\s+(~\s+)?([[:digit:][:alpha:]]+)\s+\)$)" );
+} // namespace verilog_regex
 
 class verilog_parser
 {
@@ -321,7 +321,8 @@ public:
 
     while ( token == "assign" )
     {
-      parse_assign();
+      success = parse_assign();
+      if ( !success ) return false;
 
       valid = tok.get_token( token );
       if ( !valid ) return false;
