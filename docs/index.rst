@@ -21,6 +21,7 @@ Welcome to lorina's documentation!
    bench
    blif
    pla
+   verilog
    diagnostics
    reference
 

@@ -4,6 +4,8 @@ Change Log
 v0.2 (Not yet released)
 -----------------------
 
+* verilog: ``read_verilog``.
+* util: ``tokenizer``.
 * aiger: ``on_bad_state``, ``on_constraint``, ``on_fairness``, ``on_justice``, ``on_justice_header``, ``on_justice_name``.
 * aiger: ``read_ascii_aiger``.
 * pla: ``on_keyword``, ``pla_writer``.
