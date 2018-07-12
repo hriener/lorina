@@ -82,7 +82,7 @@ public:
   mutable unsigned _maj3 = 0;
 }; /* simple_verilog_reader */
 
-TEST_CASE( "verilog_parse", "[verilog]" )
+TEST_CASE( "parse a simple Verilog file", "[verilog]" )
 {
   std::string verilog_file =
     "module top( y1, y2, a, b, c ) ;\n"
@@ -98,6 +98,39 @@ TEST_CASE( "verilog_parse", "[verilog]" )
     "  assign g5 = ( ~a & b ) | ( ~a & c ) | ( b & c ) ;\n"
     "  assign y1 = g4 ;\n"
     "  assign y2 = g5 ;\n"
+    "endmodule\n";
+
+  std::istringstream iss( verilog_file );
+
+  simple_verilog_reader reader;
+  auto result = read_verilog( iss, reader );
+  CHECK( result == return_code::success );
+  CHECK( reader._inputs == 3 );
+  CHECK( reader._outputs == 2 );
+  CHECK( reader._wires == 7 );
+  CHECK( reader._aliases == 5 );
+  CHECK( reader._ands == 1 );
+  CHECK( reader._ors == 1 );
+  CHECK( reader._xors == 1 );
+  CHECK( reader._maj3 == 1 );
+}
+
+TEST_CASE( "Parse a special characters in names", "[verilog]" )
+{
+  std::string verilog_file =
+    "module top( \\y1, \\y2, \\a, \\b, \\c ) ;\n"
+    "  input \\a , \\b , \\c ;\n"
+    "  output \\y1 , \\y2 ;\n"
+    "  wire zero, g0, g1 , g2 , g3 , g4, g5 ;\n"
+    "  assign zero = 0 ;\n"
+    "  assign g0 = \\a ;\n"
+    "  assign g1 = ~\\c ;\n"
+    "  assign g2 = g0 & g1 ;\n"
+    "  assign g3 = \\a | g2 ;\n"
+    "  assign g4 = g2 ^ g3 ;\n"
+    "  assign g5 = ( ~\\a & \\b ) | ( ~\\a & \\c ) | ( \\b & \\c ) ;\n"
+    "  assign \\y1 = g4 ;\n"
+    "  assign \\y2 = g5 ;\n"
     "endmodule\n";
 
   std::istringstream iss( verilog_file );
