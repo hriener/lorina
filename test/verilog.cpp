@@ -72,6 +72,12 @@ public:
 
   void on_endmodule() const override {}
 
+  void on_comment( const std::string& comment ) const override
+  {
+    (void)comment;
+    ++_comments;
+  }
+
   mutable unsigned _inputs = 0;
   mutable unsigned _outputs = 0;
   mutable unsigned _wires = 0;
@@ -80,6 +86,7 @@ public:
   mutable unsigned _ors = 0;
   mutable unsigned _xors = 0;
   mutable unsigned _maj3 = 0;
+  mutable unsigned _comments = 0;
 }; /* simple_verilog_reader */
 
 TEST_CASE( "parse a simple Verilog file", "[verilog]" )
@@ -115,7 +122,7 @@ TEST_CASE( "parse a simple Verilog file", "[verilog]" )
   CHECK( reader._maj3 == 1 );
 }
 
-TEST_CASE( "Parse a special characters in names", "[verilog]" )
+TEST_CASE( "Parse comment at the end", "[verilog2]" )
 {
   std::string verilog_file =
     "module top( \\y1, \\y2, \\a, \\b, \\c ) ;\n"
@@ -126,6 +133,33 @@ TEST_CASE( "Parse a special characters in names", "[verilog]" )
     "  assign g0 = \\a ;\n"
     "  assign g1 = ~\\c ;\n"
     "  assign g2 = g0 & g1 ;\n"
+    "  assign g3 = \\a | g2 ;\n"
+    "  assign g4 = g2 ^ g3 ;\n"
+    "  assign g5 = ( ~\\a & \\b ) | ( ~\\a & \\c ) | ( \\b & \\c ) ;\n"
+    "  assign \\y1 = g4 ;\n"
+    "  assign \\y2 = g5 ;\n"
+    "endmodule\n";
+
+  std::istringstream iss( verilog_file );
+
+  simple_verilog_reader reader;
+  auto result = read_verilog( iss, reader );
+  CHECK( result == return_code::success );
+}
+
+TEST_CASE( "Parse comments", "[verilog2]" )
+{
+  std::string verilog_file =
+    "// comment at the beginning\n"
+    "module top( \\y1, \\y2, \\a, \\b, \\c ) ;\n"
+    "  input \\a , \\b , \\c ;\n"
+    "  output \\y1 , \\y2 ;\n"
+    "  wire zero, g0, g1 , g2 , g3 , g4, g5 ;\n"
+    "  assign zero = 0 ; // the zero constant\n"
+    "  assign g0 = \\a ;\n"
+    "  assign g1 = ~\\c ;\n"
+    "  assign g2 = g0 & g1 ;\n"
+    "  // comment in the middle\n"
     "  assign g3 = \\a | g2 ;\n"
     "  assign g4 = g2 ^ g3 ;\n"
     "  assign g5 = ( ~\\a & \\b ) | ( ~\\a & \\c ) | ( \\b & \\c ) ;\n"
