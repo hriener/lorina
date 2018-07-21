@@ -122,22 +122,22 @@ TEST_CASE( "parse a simple Verilog file", "[verilog]" )
   CHECK( reader._maj3 == 1 );
 }
 
-TEST_CASE( "Parse comment at the end", "[verilog2]" )
+TEST_CASE( "parse special characters in Verilog file", "[verilog]" )
 {
   std::string verilog_file =
-    "module top( \\y1, \\y2, \\a, \\b, \\c ) ;\n"
-    "  input \\a , \\b , \\c ;\n"
-    "  output \\y1 , \\y2 ;\n"
-    "  wire zero, g0, g1 , g2 , g3 , g4, g5 ;\n"
+    "module top( \\y[0], \\y[1], \\x[0], \\x[1], \\x[2] ) ;\n"
+    "  input \\x[0] , \\x[1] , \\x[2] ;\n"
+    "  output \\y[0] , \\y[1] ;\n"
+    "  wire zero, _g0, _g1 , _g2 , _g3 , _g4, _g5 ;\n"
     "  assign zero = 0 ;\n"
-    "  assign g0 = \\a ;\n"
-    "  assign g1 = ~\\c ;\n"
-    "  assign g2 = g0 & g1 ;\n"
-    "  assign g3 = \\a | g2 ;\n"
-    "  assign g4 = g2 ^ g3 ;\n"
-    "  assign g5 = ( ~\\a & \\b ) | ( ~\\a & \\c ) | ( \\b & \\c ) ;\n"
-    "  assign \\y1 = g4 ;\n"
-    "  assign \\y2 = g5 ;\n"
+    "  assign _g0 = \\x[0] ;\n"
+    "  assign _g1 = ~\\x[3] ;\n"
+    "  assign _g2 = _g0 & _g1 ;\n"
+    "  assign _g3 = \\x[0] | _g2 ;\n"
+    "  assign _g4 = _g2 ^ _g3 ;\n"
+    "  assign _g5 = ( ~\\x[0] & \\x[1] ) | ( ~\\x[0] & \\x[2] ) | ( \\x[1] & \\x[2] ) ;\n"
+    "  assign \\y[0] = _g4 ;\n"
+    "  assign \\y[1] = _g5 ;\n"
     "endmodule\n";
 
   std::istringstream iss( verilog_file );
@@ -145,9 +145,17 @@ TEST_CASE( "Parse comment at the end", "[verilog2]" )
   simple_verilog_reader reader;
   auto result = read_verilog( iss, reader );
   CHECK( result == return_code::success );
+  CHECK( reader._inputs == 3 );
+  CHECK( reader._outputs == 2 );
+  CHECK( reader._wires == 7 );
+  CHECK( reader._aliases == 5 );
+  CHECK( reader._ands == 1 );
+  CHECK( reader._ors == 1 );
+  CHECK( reader._xors == 1 );
+  CHECK( reader._maj3 == 1 );
 }
 
-TEST_CASE( "Parse comments", "[verilog2]" )
+TEST_CASE( "Parse comments in Verilog file", "[verilog]" )
 {
   std::string verilog_file =
     "// comment at the beginning\n"
@@ -180,4 +188,5 @@ TEST_CASE( "Parse comments", "[verilog2]" )
   CHECK( reader._ors == 1 );
   CHECK( reader._xors == 1 );
   CHECK( reader._maj3 == 1 );
+  CHECK( reader._comments == 3 );
 }
