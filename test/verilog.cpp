@@ -89,7 +89,7 @@ public:
   mutable unsigned _comments = 0;
 }; /* simple_verilog_reader */
 
-TEST_CASE( "parse a simple Verilog file", "[verilog]" )
+TEST_CASE( "Parse a simple Verilog file", "[verilog]" )
 {
   std::string verilog_file =
     "module top( y1, y2, a, b, c ) ;\n"
@@ -122,7 +122,7 @@ TEST_CASE( "parse a simple Verilog file", "[verilog]" )
   CHECK( reader._maj3 == 1 );
 }
 
-TEST_CASE( "parse special characters in Verilog file", "[verilog]" )
+TEST_CASE( "Parse special characters in Verilog file", "[verilog]" )
 {
   std::string verilog_file =
     "module top( \\y[0], \\y[1], \\x[0], \\x[1], \\x[2] ) ;\n"
@@ -189,4 +189,32 @@ TEST_CASE( "Parse comments in Verilog file", "[verilog]" )
   CHECK( reader._xors == 1 );
   CHECK( reader._maj3 == 1 );
   CHECK( reader._comments == 3 );
+}
+
+TEST_CASE( "Parse constants in Verilog file", "[verilog]" )
+{
+  std::string verilog_file =
+    "module top( \\y1, \\y2 ) ;\n"
+    "  output \\y1 , \\y2 ;\n"
+    "  wire zero, g0 ;\n"
+    "  assign zero = 0 ;\n"
+    "  assign g0 = 1'b1 ;\n"
+    "  assign \\y1 = 0'b1 ;\n"
+    "  assign \\y2 = g0 ;\n"
+    "endmodule\n";
+
+  std::istringstream iss( verilog_file );
+
+  simple_verilog_reader reader;
+  auto result = read_verilog( iss, reader );
+  CHECK( result == return_code::success );
+  CHECK( reader._inputs == 0 );
+  CHECK( reader._outputs == 2 );
+  CHECK( reader._wires == 2 );
+  CHECK( reader._aliases == 4 );
+  CHECK( reader._ands == 0 );
+  CHECK( reader._ors == 0 );
+  CHECK( reader._xors == 0 );
+  CHECK( reader._maj3 == 0 );
+  CHECK( reader._comments == 0 );
 }
