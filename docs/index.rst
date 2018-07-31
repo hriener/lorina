@@ -16,16 +16,24 @@ Welcome to lorina's documentation!
 
 .. toctree::
    :maxdepth: 2
+   :caption: Readers
 
    aiger
    bench
    blif
    pla
    verilog
-   diagnostics
-   reference
 
-   :caption: Reference
+.. toctree::
+   :maxdepth: 2
+   :caption: Writers
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Diagnostics
+
+   diagnostics
+
 
 Indices and tables
 ==================
