@@ -137,6 +137,51 @@ public:
     (void)op2;
   }
 
+  /*! \brief Callback method for parsed and gate `LHS = OP1 & OP2 & OP3 ;`.
+   *
+   * \param lhs Left-hand side of assignment
+   * \param op1 operand1 of assignment
+   * \param op2 operand2 of assignment
+   * \param op3 operand3 of assignment
+   */
+  virtual void on_and3( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2, const std::pair<std::string, bool>& op3 ) const
+  {
+    (void)lhs;
+    (void)op1;
+    (void)op2;
+    (void)op3;
+  }
+
+  /*! \brief Callback method for parsed or gate `LHS = OP1 | OP2 | OP3 ;`.
+   *
+   * \param lhs Left-hand side of assignment
+   * \param op1 operand1 of assignment
+   * \param op2 operand2 of assignment
+   * \param op3 operand3 of assignment
+   */
+  virtual void on_or3( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2, const std::pair<std::string, bool>& op3 ) const
+  {
+    (void)lhs;
+    (void)op1;
+    (void)op2;
+    (void)op3;
+  }
+
+  /*! \brief Callback method for parsed or gate `LHS = OP1 ^ OP2 ^ OP3 ;`.
+   *
+   * \param lhs Left-hand side of assignment
+   * \param op1 operand1 of assignment
+   * \param op2 operand2 of assignment
+   * \param op3 operand3 of assignment
+   */
+  virtual void on_xor3( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2, const std::pair<std::string, bool>& op3 ) const
+  {
+    (void)lhs;
+    (void)op1;
+    (void)op2;
+    (void)op3;
+  }
+
   /*! \brief Callback method for parsed majority-of-3 gate `LHS = ( OP1 & OP2 ) | ( OP1 & OP3 ) | ( OP2 & OP3 ) ;`.
    *
    * \param lhs Left-hand side of assignment
@@ -261,6 +306,30 @@ public:
     _os << fmt::format("assign {} = {} ^ {} ;\n", lhs, p1, p2 );
   }
 
+  void on_and3( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2, const std::pair<std::string, bool>& op3 ) const override
+  {
+    const std::string p1 = op1.second ? fmt::format( "~{}", op1.first ) : op1.first;
+    const std::string p2 = op2.second ? fmt::format( "~{}", op2.first ) : op2.first;
+    const std::string p3 = op3.second ? fmt::format( "~{}", op3.first ) : op3.first;
+    _os << fmt::format("assign {} = {} & {} & {} ;\n", lhs, p1, p2, p3 );
+  }
+
+  void on_or3( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2, const std::pair<std::string, bool>& op3 ) const override
+  {
+    const std::string p1 = op1.second ? fmt::format( "~{}", op1.first ) : op1.first;
+    const std::string p2 = op2.second ? fmt::format( "~{}", op2.first ) : op2.first;
+    const std::string p3 = op3.second ? fmt::format( "~{}", op3.first ) : op3.first;
+    _os << fmt::format("assign {} = {} | {} | {} ;\n", lhs, p1, p2, p3 );
+  }
+
+  void on_xor3( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2, const std::pair<std::string, bool>& op3 ) const override
+  {
+    const std::string p1 = op1.second ? fmt::format( "~{}", op1.first ) : op1.first;
+    const std::string p2 = op2.second ? fmt::format( "~{}", op2.first ) : op2.first;
+    const std::string p3 = op3.second ? fmt::format( "~{}", op3.first ) : op3.first;
+    _os << fmt::format("assign {} = {} ^ {} ^ {} ;\n", lhs, p1, p2, p3 );
+  }
+
   void on_maj3( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2, const std::pair<std::string, bool>& op3 ) const override
   {
     const std::string p1 = op1.second ? fmt::format( "~{}", op1.first ) : op1.first;
@@ -286,6 +355,7 @@ namespace verilog_regex
 {
 static std::regex immediate_assign( R"(^(~)?([[:alnum:]\[\]_']+)$)" );
 static std::regex binary_expression( R"(^(~)?([[:alnum:]\[\]_']+)([&|^])(~)?([[:alnum:]\[\]_']+)$)" );
+static std::regex ternary_expression( R"(^(~)?([[:alnum:]\[\]_']+)([&|^])(~)?([[:alnum:]\[\]_']+)([&|^])(~)?([[:alnum:]\[\]_']+)$)" );
 static std::regex maj3_expression( R"(^\((~)?([[:alnum:]\[\]_']+)&(~)?([[:alnum:]\[\]_']+)\)\|\((~)?([[:alnum:]\[\]_']+)&(~)?([[:alnum:]\[\]_']+)\)\|\((~)?([[:alnum:]\[\]_']+)&(~)?([[:alnum:]\[\]_']+)\)$)" );
 } // namespace verilog_regex
 
@@ -576,6 +646,35 @@ public:
       else if ( op == "^" )
       {
         reader.on_xor( lhs, arg0, arg1 );
+      }
+      else
+      {
+        return false;
+      }
+    }
+    else if ( std::regex_match( s, sm, verilog_regex::ternary_expression ) )
+    {
+      assert( sm.size() == 9u );
+      std::pair<std::string,bool> arg0 = {sm[2], sm[1] == "~"};
+      std::pair<std::string,bool> arg1 = {sm[5], sm[4] == "~"};
+      std::pair<std::string,bool> arg2 = {sm[8], sm[7] == "~"};
+      auto op = sm[3];
+      if ( sm[6] != op )
+      {
+        return false;
+      }
+
+      if ( op == "&" )
+      {
+        reader.on_and3( lhs, arg0, arg1, arg2 );
+      }
+      else if ( op == "|" )
+      {
+        reader.on_or3( lhs, arg0, arg1, arg2 );
+      }
+      else if ( op == "^" )
+      {
+        reader.on_xor3( lhs, arg0, arg1, arg2 );
       }
       else
       {
