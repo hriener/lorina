@@ -61,6 +61,33 @@ public:
     ++_xors;
   }
 
+  void on_and3( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2, const std::pair<std::string, bool>& op3 ) const override
+  {
+    (void)lhs;
+    (void)op1;
+    (void)op2;
+    (void)op3;
+    ++_ands3;
+  }
+
+  void on_or3( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2, const std::pair<std::string, bool>& op3 ) const override
+  {
+    (void)lhs;
+    (void)op1;
+    (void)op2;
+    (void)op3;
+    ++_ors3;
+  }
+
+  void on_xor3( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2, const std::pair<std::string, bool>& op3 ) const override
+  {
+    (void)lhs;
+    (void)op1;
+    (void)op2;
+    (void)op3;
+    ++_xors3;
+  }
+
   void on_maj3( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2, const std::pair<std::string, bool>& op3 ) const override
   {
     (void)lhs;
@@ -85,6 +112,9 @@ public:
   mutable unsigned _ands = 0;
   mutable unsigned _ors = 0;
   mutable unsigned _xors = 0;
+  mutable unsigned _ands3 = 0;
+  mutable unsigned _ors3 = 0;
+  mutable unsigned _xors3 = 0;
   mutable unsigned _maj3 = 0;
   mutable unsigned _comments = 0;
 }; /* simple_verilog_reader */
@@ -92,9 +122,9 @@ public:
 TEST_CASE( "Parse a simple Verilog file", "[verilog]" )
 {
   std::string verilog_file =
-    "module top( y1, y2, a, b, c ) ;\n"
+    "module top( y1, y2, y3, y4, y5, a, b, c ) ;\n"
     "  input a , b , c ;\n"
-    "  output y1 , y2 ;\n"
+    "  output y1 , y2, y3, y4, y5 ;\n"
     "  wire zero, g0, g1 , g2 , g3 , g4, g5 ;\n"
     "  assign zero = 0 ;\n"
     "  assign g0 = a ;\n"
@@ -105,6 +135,9 @@ TEST_CASE( "Parse a simple Verilog file", "[verilog]" )
     "  assign g5 = ( ~a & b ) | ( ~a & c ) | ( b & c ) ;\n"
     "  assign y1 = g4 ;\n"
     "  assign y2 = g5 ;\n"
+    "  assign y3 = ~g0 & g1 & g2 ;\n"
+    "  assign y4 = g1 | ~g2 | g3 ;\n"
+    "  assign y5 = g3 ^ g4 ^ ~g5 ;\n"
     "endmodule\n";
 
   std::istringstream iss( verilog_file );
@@ -113,12 +146,15 @@ TEST_CASE( "Parse a simple Verilog file", "[verilog]" )
   auto result = read_verilog( iss, reader );
   CHECK( result == return_code::success );
   CHECK( reader._inputs == 3 );
-  CHECK( reader._outputs == 2 );
+  CHECK( reader._outputs == 5 );
   CHECK( reader._wires == 7 );
   CHECK( reader._aliases == 5 );
   CHECK( reader._ands == 1 );
   CHECK( reader._ors == 1 );
   CHECK( reader._xors == 1 );
+  CHECK( reader._ands3 == 1 );
+  CHECK( reader._ors3 == 1 );
+  CHECK( reader._xors3 == 1 );
   CHECK( reader._maj3 == 1 );
 }
 
