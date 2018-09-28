@@ -115,6 +115,10 @@ public:
 class pla_writer
 {
 public:
+  /*! \brief Constructs a PLA writer.
+   *
+   * \param os Output stream
+   */
   pla_writer( std::ostream& os )
     : _os( os )
   {}
@@ -175,7 +179,7 @@ public:
   }
 
 protected:
-  std::ostream& _os;
+  std::ostream& _os; /*!< Output stream */
 }; /* pla_writer */
 
 /*! \brief A PLA reader for prettyprinting PLA.
