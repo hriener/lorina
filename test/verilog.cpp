@@ -235,7 +235,7 @@ TEST_CASE( "Parse constants in Verilog file", "[verilog]" )
     "  wire zero, g0 ;\n"
     "  assign zero = 0 ;\n"
     "  assign g0 = 1'b1 ;\n"
-    "  assign \\y1 = 0'b1 ;\n"
+    "  assign \\y1 = 1'b0 ;\n"
     "  assign \\y2 = g0 ;\n"
     "endmodule\n";
 
