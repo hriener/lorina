@@ -68,7 +68,7 @@ public:
    * \param level Severity level
    * \param message Diagnostic message
    */
-  explicit diagnostic_builder( diagnostic_engine& diag, diagnostic_level level, const std::string& message );
+  inline explicit diagnostic_builder( diagnostic_engine& diag, diagnostic_level level, const std::string& message );
 
   /*! \brief Destructs the diagnostic builder and issues the diagnostic. */
   inline ~diagnostic_builder();
@@ -82,12 +82,22 @@ public:
 class diagnostic_engine
 {
 public:
+  /*! \brief Creates a diagnostic builder.
+   *
+   * \param level Severity level
+   * \param message Diagnostic message
+   */
   virtual inline diagnostic_builder report( diagnostic_level level, const std::string& message );
 
+  /*! \brief Emits a diagnostic message.
+   *
+   * \param level Severity level
+   * \param message Diagnostic message
+   */
   virtual inline void emit( diagnostic_level level, const std::string& message ) const;
 
 public:
-  mutable unsigned number_of_diagnostics = 0;
+  mutable unsigned number_of_diagnostics = 0; /*!< Number of diagnostics constructed via report */
 }; /* diagnostic_engine */
 
 diagnostic_builder::diagnostic_builder( diagnostic_engine& diag, diagnostic_level level, const std::string& message )
