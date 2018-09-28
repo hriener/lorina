@@ -121,7 +121,7 @@ public:
 
   /*! \brief Callback method for writing number of inputs.
    *
-   * \param number_of_outputs Number of outputs
+   * \param number_of_inputs Number of inputs
    */
   virtual void on_number_of_inputs( std::size_t number_of_inputs ) const
   {

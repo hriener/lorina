@@ -181,7 +181,7 @@ public:
   /*! \brief Callback method for parsed header of justice property.
    *
    * \param index Index of the justice property
-   * \param lit Number of assigned literals
+   * \param size Number of assigned literals
    */
   virtual void on_justice_header( unsigned index, std::size_t size ) const
   {
@@ -192,7 +192,7 @@ public:
   /*! \brief Callback method for parsed justice property.
    *
    * \param index Index of the justice property
-   * \param lit Assigned literal
+   * \param lits Assigned literals
    */
   virtual void on_justice( unsigned index, const std::vector<unsigned>& lits ) const
   {
