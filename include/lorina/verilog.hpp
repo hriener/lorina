@@ -36,7 +36,7 @@
 #include <lorina/diagnostics.hpp>
 #include <lorina/detail/utils.hpp>
 #include <lorina/detail/tokenizer.hpp>
-#include <regex>
+#include <lorina/verilog_regex.hpp>
 #include <iostream>
 
 namespace lorina
@@ -350,14 +350,6 @@ public:
 
   std::ostream& _os; /*!< Output stream */
 }; /* verilog_pretty_printer */
-
-namespace verilog_regex
-{
-static std::regex immediate_assign( "^(~)?([[:alnum:]\\[\\]_']+)$" );
-static std::regex binary_expression( "^(~)?([[:alnum:]\\[\\]_']+)([&|^])(~)?([[:alnum:]\\[\\]_']+)$" );
-static std::regex ternary_expression( "^(~)?([[:alnum:]\\[\\]_']+)([&|^])(~)?([[:alnum:]\\[\\]_']+)([&|^])(~)?([[:alnum:]\\[\\]_']+)$" );
-static std::regex maj3_expression( "^\\((~)?([[:alnum:]\\[\\]_']+)&(~)?([[:alnum:]\\[\\]_']+)\\)\\|\\((~)?([[:alnum:]\\[\\]_']+)&(~)?([[:alnum:]\\[\\]_']+)\\)\\|\\((~)?([[:alnum:]\\[\\]_']+)&(~)?([[:alnum:]\\[\\]_']+)\\)$" );
-} // namespace verilog_regex
 
 class verilog_parser
 {
