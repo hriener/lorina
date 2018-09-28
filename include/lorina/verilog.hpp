@@ -51,7 +51,7 @@ class verilog_reader
 public:
   /*! \brief Callback method for parsed module.
    *
-   * \param model_name Name of the module
+   * \param module_name Name of the module
    * \param inouts Container for input and output names
    */
   virtual void on_module_header( const std::string& module_name, const std::vector<std::string>& inouts ) const
@@ -187,6 +187,7 @@ public:
    * \param lhs Left-hand side of assignment
    * \param op1 operand1 of assignment
    * \param op2 operand2 of assignment
+   * \param op3 operand3 of assignment
    */
   virtual void on_maj3( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2, const std::pair<std::string, bool>& op3 ) const
   {
@@ -351,9 +352,20 @@ public:
   std::ostream& _os; /*!< Output stream */
 }; /* verilog_pretty_printer */
 
+/*! \brief Simple parser for VERILOG format.
+ *
+ * Simplistic grammar-oriented parser for a structural VERILOG format.
+ *
+ */
 class verilog_parser
 {
 public:
+  /*! \brief Construct a VERILOG parser
+   *
+   * \param in Input stream
+   * \param reader A verilog reader
+   * \param diag A diagnostic engine
+   */
   verilog_parser( std::istream& in, const verilog_reader& reader, diagnostic_engine* diag = nullptr )
     : tok( in )
     , reader( reader )
