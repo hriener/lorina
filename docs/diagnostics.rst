@@ -13,3 +13,4 @@ The `diagnostic builder` (class ``diagnostic_builder``) is a lightweight tempora
 
 .. doxygenclass:: lorina::diagnostic_builder
 .. doxygenclass:: lorina::diagnostic_engine
+.. doxygenclass:: lorina::silent_diagnostic_engine
