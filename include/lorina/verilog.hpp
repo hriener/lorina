@@ -353,10 +353,10 @@ public:
 
 namespace verilog_regex
 {
-static std::regex immediate_assign( R"(^(~)?([[:alnum:]\[\]_']+)$)" );
-static std::regex binary_expression( R"(^(~)?([[:alnum:]\[\]_']+)([&|^])(~)?([[:alnum:]\[\]_']+)$)" );
-static std::regex ternary_expression( R"(^(~)?([[:alnum:]\[\]_']+)([&|^])(~)?([[:alnum:]\[\]_']+)([&|^])(~)?([[:alnum:]\[\]_']+)$)" );
-static std::regex maj3_expression( R"(^\((~)?([[:alnum:]\[\]_']+)&(~)?([[:alnum:]\[\]_']+)\)\|\((~)?([[:alnum:]\[\]_']+)&(~)?([[:alnum:]\[\]_']+)\)\|\((~)?([[:alnum:]\[\]_']+)&(~)?([[:alnum:]\[\]_']+)\)$)" );
+static std::regex immediate_assign( "^(~)?([[:alnum:]\\[\\]_']+)$" );
+static std::regex binary_expression( "^(~)?([[:alnum:]\\[\\]_']+)([&|^])(~)?([[:alnum:]\\[\\]_']+)$" );
+static std::regex ternary_expression( "^(~)?([[:alnum:]\\[\\]_']+)([&|^])(~)?([[:alnum:]\\[\\]_']+)([&|^])(~)?([[:alnum:]\\[\\]_']+)$" );
+static std::regex maj3_expression( "^\\((~)?([[:alnum:]\\[\\]_']+)&(~)?([[:alnum:]\\[\\]_']+)\\)\\|\\((~)?([[:alnum:]\\[\\]_']+)&(~)?([[:alnum:]\\[\\]_']+)\\)\\|\\((~)?([[:alnum:]\\[\\]_']+)&(~)?([[:alnum:]\\[\\]_']+)\\)$" );
 } // namespace verilog_regex
 
 class verilog_parser
