@@ -20,11 +20,17 @@ member functions.
 +-------------------------------------------+-------------------------------------------------------------------------+
 | ``on_assign(lhs, rhs)``                   | Callback method for parsed immediate assignment                         |
 +-------------------------------------------+-------------------------------------------------------------------------+
-| ``on_and(lhs, op1, op2)``                 | Callback method for parsed AND assignment                               |
+| ``on_and(lhs, op1, op2)``                 | Callback method for parsed AND assignment (with 2 operands)             |
 +-------------------------------------------+-------------------------------------------------------------------------+
-| ``on_or(lhs, op1, op2)``                  | Callback method for parsed OR assignment                                |
+| ``on_or(lhs, op1, op2)``                  | Callback method for parsed OR assignment (with 2 operands)              |
 +-------------------------------------------+-------------------------------------------------------------------------+
-| ``on_xor(lhs, op1, op2)``                 | Callback method for parsed XOR assignment                               |
+| ``on_xor(lhs, op1, op2)``                 | Callback method for parsed XOR assignment (with 2 operands)             |
++-------------------------------------------+-------------------------------------------------------------------------+
+| ``on_and3(lhs, op1, op2, op3)``           | Callback method for parsed AND assignment (with 3 operands)             |
++-------------------------------------------+-------------------------------------------------------------------------+
+| ``on_or3(lhs, op1, op2, op3)``            | Callback method for parsed OR assignment (with 3 operands)              |
++-------------------------------------------+-------------------------------------------------------------------------+
+| ``on_xor3(lhs, op1, op2, op3)``           | Callback method for parsed XOR assignment (with 3 operands)             |
 +-------------------------------------------+-------------------------------------------------------------------------+
 | ``on_maj3(lhs, op1, op2, op3)``           | Callback method for parsed MAJ3 assignment                              |
 +-------------------------------------------+-------------------------------------------------------------------------+

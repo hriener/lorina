@@ -98,7 +98,7 @@ public:
     (void)rhs;
   }
 
-  /*! \brief Callback method for parsed and gate `LHS = OP1 & OP2 ;`.
+  /*! \brief Callback method for parsed AND-gate with 2 operands `LHS = OP1 & OP2 ;`.
    *
    * \param lhs Left-hand side of assignment
    * \param op1 operand1 of assignment
@@ -111,7 +111,7 @@ public:
     (void)op2;
   }
 
-  /*! \brief Callback method for parsed or gate `LHS = OP1 | OP2 ;`.
+  /*! \brief Callback method for parsed OR-gate with 2 operands `LHS = OP1 | OP2 ;`.
    *
    * \param lhs Left-hand side of assignment
    * \param op1 operand1 of assignment
@@ -124,7 +124,7 @@ public:
     (void)op2;
   }
 
-  /*! \brief Callback method for parsed or gate `LHS = OP1 ^ OP2 ;`.
+  /*! \brief Callback method for parsed XOR-gate with 2 operands `LHS = OP1 ^ OP2 ;`.
    *
    * \param lhs Left-hand side of assignment
    * \param op1 operand1 of assignment
@@ -137,7 +137,7 @@ public:
     (void)op2;
   }
 
-  /*! \brief Callback method for parsed and gate `LHS = OP1 & OP2 & OP3 ;`.
+  /*! \brief Callback method for parsed AND-gate with 3 operands `LHS = OP1 & OP2 & OP3 ;`.
    *
    * \param lhs Left-hand side of assignment
    * \param op1 operand1 of assignment
@@ -152,7 +152,7 @@ public:
     (void)op3;
   }
 
-  /*! \brief Callback method for parsed or gate `LHS = OP1 | OP2 | OP3 ;`.
+  /*! \brief Callback method for parsed OR-gate with 3 operands `LHS = OP1 | OP2 | OP3 ;`.
    *
    * \param lhs Left-hand side of assignment
    * \param op1 operand1 of assignment
@@ -167,7 +167,7 @@ public:
     (void)op3;
   }
 
-  /*! \brief Callback method for parsed or gate `LHS = OP1 ^ OP2 ^ OP3 ;`.
+  /*! \brief Callback method for parsed XOR-gate with 3 operands `LHS = OP1 ^ OP2 ^ OP3 ;`.
    *
    * \param lhs Left-hand side of assignment
    * \param op1 operand1 of assignment
