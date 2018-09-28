@@ -167,7 +167,7 @@ TEST_CASE( "Parse special characters in Verilog file", "[verilog]" )
     "  wire zero, _g0, _g1 , _g2 , _g3 , _g4, _g5 ;\n"
     "  assign zero = 0 ;\n"
     "  assign _g0 = \\x[0] ;\n"
-    "  assign _g1 = ~\\x[3] ;\n"
+    "  assign _g1 = ~\\x[2] ;\n"
     "  assign _g2 = _g0 & _g1 ;\n"
     "  assign _g3 = \\x[0] | _g2 ;\n"
     "  assign _g4 = _g2 ^ _g3 ;\n"
