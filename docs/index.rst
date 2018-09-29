@@ -18,11 +18,7 @@ Welcome to lorina's documentation!
    :maxdepth: 2
    :caption: Readers
 
-   aiger
-   bench
-   blif
-   pla
-   verilog
+   parsers
 
 .. toctree::
    :maxdepth: 2

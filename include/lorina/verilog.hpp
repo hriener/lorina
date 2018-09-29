@@ -36,7 +36,7 @@
 #include <lorina/diagnostics.hpp>
 #include <lorina/detail/utils.hpp>
 #include <lorina/detail/tokenizer.hpp>
-#include <regex>
+#include <lorina/verilog_regex.hpp>
 #include <iostream>
 
 namespace lorina
@@ -51,7 +51,7 @@ class verilog_reader
 public:
   /*! \brief Callback method for parsed module.
    *
-   * \param model_name Name of the module
+   * \param module_name Name of the module
    * \param inouts Container for input and output names
    */
   virtual void on_module_header( const std::string& module_name, const std::vector<std::string>& inouts ) const
@@ -98,7 +98,7 @@ public:
     (void)rhs;
   }
 
-  /*! \brief Callback method for parsed and gate `LHS = OP1 & OP2 ;`.
+  /*! \brief Callback method for parsed AND-gate with 2 operands `LHS = OP1 & OP2 ;`.
    *
    * \param lhs Left-hand side of assignment
    * \param op1 operand1 of assignment
@@ -111,7 +111,7 @@ public:
     (void)op2;
   }
 
-  /*! \brief Callback method for parsed or gate `LHS = OP1 | OP2 ;`.
+  /*! \brief Callback method for parsed OR-gate with 2 operands `LHS = OP1 | OP2 ;`.
    *
    * \param lhs Left-hand side of assignment
    * \param op1 operand1 of assignment
@@ -124,7 +124,7 @@ public:
     (void)op2;
   }
 
-  /*! \brief Callback method for parsed or gate `LHS = OP1 ^ OP2 ;`.
+  /*! \brief Callback method for parsed XOR-gate with 2 operands `LHS = OP1 ^ OP2 ;`.
    *
    * \param lhs Left-hand side of assignment
    * \param op1 operand1 of assignment
@@ -137,7 +137,7 @@ public:
     (void)op2;
   }
 
-  /*! \brief Callback method for parsed and gate `LHS = OP1 & OP2 & OP3 ;`.
+  /*! \brief Callback method for parsed AND-gate with 3 operands `LHS = OP1 & OP2 & OP3 ;`.
    *
    * \param lhs Left-hand side of assignment
    * \param op1 operand1 of assignment
@@ -152,7 +152,7 @@ public:
     (void)op3;
   }
 
-  /*! \brief Callback method for parsed or gate `LHS = OP1 | OP2 | OP3 ;`.
+  /*! \brief Callback method for parsed OR-gate with 3 operands `LHS = OP1 | OP2 | OP3 ;`.
    *
    * \param lhs Left-hand side of assignment
    * \param op1 operand1 of assignment
@@ -167,7 +167,7 @@ public:
     (void)op3;
   }
 
-  /*! \brief Callback method for parsed or gate `LHS = OP1 ^ OP2 ^ OP3 ;`.
+  /*! \brief Callback method for parsed XOR-gate with 3 operands `LHS = OP1 ^ OP2 ^ OP3 ;`.
    *
    * \param lhs Left-hand side of assignment
    * \param op1 operand1 of assignment
@@ -187,6 +187,7 @@ public:
    * \param lhs Left-hand side of assignment
    * \param op1 operand1 of assignment
    * \param op2 operand2 of assignment
+   * \param op3 operand3 of assignment
    */
   virtual void on_maj3( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2, const std::pair<std::string, bool>& op3 ) const
   {
@@ -351,17 +352,20 @@ public:
   std::ostream& _os; /*!< Output stream */
 }; /* verilog_pretty_printer */
 
-namespace verilog_regex
-{
-static std::regex immediate_assign( R"(^(~)?([[:alnum:]\[\]_']+)$)" );
-static std::regex binary_expression( R"(^(~)?([[:alnum:]\[\]_']+)([&|^])(~)?([[:alnum:]\[\]_']+)$)" );
-static std::regex ternary_expression( R"(^(~)?([[:alnum:]\[\]_']+)([&|^])(~)?([[:alnum:]\[\]_']+)([&|^])(~)?([[:alnum:]\[\]_']+)$)" );
-static std::regex maj3_expression( R"(^\((~)?([[:alnum:]\[\]_']+)&(~)?([[:alnum:]\[\]_']+)\)\|\((~)?([[:alnum:]\[\]_']+)&(~)?([[:alnum:]\[\]_']+)\)\|\((~)?([[:alnum:]\[\]_']+)&(~)?([[:alnum:]\[\]_']+)\)$)" );
-} // namespace verilog_regex
-
+/*! \brief Simple parser for VERILOG format.
+ *
+ * Simplistic grammar-oriented parser for a structural VERILOG format.
+ *
+ */
 class verilog_parser
 {
 public:
+  /*! \brief Construct a VERILOG parser
+   *
+   * \param in Input stream
+   * \param reader A verilog reader
+   * \param diag A diagnostic engine
+   */
   verilog_parser( std::istream& in, const verilog_reader& reader, diagnostic_engine* diag = nullptr )
     : tok( in )
     , reader( reader )

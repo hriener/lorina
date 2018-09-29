@@ -19,7 +19,7 @@ member functions.
 +----------------------------------------------+-------------------------------------------------------------------------+
 | ``on_end()``                                 | Callback method for parsed end                                          |
 +----------------------------------------------+-------------------------------------------------------------------------+
-| ``on_term(term, out)``                       | Callback method for parsed terms                                         |
+| ``on_term(term, out)``                       | Callback method for parsed terms                                        |
 +----------------------------------------------+-------------------------------------------------------------------------+
 
 The class :cpp:class:`lorina::pla_writer` provides the following public
