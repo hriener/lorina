@@ -17,17 +17,17 @@ public:
 
   void on_inputs( const std::vector<std::string>& inputs ) const override
   {
-    _inputs = inputs.size();
+    _inputs = uint32_t( inputs.size() );
   }
 
   void on_outputs( const std::vector<std::string>& outputs ) const override
   {
-    _outputs = outputs.size();
+    _outputs = uint32_t( outputs.size() );
   }
 
   void on_wires( const std::vector<std::string>& wires ) const override
   {
-    _wires = wires.size();
+    _wires = uint32_t( wires.size() );
   }
 
   void on_assign( const std::string& lhs, const std::pair<std::string, bool>& rhs ) const override
@@ -105,18 +105,18 @@ public:
     ++_comments;
   }
 
-  mutable unsigned _inputs = 0;
-  mutable unsigned _outputs = 0;
-  mutable unsigned _wires = 0;
-  mutable unsigned _aliases = 0;
-  mutable unsigned _ands = 0;
-  mutable unsigned _ors = 0;
-  mutable unsigned _xors = 0;
-  mutable unsigned _ands3 = 0;
-  mutable unsigned _ors3 = 0;
-  mutable unsigned _xors3 = 0;
-  mutable unsigned _maj3 = 0;
-  mutable unsigned _comments = 0;
+  mutable uint32_t _inputs = 0;
+  mutable uint32_t _outputs = 0;
+  mutable uint32_t _wires = 0;
+  mutable uint32_t _aliases = 0;
+  mutable uint32_t _ands = 0;
+  mutable uint32_t _ors = 0;
+  mutable uint32_t _xors = 0;
+  mutable uint32_t _ands3 = 0;
+  mutable uint32_t _ors3 = 0;
+  mutable uint32_t _xors3 = 0;
+  mutable uint32_t _maj3 = 0;
+  mutable uint32_t _comments = 0;
 }; /* simple_verilog_reader */
 
 TEST_CASE( "Parse a simple Verilog file", "[verilog]" )
