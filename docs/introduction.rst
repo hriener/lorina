@@ -6,7 +6,7 @@ Synopsis
 
 The C++ library `lorina` implements parsers for simple file formats
 used in logic synthesis and formal verification.  A callback mechanism
-in form of overloadable visitor classes allows users to react on
+in form of customizable visitor classes allows users to react on
 parsed primitives and parse errors.
 
 The library consists of several independent parsers.  Each parser has
@@ -36,10 +36,10 @@ Customization
 -------------
 
 The default behavior of any reader visitor can be customized by
-deriving a new class from a reader visitor and overloading its virtual
-callback methods.  In the following code snippet, the class
-``print_bench_input_decl`` derives from ``bench_reader`` and customizes
-the behavior of the ``on_input`` event point::
+deriving from a reader visitor and overriding its virtual callback
+methods.  In the following code snippet, the class
+``print_bench_input_decl`` derives from ``bench_reader`` and
+customizes the behavior of the ``on_input`` event point::
 
   class print_bench_input_decl : public bench_reader
   {
@@ -61,9 +61,9 @@ projects even when C++ exceptions are globally disabled.
 All reader functions ``read_<format>`` either return
 ``return_code::success`` if parsing has been successful or otherwise
 ``return_code::parse_error``.  The `diagnostic engine` additionally
-allows users to react on parse errors and can be activated by
-providing a pointer to a ``diagnostic_engine`` as a third parameter to
-a reader function::
+allows users to react on parse errors.  Diagnostics are automatically
+activated by providing a pointer to a ``diagnostic_engine`` as a third
+parameter to a reader function::
 
   diagnostic_engine diag;
   return_code result = read_<format>( filename, <format>_reader(), &diag );
@@ -71,5 +71,5 @@ a reader function::
 The `parse error` event points and the corresponding `error messages`
 are specified by the respective parsing algorithm.  The default
 behavior of the diagnostic engine can be customized (similarly to the
-reader visitors) by deriving a new class from `diagnostic_engine` and
-overloading its callback method ``emit``.
+reader visitors) by deriving from `diagnostic_engine` and overriding
+its virtual callback method ``emit``.

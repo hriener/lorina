@@ -7,4 +7,4 @@ function(add_example name)
 endfunction()
 
 add_example(pretty_print pretty_print.cpp)
-target_link_libraries(pretty_print lorina_cli11)
+target_link_libraries(pretty_print cli11)
