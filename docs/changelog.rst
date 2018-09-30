@@ -5,7 +5,7 @@ v0.2 (Not yet released)
 -----------------------
 
 * Reader visitor for a simplistic version of structural Verilog (`verilog_reader`)
-* Implementation of a pretty-printer for the support subset of Verilog: (`verilog_pretty_printer`)
+* Implementation of a pretty-printer for Verilog: (`verilog_pretty_printer`)
 * Writer visitor for assembling strings to PLA (`pla_writer`)
 * Support for parsing AIGER 1.9 (`aiger_reader`, `ascii_aiger_pretty_printer`)
 
