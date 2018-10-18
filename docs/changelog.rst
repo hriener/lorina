@@ -1,7 +1,10 @@
 Change Log
 ==========
 
-v0.2 (Not yet released)
+v0.3 (Not yet released)
+-----------------------
+
+v0.2 (October 18, 2018)
 -----------------------
 
 * Reader visitor for a simplistic version of structural Verilog (`verilog_reader`)
