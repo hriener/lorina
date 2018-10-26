@@ -33,7 +33,8 @@ public:
   }
 }; /* reader */
 
-read_bench( "network.bench", reader() );
+auto const result = read_bench( "network.bench", reader() );
+assert( result == return_code::success );
 ```
 
 Besides parsing, the reader supports a mechanism to react on parse errors.
@@ -51,7 +52,8 @@ public:
 }; /* diagnostics */
 
 diagnostics diag;
-read_bench( "network.bench", reader(), &diag );
+auto const result = read_bench( "network.bench", reader(), &diag );
+assert( result == return_code::success );
 ```
 
 ## EPFL logic sythesis libraries
