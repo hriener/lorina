@@ -697,7 +697,7 @@ inline return_code read_aiger( std::istream& in, const aiger_reader& reader, dia
   /* parse header */
   if ( std::regex_search( header_line, m, aig_regex::header ) )
   {
-    std::vector<std::size_t> header;
+    std::vector<uint32_t> header;
     for ( const auto& i : m )
     {
       if ( i == "" )
