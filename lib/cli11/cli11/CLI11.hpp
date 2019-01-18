@@ -1658,6 +1658,11 @@ class App {
         return this;
     }
 
+    /// Destructor
+    virtual ~App()
+    {
+    }
+
     /// Check to see if this subcommand was parsed, true only if received on command line.
     bool parsed() const { return parsed_; }
 
