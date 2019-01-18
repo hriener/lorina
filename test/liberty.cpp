@@ -22,9 +22,9 @@ TEST_CASE( "example1", "[liberty]" )
     "library (example1) {\n"
     "  technology (cmos);\n"
     "  delay_model : table_lookup;\n"
-    "  date : \"December 12, 2003\";\n"
-    "  comment : \"Copyright 2003, General Silicon, Inc.\";\n"
-    "  revision : 2003.12 ;\n"
+    "  date : \"January 18, 2019\";\n"
+    "  comment : \"Copyright (C) 2018  EPFL\";\n"
+    "  revision : 2019.01 ;\n"
     "  bus_naming_style : \"Bus%sPin%d\";\n"
     "}\n";
 
