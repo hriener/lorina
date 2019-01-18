@@ -174,7 +174,7 @@ public:
       else if ( c == '/' && comment_mode == 3 )
       {
         lexem.push_back( c );
-        std::cout << lexem << std::endl;
+        // std::cout << lexem << std::endl;
         comment_mode = 0;
         lexem = "";
         continue;
