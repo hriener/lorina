@@ -51,7 +51,16 @@ class liberty_reader
 public:
 }; // liberty_reader
 
-/*! \brief Reader function for the LIBERTY format.
+/*! \brief A LIBERTY reader for pretty-printing.
+ *
+ * Callbacks for pretty-printing LIBERTY.
+ */
+class liberty_pretty_printer : public liberty_reader
+{
+public:
+}; // liberty_pretty_printer
+
+/*! \brief Reader function for LIBERTY format.
  *
  * Reads LIBERTY format from a stream and invokes a callback
  * method for each parsed primitive and each detected parse error.
@@ -65,6 +74,7 @@ inline return_code read_liberty( std::istream& in, const liberty_reader& reader,
 {
   (void)in;
   (void)reader;
+  (void)diag;
   return return_code::parse_error;
 }
 
@@ -80,6 +90,8 @@ inline return_code read_liberty( std::istream& in, const liberty_reader& reader,
  */
 inline return_code read_liberty( const std::string& filename, const liberty_reader& reader, diagnostic_engine* diag = nullptr )
 {
+  (void)diag;
+
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );
   return read_liberty( in, reader );
 }

@@ -28,24 +28,27 @@
 #include <lorina/bench.hpp>
 #include <lorina/blif.hpp>
 #include <lorina/pla.hpp>
+#include <lorina/liberty.hpp>
 #include <unordered_map>
 
 using namespace lorina;
 
 enum class format
 {
-  binary_aiger,
   ascii_aiger,
+  binary_aiger,
   bench,
   blif,
-  pla,
+  liberty,
+  pla
 }; /* format */
 
 std::unordered_map<std::string, format> ext_to_format( {
-    {"aig", format::binary_aiger},
     {"aag", format::ascii_aiger},
+    {"aig", format::binary_aiger},
     {"bench", format::bench},
     {"blif", format::blif},
+    {"liberty", format::liberty},
     {"pla", format::pla},
 } );
 
@@ -112,6 +115,12 @@ int main( int argc, char** argv )
   {
     blif_pretty_printer reader;
     result = read_blif( filename, reader, &diag );
+    break;
+  }
+  case format::liberty:
+  {
+    liberty_pretty_printer reader;
+    result = read_liberty( filename, reader, &diag );
     break;
   }
   case format::pla:
