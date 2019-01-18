@@ -48,7 +48,7 @@ std::unordered_map<std::string, format> ext_to_format( {
     {"aig", format::binary_aiger},
     {"bench", format::bench},
     {"blif", format::blif},
-    {"liberty", format::liberty},
+    {"lib", format::liberty},
     {"pla", format::pla},
 } );
 
