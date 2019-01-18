@@ -376,7 +376,7 @@ public:
         consume();
       }
 
-      assert( is( token_kind::comma ) );
+      assert( is( token_kind::rparan ) );
       consume();
 
       if ( !is( token_kind::semicolon ) )
