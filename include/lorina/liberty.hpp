@@ -160,17 +160,22 @@ public:
         lexem.push_back( c );
         continue;
       }
+      else if ( comment_mode == 1 )
+      {
+        comment_mode = 0;
+      }
+
       if ( c == '*' && comment_mode == 2 )
       {
-        --comment_mode;
+        ++comment_mode;
         lexem.push_back( c );
         continue;
       }
-      else if ( c == '/' && comment_mode == 1 )
+      else if ( c == '/' && comment_mode == 3 )
       {
-        comment_mode = 0;
         lexem.push_back( c );
-        // std::cout << lexem << std::endl;
+        std::cout << lexem << std::endl;
+        comment_mode = 0;
         lexem = "";
         continue;
       }
@@ -180,10 +185,7 @@ public:
         lexem.push_back( c );
         continue;
       }
-      else if ( comment_mode <= 1 )
-      {
-        comment_mode = 0;
-      }
+      /* end parse comments */
 
       if ( quote_mode )
       {
@@ -192,7 +194,6 @@ public:
         lexem.push_back( c );
         continue;
       }
-      /* end parse comments */
 
       assert( !quote_mode );
 
@@ -351,7 +352,7 @@ public:
         return false;
       consume();
 
-      std::cout << fmt::format( "{} = {};\n", key, value );
+      std::cout << fmt::format( "{} : {};\n", key, value );
       return true;
     }
     else if ( is( token_kind::lparan ) )
@@ -359,41 +360,54 @@ public:
       std::vector<std::string> values;
       consume();
 
-      if ( !is( token_kind::id ) )
-        return false;
-      values.emplace_back( _tok.lexem );
-      consume();
-
       while ( !is( token_kind::rparan ) )
       {
-        if ( !is( token_kind::comma ) )
-          return false;
-        consume();
+        if ( is( token_kind::id ) )
+        {
+          values.emplace_back( _tok.lexem );
+          consume();
 
-        if ( !is( token_kind::id ) )
-          return false;
-        values.emplace_back( _tok.lexem );
-        consume();
+          if ( is( token_kind::comma ) )
+            consume();
+        }
       }
 
       assert( is( token_kind::rparan ) );
       consume();
 
-      if ( !is( token_kind::semicolon ) )
-        return false;
-      consume();
-
-      std::string out;
-      for ( auto i = 0u; i < values.size(); ++i )
+      if ( is( token_kind::semicolon ) )
       {
-        out += values.at( i );
-        if ( i+1 < values.size() )
-          out += ", ";
+        consume();
+        std::string out;
+        for ( auto i = 0u; i < values.size(); ++i )
+        {
+          out += values.at( i );
+          if ( i+1 < values.size() )
+            out += ", ";
+        }
+        std::cout << fmt::format( "{}( {} );\n", key, out );
+        return true;
       }
-      std::cout << fmt::format( "{}( {} );\n", key, out );
-      return true;
-    }
+      else if ( is( token_kind::lscope ) )
+      {
+        consume();
 
+        assert( values.size() <= 1u );
+        std::cout << fmt::format( "{}( {} )\n", key, values.size() == 0u ? "" : values.at( 0u ) );
+        std::cout << "{" << std::endl;
+
+        bool okay = parse_defs();
+        if ( !okay )
+          return false;
+
+        if ( !is( token_kind::rscope ) )
+          return false;
+        consume();
+
+        std::cout << "}" << std::endl;
+        return true;
+      }
+    }
     return false;
   }
 
