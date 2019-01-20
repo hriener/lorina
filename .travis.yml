@@ -10,6 +10,7 @@ script:
   - make run_tests
   - cd test
   - ./run_tests
+  - cd ..
 
 matrix:
   include:
@@ -23,15 +24,9 @@ matrix:
         packages:
           - g++-7
     env: COMPILER=g++-7 COVERAGE=ON
-    after_script:
+    after_success:
       - pwd
       - coveralls --gcov-options '\-lp' --verbose
-      - cd ..
-      - ls -lah
-      - cd ..
-      - ls -lah
-      - cd ..
-      - ls -lah
   - os: linux
     dist: trusty
     compiler: gcc
