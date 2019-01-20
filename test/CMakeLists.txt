@@ -6,6 +6,7 @@ endif()
 
 file(GLOB FILENAMES *.cpp)
 
+message("ENABLE_COVERAGE=${ENABLE_COVERAGE}")
 add_executable(run_tests ${FILENAMES})
 if (ENABLE_COVERAGE)
   target_link_libraries(run_tests PUBLIC fmt lorina gcov)

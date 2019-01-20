@@ -6,7 +6,7 @@ option(LORINA_EXAMPLES "Build examples" ON)
 option(LORINA_TEST "Build tests" OFF)
 
 if (CMAKE_COMPILER_IS_GNUCC)
-  option(ENABLE_COVERAGE "Enable coverage reporting for gcc/clang" FALSE)
+  option(ENABLE_COVERAGE "Enable coverage reporting for gcc/clang" OFF)
 
   if (ENABLE_COVERAGE)
     add_compile_options(-O0 -g --coverage -fprofile-arcs -ftest-coverage)
