@@ -25,8 +25,7 @@ matrix:
           - g++-7
     env: COMPILER=g++-7 COVERAGE=ON
     after_success:
-      - pwd
-      - coveralls --gcov-options '\-lp' --verbose
+      - coveralls --gcov-options '\-lp' --exclude CMakeFiles --exclude lib --exclude examples
   - os: linux
     dist: trusty
     compiler: gcc
