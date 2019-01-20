@@ -8,7 +8,8 @@ before_install:
 script:
   - cmake -DCMAKE_CXX_COMPILER=$COMPILER -DLORINA_TEST=ON -DLORINA_EXAMPLES=ON .. -DENABLE_COVERAGE:BOOL=$COVERAGE .
   - make run_tests
-  - ./test/run_tests
+  - cd test
+  - ./run_tests
 
 matrix:
   include:
@@ -23,6 +24,7 @@ matrix:
           - g++-7
     env: COMPILER=g++-7 COVERAGE=ON
     after_script:
+      - pwd
       - coveralls --gcov-options '\-lp'
   - os: linux
     dist: trusty
