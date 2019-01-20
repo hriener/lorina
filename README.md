@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/hriener/lorina.svg?branch=master)](https://travis-ci.org/hriener/lorina)
 [![Build status](https://ci.appveyor.com/api/projects/status/vwo8hc9dhtkxhcbl?svg=true)](https://ci.appveyor.com/project/hriener/lorina)
+[![Coverage Status](https://coveralls.io/repos/github/hriener/lorina/badge.svg?branch=coverage)](https://coveralls.io/github/hriener/lorina?branch=coverage)
 [![Documentation Status](https://readthedocs.org/projects/lorina/badge/?version=latest)](http://lorina.readthedocs.io/en/latest/?badge=latest)
 [![Latest release](https://img.shields.io/github/release/hriener/lorina.svg)](https://github.com/hriener/lorina/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
