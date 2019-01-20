@@ -5,11 +5,13 @@ project(lorina LANGUAGES CXX)
 option(LORINA_EXAMPLES "Build examples" ON)
 option(LORINA_TEST "Build tests" OFF)
 
-# CXX standard
-if(NOT "${CMAKE_CXX_STANDARD}")
-  set(CMAKE_CXX_STANDARD 14)
+if (CMAKE_COMPILER_IS_GNUCC)
+  option(ENABLE_COVERAGE "Enable coverage reporting for gcc/clang" FALSE)
+
+  if (ENABLE_COVERAGE)
+    add_compile_options(-O0 -g --coverage -fprofile-arcs -ftest-coverage)
+  endif()
 endif()
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # some specific compiler definitions
 include(CheckCXXCompilerFlag)

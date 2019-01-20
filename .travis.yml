@@ -1,28 +1,69 @@
 sudo: required
 dist: trusty
-
 language: cpp
-script:
-  - mkdir build
-  - cd build
-  - cmake -DCMAKE_CXX_COMPILER=$COMPILER -DCMAKE_CXX_STANDARD=$CXX_STANDARD -DLORINA_TEST=ON -DLORINA_EXAMPLES=ON ..
-  - make run_tests
-  - ./test/run_tests
 
 before_install:
-  - python3 -m pip install --user cpp-coveralls
+  - pip install --user cpp-coveralls
 
-after_success:
-  - coveralls --gcov-options '\-lp'
+script:
+  - cmake -DCMAKE_CXX_COMPILER=$COMPILER -DLORINA_TEST=ON -DLORINA_EXAMPLES=ON .. -DENABLE_COVERAGE:BOOL=$COVERAGE .
+  - make run_tests
+  - ./test/run_tests
+  - if [[ $COVERAGE == TRUE ]]; then coveralls --gcov-options '\-lp'; fi
 
 matrix:
   include:
-    - compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-7
-            - ggcov
-      env: COMPILER=g++-7 CXX_STANDARD=17
+  - os: linux
+    dist: trusty
+    compiler: gcc
+    addons:
+      apt:
+        sources: 
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-7
+    env: COMPILER=g++-7 COVERAGE=TRUE
+  - os: linux
+    dist: trusty
+    compiler: gcc
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-8
+    env: COMPILER=g++-8 COVERAGE=TRUE
+  - os: linux
+    dist: trusty
+    compiler: clang
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-6.0
+        packages:
+          - clang-6.0
+          - g++-7
+    env: COMPILER=clang++-6.0 COVERAGE=FALSE
+  - os: osx
+    osx_image: xcode9.3
+    compiler: clang
+    before_install:
+      - brew update
+      - brew install llvm
+    env: COMPILER=/usr/local/opt/llvm/bin/clang++ COVERAGE=FALSE
+  - os: osx
+    osx_image: xcode8.3
+    compiler: gcc
+    before_install:
+      - brew update
+      - brew install gcc
+    env: COMPILER=/usr/local/opt/gcc/bin/g++-8 COVERAGE=FALSE
+  - os: osx
+    osx_image: xcode8.3
+    compiler: gcc
+    before_install:
+      - brew update
+      - brew install gcc@7
+    env: COMPILER=/usr/local/opt/gcc@7/bin/g++-7 COVERAGE=FALSE
+    
