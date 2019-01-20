@@ -9,6 +9,12 @@ script:
   - make run_tests
   - ./test/run_tests
 
+before_install:
+  - python3 -m pip install --user cpp-coveralls
+
+after_success:
+  - coveralls --gcov-options '\-lp'
+
 matrix:
   include:
     - compiler: gcc
@@ -17,49 +23,6 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-4.9
-      env: COMPILER=g++-4.9
-    - compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-5
-      env: COMPILER=g++-5
-    - compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-6
-      env: COMPILER=g++-6
-    - compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
             - g++-7
+            - ggcov
       env: COMPILER=g++-7 CXX_STANDARD=17
-    - compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-4.0
-          packages:
-            - clang-4.0
-            - g++-5
-      env: COMPILER=clang++-4.0
-    - compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-6.0
-          packages:
-            - clang-6.0
-            - g++-5
-      env: COMPILER=clang++-6.0 CXX_STANDARD=17
