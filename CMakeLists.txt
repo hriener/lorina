@@ -21,7 +21,7 @@ if (HAS_FCOLOR_DIAGNOSTICS)
 endif()
 
 if (UNIX)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
 endif()
 
 add_subdirectory(lib)
