@@ -10,26 +10,26 @@ using namespace lorina;
 struct aiger_statistics
 {
   /* header information AIGER v1.9 */
-  std::size_t maximum_variable_index = 0;
-  std::size_t number_of_inputs = 0;
-  std::size_t number_of_latches = 0;
-  std::size_t number_of_outputs = 0;
-  std::size_t number_of_ands = 0;
-  std::size_t number_of_bad_states = 0;
-  std::size_t number_of_constraints = 0;
-  std::size_t number_of_justice = 0;
-  std::size_t number_of_fairness = 0;
+  uint64_t maximum_variable_index = 0;
+  uint64_t number_of_inputs = 0;
+  uint64_t number_of_latches = 0;
+  uint64_t number_of_outputs = 0;
+  uint64_t number_of_ands = 0;
+  uint64_t number_of_bad_states = 0;
+  uint64_t number_of_constraints = 0;
+  uint64_t number_of_justice = 0;
+  uint64_t number_of_fairness = 0;
 
-  std::vector<std::tuple<unsigned, unsigned>> outputs;
-  std::vector<std::tuple<unsigned,unsigned,aiger_reader::latch_init_value>> latches;
-  std::vector<std::tuple<unsigned,unsigned,unsigned>> ands;
-  std::vector<std::tuple<unsigned, unsigned>> bad_states;
-  std::vector<std::tuple<unsigned, unsigned>> constraints;
-  std::vector<std::tuple<unsigned, std::vector<unsigned>>> justice;
-  std::vector<std::tuple<unsigned, unsigned>> fairness;
+  std::vector<std::tuple<uint32_t, uint32_t>> outputs;
+  std::vector<std::tuple<uint32_t,uint32_t,aiger_reader::latch_init_value>> latches;
+  std::vector<std::tuple<uint32_t,uint32_t,uint32_t>> ands;
+  std::vector<std::tuple<uint32_t, uint32_t>> bad_states;
+  std::vector<std::tuple<uint32_t, uint32_t>> constraints;
+  std::vector<std::tuple<uint32_t, std::vector<uint32_t>>> justice;
+  std::vector<std::tuple<uint32_t, uint32_t>> fairness;
 
-  std::map<unsigned, std::string> input_names;
-  std::map<unsigned, std::string> output_names;
+  std::map<uint32_t, std::string> input_names;
+  std::map<uint32_t, std::string> output_names;
   std::string comment;
 };
 
@@ -41,8 +41,8 @@ public:
   {
   }
 
-  void on_header( std::size_t m, std::size_t i, std::size_t l, std::size_t o, std::size_t a,
-                  std::size_t b, std::size_t c, std::size_t j, std::size_t f ) const override
+  void on_header( uint64_t m, uint64_t i, uint64_t l, uint64_t o, uint64_t a,
+                  uint64_t b, uint64_t c, uint64_t j, uint64_t f ) const override
   {
     _stats.maximum_variable_index = m;
     _stats.number_of_inputs = i;
@@ -55,14 +55,14 @@ public:
     _stats.number_of_fairness = f;
   }
 
-  void on_output( unsigned index, unsigned lit ) const override
+  void on_output( uint32_t index, uint32_t lit ) const override
   {
     (void)index;
     (void)lit;
     _stats.outputs.emplace_back( std::make_tuple(index, lit) );
   }
 
-  void on_and( unsigned index, unsigned left_lit, unsigned right_lit ) const override
+  void on_and( uint32_t index, uint32_t left_lit, uint32_t right_lit ) const override
   {
     (void)index;
     (void)left_lit;
@@ -70,37 +70,37 @@ public:
     _stats.ands.emplace_back( std::make_tuple(index, left_lit, right_lit) );
   }
 
-  void on_latch( unsigned index, unsigned next, latch_init_value init_value ) const override
+  void on_latch( uint32_t index, uint32_t next, latch_init_value init_value ) const override
   {
     _stats.latches.emplace_back( std::make_tuple(index, next, init_value) );
   }
 
-  void on_bad_state( unsigned index, unsigned lit ) const override
+  void on_bad_state( uint32_t index, uint32_t lit ) const override
   {
     _stats.bad_states.emplace_back( std::make_tuple(index, lit) );
   }
 
-  void on_constraint( unsigned index, unsigned lit ) const override
+  void on_constraint( uint32_t index, uint32_t lit ) const override
   {
     _stats.constraints.emplace_back( std::make_tuple(index, lit) );
   }
 
-  void on_justice( unsigned index, const std::vector<unsigned>& lits ) const override
+  void on_justice( uint32_t index, const std::vector<uint32_t>& lits ) const override
   {
     _stats.justice.emplace_back( std::make_tuple(index, lits) );
   }
 
-  void on_fairness( unsigned index, unsigned lit ) const override
+  void on_fairness( uint32_t index, uint32_t lit ) const override
   {
     _stats.fairness.emplace_back( std::make_tuple(index, lit) );
   }
 
-  void on_input_name( unsigned index, const std::string& name ) const override
+  void on_input_name( uint32_t index, const std::string& name ) const override
   {
     _stats.input_names.insert( std::make_pair( index, name ) );
   }
 
-  void on_output_name( unsigned index, const std::string& name ) const override
+  void on_output_name( uint32_t index, const std::string& name ) const override
   {
     _stats.output_names.insert( std::make_pair( index, name ) );
   }

@@ -6,10 +6,10 @@ using namespace lorina;
 
 struct pla_statistics
 {
-  std::size_t number_of_inputs = 0;
-  std::size_t number_of_outputs = 0;
-  std::size_t number_of_terms = 0;
-  std::size_t term_count = 0;
+  uint64_t number_of_inputs = 0;
+  uint64_t number_of_outputs = 0;
+  uint64_t number_of_terms = 0;
+  uint64_t term_count = 0;
   bool end_seen = false;
   std::string type;
 };
@@ -22,17 +22,17 @@ public:
   {
   }
 
-  void on_number_of_inputs( std::size_t number_of_inputs ) const override
+  void on_number_of_inputs( uint64_t number_of_inputs ) const override
   {
     _stats.number_of_inputs = number_of_inputs;
   }
 
-  void on_number_of_outputs( std::size_t number_of_outputs ) const override
+  void on_number_of_outputs( uint64_t number_of_outputs ) const override
   {
     _stats.number_of_outputs = number_of_outputs;
   }
 
-  void on_number_of_terms( std::size_t number_of_terms ) const override
+  void on_number_of_terms( uint64_t number_of_terms ) const override
   {
     _stats.number_of_terms = number_of_terms;
   }
