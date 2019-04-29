@@ -23,7 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <cli11/CLI11.hpp>
+#include <CLI/CLI.hpp>
 #include <lorina/aiger.hpp>
 #include <lorina/bench.hpp>
 #include <lorina/blif.hpp>
