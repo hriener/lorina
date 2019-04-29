@@ -111,6 +111,19 @@ public:
     (void)op2;
   }
 
+  /*! \brief Callback method for parsed NAND-gate with 2 operands `LHS = ~(OP1 & OP2) ;`.
+   *
+   * \param lhs Left-hand side of assignment
+   * \param op1 operand1 of assignment
+   * \param op2 operand2 of assignment
+   */
+  virtual void on_nand( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2 ) const
+  {
+    (void)lhs;
+    (void)op1;
+    (void)op2;
+  }
+
   /*! \brief Callback method for parsed OR-gate with 2 operands `LHS = OP1 | OP2 ;`.
    *
    * \param lhs Left-hand side of assignment
@@ -124,6 +137,19 @@ public:
     (void)op2;
   }
 
+  /*! \brief Callback method for parsed NOR-gate with 2 operands `LHS = ~(OP1 | OP2) ;`.
+   *
+   * \param lhs Left-hand side of assignment
+   * \param op1 operand1 of assignment
+   * \param op2 operand2 of assignment
+   */
+  virtual void on_nor( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2 ) const
+  {
+    (void)lhs;
+    (void)op1;
+    (void)op2;
+  }
+
   /*! \brief Callback method for parsed XOR-gate with 2 operands `LHS = OP1 ^ OP2 ;`.
    *
    * \param lhs Left-hand side of assignment
@@ -131,6 +157,19 @@ public:
    * \param op2 operand2 of assignment
    */
   virtual void on_xor( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2 ) const
+  {
+    (void)lhs;
+    (void)op1;
+    (void)op2;
+  }
+
+  /*! \brief Callback method for parsed XOR-gate with 2 operands `LHS = ~(OP1 ^ OP2) ;`.
+   *
+   * \param lhs Left-hand side of assignment
+   * \param op1 operand1 of assignment
+   * \param op2 operand2 of assignment
+   */
+  virtual void on_xnor( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2 ) const
   {
     (void)lhs;
     (void)op1;
@@ -293,6 +332,13 @@ public:
     _os << fmt::format("assign {} = {} & {} ;\n", lhs, p1, p2 );
   }
 
+  void on_nand( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2 ) const override
+  {
+    const std::string p1 = op1.second ? fmt::format( "~{}", op1.first ) : op1.first;
+    const std::string p2 = op2.second ? fmt::format( "~{}", op2.first ) : op2.first;
+    _os << fmt::format("assign {} = ~({} & {}) ;\n", lhs, p1, p2 );
+  }
+
   void on_or( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2 ) const override
   {
     const std::string p1 = op1.second ? fmt::format( "~{}", op1.first ) : op1.first;
@@ -300,11 +346,25 @@ public:
     _os << fmt::format("assign {} = {} | {} ;\n", lhs, p1, p2 );
   }
 
+  void on_nor( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2 ) const override
+  {
+    const std::string p1 = op1.second ? fmt::format( "~{}", op1.first ) : op1.first;
+    const std::string p2 = op2.second ? fmt::format( "~{}", op2.first ) : op2.first;
+    _os << fmt::format("assign {} = ~({} | {}) ;\n", lhs, p1, p2 );
+  }
+
   void on_xor( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2 ) const override
   {
     const std::string p1 = op1.second ? fmt::format( "~{}", op1.first ) : op1.first;
     const std::string p2 = op2.second ? fmt::format( "~{}", op2.first ) : op2.first;
     _os << fmt::format("assign {} = {} ^ {} ;\n", lhs, p1, p2 );
+  }
+
+  void on_xnor( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2 ) const override
+  {
+    const std::string p1 = op1.second ? fmt::format( "~{}", op1.first ) : op1.first;
+    const std::string p2 = op2.second ? fmt::format( "~{}", op2.first ) : op2.first;
+    _os << fmt::format("assign {} = ~({} ^ {}) ;\n", lhs, p1, p2 );
   }
 
   void on_and3( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2, const std::pair<std::string, bool>& op3 ) const override
@@ -508,15 +568,30 @@ public:
                     assert( inputs.size() == 2u );
                     reader.on_and( output, inputs[0], inputs[1] );
                   }
+                  else if ( type == "nand2" )
+                  {
+                    assert( inputs.size() == 2u );
+                    reader.on_nand( output, inputs[0], inputs[1] );
+                  }
                   else if ( type == "or2" )
                   {
                     assert( inputs.size() == 2u );
                     reader.on_or( output, inputs[0], inputs[1] );
                   }
+                  else if ( type == "nor2" )
+                  {
+                    assert( inputs.size() == 2u );
+                    reader.on_nor( output, inputs[0], inputs[1] );
+                  }
                   else if ( type == "xor2" )
                   {
                     assert( inputs.size() == 2u );
                     reader.on_xor( output, inputs[0], inputs[1] );
+                  }
+                  else if ( type == "xnor2" )
+                  {
+                    assert( inputs.size() == 2u );
+                    reader.on_xnor( output, inputs[0], inputs[1] );
                   }
                   else if ( type == "and3" )
                   {
@@ -840,6 +915,29 @@ public:
       else if ( op == "^" )
       {
         on_action.call_deferred( { arg0.first, arg1.first }, lhs, {arg0, arg1}, lhs, "xor2" );
+      }
+      else
+      {
+        return false;
+      }
+    }
+    else if ( std::regex_match( s, sm, verilog_regex::negated_binary_expression ) )
+    {
+      assert( sm.size() == 6u );
+      std::pair<std::string,bool> arg0 = {sm[2], sm[1] == "~"};
+      std::pair<std::string,bool> arg1 = {sm[5], sm[4] == "~"};
+      auto op = sm[3];
+      if ( op == "&" )
+      {
+        on_action.call_deferred( { arg0.first, arg1.first }, lhs, {arg0, arg1}, lhs, "nand2" );
+      }
+      else if ( op == "|" )
+      {
+        on_action.call_deferred( { arg0.first, arg1.first }, lhs, {arg0, arg1}, lhs, "nor2" );
+      }
+      else if ( op == "^" )
+      {
+        on_action.call_deferred( { arg0.first, arg1.first }, lhs, {arg0, arg1}, lhs, "xnor2" );
       }
       else
       {
