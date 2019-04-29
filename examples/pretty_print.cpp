@@ -28,6 +28,7 @@
 #include <lorina/bench.hpp>
 #include <lorina/blif.hpp>
 #include <lorina/pla.hpp>
+#include <lorina/verilog.hpp>
 #include <unordered_map>
 
 using namespace lorina;
@@ -39,6 +40,7 @@ enum class format
   bench,
   blif,
   pla,
+  verilog,
 }; /* format */
 
 std::unordered_map<std::string, format> ext_to_format( {
@@ -47,6 +49,7 @@ std::unordered_map<std::string, format> ext_to_format( {
     {"bench", format::bench},
     {"blif", format::blif},
     {"pla", format::pla},
+    {"v", format::verilog},
 } );
 
 int main( int argc, char** argv )
@@ -91,35 +94,41 @@ int main( int argc, char** argv )
   switch ( kind )
   {
   case format::ascii_aiger:
-  {
-    ascii_aiger_pretty_printer reader;
-    result = read_ascii_aiger( filename, reader, &diag );
-    break;
-  }
+    {
+      ascii_aiger_pretty_printer reader;
+      result = read_ascii_aiger( filename, reader, &diag );
+      break;
+    }
   case format::binary_aiger:
-  {
-    ascii_aiger_pretty_printer reader;
-    result = read_aiger( filename, reader, &diag );
-    break;
-  }
+    {
+      ascii_aiger_pretty_printer reader;
+      result = read_aiger( filename, reader, &diag );
+      break;
+    }
   case format::bench:
-  {
-    bench_pretty_printer reader;
-    result = read_bench( filename, reader, &diag );
-    break;
-  }
+    {
+      bench_pretty_printer reader;
+      result = read_bench( filename, reader, &diag );
+      break;
+    }
   case format::blif:
-  {
-    blif_pretty_printer reader;
-    result = read_blif( filename, reader, &diag );
-    break;
-  }
+    {
+      blif_pretty_printer reader;
+      result = read_blif( filename, reader, &diag );
+      break;
+    }
   case format::pla:
-  {
-    pla_pretty_printer reader;
-    result = read_pla( filename, reader, &diag );
-    break;
-  }
+    {
+      pla_pretty_printer reader;
+      result = read_pla( filename, reader, &diag );
+      break;
+    }
+  case format::verilog:
+    {
+      verilog_pretty_printer reader;
+      result = read_verilog( filename, reader, &diag );
+      break;
+    }
   default:
   {
     std::cerr << fmt::format( "[e] no reader specified for `{0}`", kind_string ) << std::endl;
