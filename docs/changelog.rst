@@ -4,12 +4,14 @@ Change Log
 v0.3 (Not yet released)
 -----------------------
 
+* Writer visitor for Verilog (`verilog_writer`)
+
 v0.2 (October 18, 2018)
 -----------------------
 
 * Reader visitor for a simplistic version of structural Verilog (`verilog_reader`)
 * Implementation of a pretty-printer for Verilog: (`verilog_pretty_printer`)
-* Writer visitor for assembling strings to PLA (`pla_writer`)
+* Writer visitor for PLA (`pla_writer`)
 * Support for parsing AIGER 1.9 (`aiger_reader`, `ascii_aiger_pretty_printer`)
 
 v0.1 (April 27, 2018)
