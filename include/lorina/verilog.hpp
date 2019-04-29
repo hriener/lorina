@@ -374,7 +374,7 @@ public:
    * \param name Module name
    * \param xs List of module inputs
    * \param ys List of module outputs
-   * \param ys List of module wires
+   * \param ws List of module wires
    */
   virtual void on_module_begin( std::string const& name, std::vector<std::string> const& xs, std::vector<std::string> const& ys, std::vector<std::string> const& ws ) const
   {
@@ -421,7 +421,7 @@ public:
   /*! \brief Callback method for writing an assignment statement.
    *
    * \param out Output signal
-   * \param xs List of input signals
+   * \param ins List of input signals
    * \param op Operator
    */
   virtual void on_assign( std::string const& out, std::vector<std::pair<bool,std::string>> const& ins, std::string const& op ) const
@@ -442,7 +442,7 @@ public:
   /*! \brief Callback method for writing a maj3 assignment statement.
    *
    * \param out Output signal
-   * \param xs List of three input signals
+   * \param ins List of three input signals
    */
   virtual void on_assign_maj3( std::string const& out, std::vector<std::pair<bool,std::string>> const& ins ) const
   {
@@ -466,7 +466,7 @@ public:
   /*! \brief Callback method for writing a maj3 assignment statement.
    *
    * \param out Output signal
-   * \param xs List of three input signals
+   * \param in An input signal
    */
   virtual void on_assign_po( std::string const& out, std::pair<bool,std::string> const& in ) const
   {
