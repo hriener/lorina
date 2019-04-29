@@ -50,12 +50,12 @@ public:
   mutable std::vector<std::tuple<std::vector<std::string>,std::string,std::string>> gate_lines;
 }; /* bench_statistics_reader */
 
-TEST_CASE( "return_code", "[bench]" )
+TEST_CASE( "Check return_code of read_bench", "[bench]" )
 {
   std::string broken_file =
     "INPUT(x[0])\n"
     "OUTPUT(y[0])\n"
-    "y[0]!! x[0]\n";
+    "y[0] := x[0]\n";
 
   {
     std::istringstream iss( broken_file );
