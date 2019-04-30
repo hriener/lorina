@@ -58,6 +58,33 @@ public:
   blif_statistics& _stats;
 }; /* blif_statistics_reader */
 
+TEST_CASE( "Check return_code of read_blif", "[blif]")
+{
+  std::string broken_file =
+    "model top\n"
+    "names y0\n"
+    " 0\n"
+    "end\n";
+
+  {
+    std::istringstream iss( broken_file );
+    CHECK( read_blif( iss, blif_reader{} ) == return_code::parse_error );
+  }
+
+  std::string correct_file =
+    ".model top\n"
+    ".inputs x0 x1\n"
+    ".outputs y0\n"
+    ".names y0\n"
+    " 0\n"
+    ".end\n";
+
+  {
+    std::istringstream iss( correct_file );
+    CHECK( read_blif( iss, blif_reader{} ) == return_code::success );
+  }
+}
+
 TEST_CASE( "blif_parse", "[blif]" )
 {
   std::string blif_file =

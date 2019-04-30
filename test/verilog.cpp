@@ -119,6 +119,37 @@ public:
   mutable uint32_t _comments = 0;
 }; /* simple_verilog_reader */
 
+TEST_CASE( "Check return_code of read_verilog", "[blif]")
+{
+  std::string broken_file =
+    "module top( y1, a, b ) ;\n"
+    "  input a , b ;\n"
+    "  output y1 ;\n"
+    "  wire g0 ;\n"
+    "  g0 = a ^ b ;\n"
+    "  assign y1 = g0 ;\n"
+    "endmodule\n";
+
+  {
+    std::istringstream iss( broken_file );
+    CHECK( read_verilog( iss, verilog_reader{} ) == return_code::parse_error );
+  }
+
+  std::string correct_file =
+    "module top( y1, a, b ) ;\n"
+    "  input a , b ;\n"
+    "  output y1 ;\n"
+    "  wire g0 ;\n"
+    "  assign g0 = a ^ b ;\n"
+    "  assign y1 = g0 ;\n"
+    "endmodule\n";
+
+  {
+    std::istringstream iss( correct_file );
+    CHECK( read_verilog( iss, verilog_reader{} ) == return_code::success );
+  }
+}
+
 TEST_CASE( "Parse a simple Verilog file", "[verilog]" )
 {
   std::string verilog_file =

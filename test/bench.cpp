@@ -50,6 +50,29 @@ public:
   mutable std::vector<std::tuple<std::vector<std::string>,std::string,std::string>> gate_lines;
 }; /* bench_statistics_reader */
 
+TEST_CASE( "Check return_code of read_bench", "[bench]" )
+{
+  std::string broken_file =
+    "INPUT(x[0])\n"
+    "OUTPUT(y[0])\n"
+    "y[0] := x[0]\n";
+
+  {
+    std::istringstream iss( broken_file );
+    CHECK( read_bench( iss, bench_reader{} ) == return_code::parse_error );
+  }
+
+  std::string correct_file =
+    "INPUT(x[0])\n"
+    "OUTPUT(y[0])\n"
+    "y[0] = x[0]\n";
+
+  {
+    std::istringstream iss( correct_file );
+    CHECK( read_bench( iss, bench_reader{} ) == return_code::success );
+  }
+}
+
 TEST_CASE( "bench_parse", "[bench]" )
 {
   std::string bench_file =

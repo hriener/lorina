@@ -730,7 +730,13 @@ public:
     }
 
     /* check dangling objects */
-    for ( const auto& r : on_action.unresolved_dependencies() )
+
+    bool result = true;
+    const auto& deps = on_action.unresolved_dependencies();
+    if ( deps.size() > 0 )
+      result = false;
+
+    for ( const auto& r : deps )
     {
       if ( diag )
       {
@@ -738,6 +744,9 @@ public:
                       fmt::format( "unresolved dependencies: `{0}` requires `{1}`",  r.first, r.second ) );
       }
     }
+
+    if ( !result )
+      return false;
 
     if ( token == "endmodule" )
     {
