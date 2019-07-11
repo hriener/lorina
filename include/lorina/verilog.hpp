@@ -434,42 +434,127 @@ public:
    * \param name Module name
    * \param xs List of module inputs
    * \param ys List of module outputs
-   * \param ws List of module wires
    */
-  virtual void on_module_begin( std::string const& name, std::vector<std::string> const& xs, std::vector<std::string> const& ys, std::vector<std::string> const& ws ) const
+  virtual void on_module_begin( std::string const& name, std::vector<std::string> const& xs, std::vector<std::string> const& ys ) const
   {
-    std::string in, out, wire;
+    std::vector<std::string> names = xs;
+    std::copy( ys.begin(), ys.end(), std::back_inserter( names ) );
 
-    /* assemble input declaration */
-    for ( auto i = 0u; i < xs.size(); ++i )
-    {
-      in.append( xs.at( i ) );
-      if ( i != xs.size() - 1 )
-        in.append( ", " );
-    }
+    _os << fmt::format( "module {}({});\n", name, fmt::join( names, ", " ) );
+  }
 
-    /* assemble output declaration */
-    for ( auto i = 0u; i < ys.size(); ++i )
-    {
-      out.append( ys.at( i ) );
-      if ( i != ys.size() - 1 )
-        out.append( ", " );
-    }
+  /*! \brief Callback method for writing single 1-bit input.
+   *
+   * \param name Input name
+   */
+  virtual void on_input( std::string const& name ) const
+  {
+    _os << fmt::format( "  input {};\n", name );
+  }
 
-    /* assemble wire declaration */
-    for ( auto i = 0u; i < ws.size(); ++i )
-    {
-      wire.append( ws.at( i ) );
-      if ( i != ws.size() - 1 )
-        wire.append( ", " );
-    }
+  /*! \brief Callback method for writing input register.
+   *
+   * \param width Register size
+   * \param name Input name
+   */
+  virtual void on_input( uint32_t width, std::string const& name ) const
+  {
+    _os << fmt::format( "  input [{}:0] {};\n", width - 1 , name );
+  }
 
-    _os << fmt::format( "module {}({}, {});\n", name, in, out )
-        << fmt::format( "  input {};\n", in )
-        << fmt::format( "  output {};\n", out );
+  /*! \brief Callback method for writing multiple single 1-bit input.
+   *
+   * \param names Input names
+   */
+  virtual void on_input( std::vector<std::string> const& names ) const
+  {
+    _os << fmt::format( "  input {};\n", fmt::join( names, "," ) );
+  }
 
-    if ( ws.size() > 0 )
-      _os << fmt::format( "  wire {};\n", wire );
+  /*! \brief Callback method for writing multiple input registers.
+   *
+   * \param width Register size
+   * \param names Input names
+   */
+  virtual void on_input( uint32_t width, std::vector<std::string> const& names ) const
+  {
+    _os << fmt::format( "  input [{}:0] {};\n", width - 1, fmt::join( names, "," ) );
+  }
+
+  /*! \brief Callback method for writing single 1-bit output.
+   *
+   * \param name Output name
+   */
+  virtual void on_output( std::string const& name ) const
+  {
+    _os << fmt::format( "  output {};\n", name );
+  }
+
+  /*! \brief Callback method for writing output register.
+   *
+   * \param width Register size
+   * \param name Output name
+   */
+  virtual void on_output( uint32_t width, std::string const& name ) const
+  {
+    _os << fmt::format( "  output [{}:0] {};\n", width - 1 , name );
+  }
+
+  /*! \brief Callback method for writing multiple single 1-bit output.
+   *
+   * \param names Output names
+   */
+  virtual void on_output( std::vector<std::string> const& names ) const
+  {
+    _os << fmt::format( "  output {};\n", fmt::join( names, "," ) );
+  }
+
+  /*! \brief Callback method for writing multiple output registers.
+   *
+   * \param width Register size
+   * \param names Output names
+   */
+  virtual void on_output( uint32_t width, std::vector<std::string> const& names ) const
+  {
+    _os << fmt::format( "  output [{}:0] {};\n", width - 1, fmt::join( names, "," ) );
+  }
+
+  /*! \brief Callback method for writing single 1-bit wire.
+   *
+   * \param name Wire name
+   */
+  virtual void on_wire( std::string const& name ) const
+  {
+    _os << fmt::format( "  wire {};\n", name );
+  }
+
+  /*! \brief Callback method for writing wire register.
+   *
+   * \param width Register size
+   * \param name Wire name
+   */
+  virtual void on_wire( uint32_t width, std::string const& name ) const
+  {
+    _os << fmt::format( "  wire [{}:0] {};\n", width - 1 , name );
+  }
+
+  /*! \brief Callback method for writing multiple single 1-bit wire.
+   *
+   * \param names Wire names
+   */
+  virtual void on_wire( std::vector<std::string> const& names ) const
+  {
+    _os << fmt::format( "  wire {};\n", fmt::join( names, "," ) );
+  }
+
+  /*! \brief Callback method for writing multiple wire registers.
+   *
+   * \param width Register size
+   * \param names Wire names
+   */
+  virtual void on_wire( uint32_t width, std::vector<std::string> const& names ) const
+  {
+    _os << fmt::format( "  wire [{}:0] {};\n", width - 1, fmt::join( names, "," ) );
   }
 
   /*! \brief Callback method for writing end of a module declaration. */
