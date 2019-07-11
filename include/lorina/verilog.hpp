@@ -468,7 +468,7 @@ public:
    */
   virtual void on_input( std::vector<std::string> const& names ) const
   {
-    _os << fmt::format( "  input {};\n", fmt::join( names, "," ) );
+    _os << fmt::format( "  input {};\n", fmt::join( names, ", " ) );
   }
 
   /*! \brief Callback method for writing multiple input registers.
@@ -478,7 +478,7 @@ public:
    */
   virtual void on_input( uint32_t width, std::vector<std::string> const& names ) const
   {
-    _os << fmt::format( "  input [{}:0] {};\n", width - 1, fmt::join( names, "," ) );
+    _os << fmt::format( "  input [{}:0] {};\n", width - 1, fmt::join( names, ", " ) );
   }
 
   /*! \brief Callback method for writing single 1-bit output.
@@ -506,7 +506,7 @@ public:
    */
   virtual void on_output( std::vector<std::string> const& names ) const
   {
-    _os << fmt::format( "  output {};\n", fmt::join( names, "," ) );
+    _os << fmt::format( "  output {};\n", fmt::join( names, ", " ) );
   }
 
   /*! \brief Callback method for writing multiple output registers.
@@ -516,7 +516,7 @@ public:
    */
   virtual void on_output( uint32_t width, std::vector<std::string> const& names ) const
   {
-    _os << fmt::format( "  output [{}:0] {};\n", width - 1, fmt::join( names, "," ) );
+    _os << fmt::format( "  output [{}:0] {};\n", width - 1, fmt::join( names, ", " ) );
   }
 
   /*! \brief Callback method for writing single 1-bit wire.
@@ -544,7 +544,7 @@ public:
    */
   virtual void on_wire( std::vector<std::string> const& names ) const
   {
-    _os << fmt::format( "  wire {};\n", fmt::join( names, "," ) );
+    _os << fmt::format( "  wire {};\n", fmt::join( names, ", " ) );
   }
 
   /*! \brief Callback method for writing multiple wire registers.
@@ -554,7 +554,7 @@ public:
    */
   virtual void on_wire( uint32_t width, std::vector<std::string> const& names ) const
   {
-    _os << fmt::format( "  wire [{}:0] {};\n", width - 1, fmt::join( names, "," ) );
+    _os << fmt::format( "  wire [{}:0] {};\n", width - 1, fmt::join( names, ", " ) );
   }
 
   /*! \brief Callback method for writing end of a module declaration. */
