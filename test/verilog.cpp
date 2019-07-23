@@ -285,3 +285,28 @@ TEST_CASE( "Parse constants in Verilog file", "[verilog]" )
   CHECK( reader._maj3 == 0 );
   CHECK( reader._comments == 0 );
 }
+
+TEST_CASE( "Module instantiation with parameters", "[verilog]" )
+{
+  std::string verilog_file =
+    "module fp2mult(a0, a1, b0, b1, c0, c1);\n"
+    "  parameter N = 5;\n"
+    "  parameter M = 29;\n"
+    "  input [N - 1:0] a0, a1, b0, b1;\n"
+    "  output [N - 1:0] c0, c1;\n"
+    "  wire [N - 1:0] w0, w1, w2, w3, w4, w5;\n"
+    "  mod_mul #(M) i1(.x1(a0), .x2(b0), .y1(w0));\n"
+    "  mod_mul #(M) i2(.x1(a1), .x2(b1), .y1(w1));\n"
+    "  mod_add #(M) i3(.x1(a0), .x2(a1), .y1(w2));\n"
+    "  mod_add #(M) i4(.x1(b0), .x2(b1), .y1(w3));\n"
+    "  mod_sub #(M) i5(.x1(w0), .x2(w1), .y1(c0));\n"
+    "  mod_add #(M) i6(.x1(w0), .x2(w1), .y1(w4));\n"
+    "  mod_mul #(M) i7(.x1(w2), .x2(w3), .y1(w5));\n"
+    "  mod_sub #(M) i8(.x1(w4), .x2(w5), .y1(c1));\n"
+    "endmodule";
+
+  std::istringstream iss( verilog_file );
+  simple_verilog_reader reader;
+  auto result = read_verilog( iss, reader );
+  CHECK( result == return_code::success );
+}
