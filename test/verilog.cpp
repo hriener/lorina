@@ -119,7 +119,7 @@ public:
   mutable uint32_t _comments = 0;
 }; /* simple_verilog_reader */
 
-TEST_CASE( "Check return_code of read_verilog", "[blif]")
+TEST_CASE( "Check return_code of read_verilog", "[verilog]")
 {
   std::string broken_file =
     "module top( y1, a, b ) ;\n"

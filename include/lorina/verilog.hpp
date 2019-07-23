@@ -38,6 +38,7 @@
 #include <lorina/detail/tokenizer.hpp>
 #include <lorina/verilog_regex.hpp>
 #include <iostream>
+#include <queue>
 
 namespace lorina
 {
@@ -375,7 +376,7 @@ public:
       _os << ")";
     }
 
-    _os << "(";
+    _os << inst_name << "(";
     for ( auto i = 0u; i < args.size(); ++i )
     {
       _os << args.at( i ).first << "(" << args.at( i ).second << ")";
@@ -777,8 +778,17 @@ public:
     detail::tokenizer_return_code result;
     do
     {
-      result = tok.get_token_internal( token );
-      detail::trim( token );
+      if ( tokens.empty() )
+      {
+        result = tok.get_token_internal( token );
+        detail::trim( token );
+      }
+      else
+      {
+        token = tokens.front();
+        tokens.pop();
+        return true;
+      }
 
       /* switch to comment mode */
       if ( token == "//" && result == detail::tokenizer_return_code::valid )
@@ -795,6 +805,37 @@ public:
               result == detail::tokenizer_return_code::comment );
 
     return ( result == detail::tokenizer_return_code::valid );
+  }
+
+  void push_token( std::string const& token )
+  {
+    tokens.push( token );
+  }
+
+  bool parse_signal_name()
+  {
+    valid = get_token( token ); // name
+    if ( !valid || token == "[" ) return false;
+    auto const name = token;
+
+    valid = get_token( token );
+    if ( token == "[" )
+    {
+      valid = get_token( token ); // size
+      if ( !valid ) return false;
+      auto const size = token;
+
+      valid = get_token( token ); // size
+      if ( !valid && token != "]" ) return false;
+      token = name + "[" + size + "]";
+
+      return true;
+    }
+
+    push_token( token );
+
+    token = name;
+    return true;
   }
 
   bool parse_module()
@@ -951,11 +992,11 @@ public:
     std::vector<std::string> inouts;
     do
     {
-      valid = get_token( token );
-      if ( !valid ) return false;
-      inouts.push_back( token );
+      if ( !parse_signal_name() )
+        return false;
+      inouts.emplace_back( token );
 
-      valid = get_token( token );
+      valid = get_token( token ); // , or )
       if ( !valid || (token != "," && token != ")") ) return false;
     } while ( valid && token != ")" );
 
@@ -970,32 +1011,36 @@ public:
 
   bool parse_inputs()
   {
+    std::vector<std::string> inputs;
     if ( token != "input" ) return false;
 
-    std::vector<std::string> inputs;
-    do
+    if ( !parse_signal_name() && token == "[" )
     {
-      valid = get_token( token );
-      if ( !valid ) return false;
-
-      /* optional size definition */
-      if ( token == "[" )
+      do
       {
-        do
-        {
-          valid = get_token( token );
-          if ( !valid ) return false;
-        } while ( valid && token != "]" );
-
         valid = get_token( token );
         if ( !valid ) return false;
-      }
+      } while ( valid && token != "]" );
 
-      inputs.push_back( token );
+      if ( !parse_signal_name() )
+        return false;
+    }
+    inputs.emplace_back( token );
 
+    while ( true )
+    {
       valid = get_token( token );
+
       if ( !valid || (token != "," && token != ";") ) return false;
-    } while ( valid && token != ";" );
+
+      if ( token == ";" )
+        break;
+
+      if ( !parse_signal_name() )
+        return false;
+
+      inputs.emplace_back( token );
+    }
 
     /* callback */
     reader.on_inputs( inputs );
@@ -1008,32 +1053,36 @@ public:
 
   bool parse_outputs()
   {
+    std::vector<std::string> outputs;
     if ( token != "output" ) return false;
 
-    std::vector<std::string> outputs;
-    do
+    if ( !parse_signal_name() && token == "[" )
     {
-      valid = get_token( token );
-      if ( !valid ) return false;
-
-      /* optional size definition */
-      if ( token == "[" )
+      do
       {
-        do
-        {
-          valid = get_token( token );
-          if ( !valid ) return false;
-        } while ( valid && token != "]" );
-
         valid = get_token( token );
         if ( !valid ) return false;
-      }
+      } while ( valid && token != "]" );
 
-      outputs.push_back( token );
+      if ( !parse_signal_name() )
+        return false;
+    }
+    outputs.emplace_back( token );
 
+    while ( true )
+    {
       valid = get_token( token );
+
       if ( !valid || (token != "," && token != ";") ) return false;
-    } while ( valid && token != ";" );
+
+      if ( token == ";" )
+        break;
+
+      if ( !parse_signal_name() )
+        return false;
+
+      outputs.emplace_back( token );
+    }
 
     /* callback */
     reader.on_outputs( outputs );
@@ -1043,32 +1092,36 @@ public:
 
   bool parse_wires()
   {
+    std::vector<std::string> wires;
     if ( token != "wire" ) return false;
 
-    std::vector<std::string> wires;
-    do
+    if ( !parse_signal_name() && token == "[" )
     {
-      valid = get_token( token );
-      if ( !valid ) return false;
-
-      /* optional size definition */
-      if ( token == "[" )
+      do
       {
-        do
-        {
-          valid = get_token( token );
-          if ( !valid ) return false;
-        } while ( valid && token != "]" );
-
         valid = get_token( token );
         if ( !valid ) return false;
-      }
+      } while ( valid && token != "]" );
 
-      wires.push_back( token );
+      if ( !parse_signal_name() )
+        return false;
+    }
+    wires.emplace_back( token );
 
+    while ( true )
+    {
       valid = get_token( token );
+
       if ( !valid || (token != "," && token != ";") ) return false;
-    } while ( valid && token != ";" );
+
+      if ( token == ";" )
+        break;
+
+      if ( !parse_signal_name() )
+        return false;
+
+      wires.emplace_back( token );
+    }
 
     /* callback */
     reader.on_wires( wires );
@@ -1104,8 +1157,8 @@ public:
   {
     if ( token != "assign" ) return false;
 
-    valid = get_token( token );
-    if ( !valid ) return false;
+    if ( !parse_signal_name() )
+      return false;
 
     const std::string lhs = token;
 
@@ -1323,6 +1376,8 @@ private:
   diagnostic_engine* diag;
 
   std::string token;
+  std::queue<std::string> tokens; /* lookahead */
+
   bool valid = false;
 
   detail::call_in_topological_order<std::vector<std::pair<std::string,bool>>, std::string, std::string> on_action;
