@@ -15,18 +15,21 @@ public:
     (void)inouts;
   }
 
-  void on_inputs( const std::vector<std::string>& inputs ) const override
+  void on_inputs( const std::vector<std::string>& inputs, std::string const& size = "" ) const override
   {
+    (void)size;
     _inputs = uint32_t( inputs.size() );
   }
 
-  void on_outputs( const std::vector<std::string>& outputs ) const override
+  void on_outputs( const std::vector<std::string>& outputs, std::string const& size = "" ) const override
   {
+    (void)size;
     _outputs = uint32_t( outputs.size() );
   }
 
-  void on_wires( const std::vector<std::string>& wires ) const override
+  void on_wires( const std::vector<std::string>& wires, std::string const& size = "" ) const override
   {
+    (void)size;
     _wires = uint32_t( wires.size() );
   }
 

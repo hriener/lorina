@@ -64,28 +64,34 @@ public:
   /*! \brief Callback method for parsed inputs.
    *
    * \param inputs Input names
+   * \param size Size modifier
    */
-  virtual void on_inputs( const std::vector<std::string>& inputs ) const
+  virtual void on_inputs( const std::vector<std::string>& inputs, std::string const& size = "" ) const
   {
     (void)inputs;
+    (void)size;
   }
 
   /*! \brief Callback method for parsed outputs.
    *
    * \param outputs Output names
+   * \param size Size modifier
    */
-  virtual void on_outputs( const std::vector<std::string>& outputs ) const
+  virtual void on_outputs( const std::vector<std::string>& outputs, std::string const& size = "" ) const
   {
     (void)outputs;
+    (void)size;
   }
 
   /*! \brief Callback method for parsed wires.
    *
    * \param wires Wire names
+   * \param size Size modifier
    */
-  virtual void on_wires( const std::vector<std::string>& wires ) const
+  virtual void on_wires( const std::vector<std::string>& wires, std::string const& size = "" ) const
   {
     (void)wires;
+    (void)size;
   }
 
   /*! \brief Callback method for parsed parameter definition of form ` parameter M = 10;`.
@@ -313,10 +319,14 @@ public:
     _os << fmt::format( "module {}( {} ) ;\n", module_name, params );
   }
 
-  void on_inputs( const std::vector<std::string>& inputs ) const override
+  void on_inputs( const std::vector<std::string>& inputs, std::string const& size = "" ) const override
   {
     if ( inputs.size() == 0 ) return;
-    _os << "input " << inputs[0];
+    _os << "input ";
+    if ( size != "" )
+      _os << "[" << size << "] ";
+
+    _os << inputs[0];
     for ( auto i = 1u; i < inputs.size(); ++i )
     {
       _os << " , ";
@@ -325,10 +335,14 @@ public:
     _os << " ;\n";
   }
 
-  void on_outputs( const std::vector<std::string>& outputs ) const override
+  void on_outputs( const std::vector<std::string>& outputs, std::string const& size = "" ) const override
   {
     if ( outputs.size() == 0 ) return;
-    _os << "output " << outputs[0];
+    _os << "output ";
+    if ( size != "" )
+      _os << "[" << size << "] ";
+
+    _os << outputs[0];
     for ( auto i = 1u; i < outputs.size(); ++i )
     {
       _os << " , ";
@@ -337,10 +351,14 @@ public:
     _os << " ;\n";
   }
 
-  void on_wires( const std::vector<std::string>& wires ) const override
+  void on_wires( const std::vector<std::string>& wires, std::string const& size = "" ) const override
   {
     if ( wires.size() == 0 ) return;
-    _os << "wire " << wires[0];
+    _os << "wire ";
+    if ( size != "" )
+      _os << "[" << size << "] ";
+
+    _os << wires[0];
     for ( auto i = 1u; i < wires.size(); ++i )
     {
       _os << " , ";
@@ -1014,12 +1032,16 @@ public:
     std::vector<std::string> inputs;
     if ( token != "input" ) return false;
 
+    std::string size = "";
     if ( !parse_signal_name() && token == "[" )
     {
       do
       {
         valid = get_token( token );
         if ( !valid ) return false;
+
+        if ( token != "]" )
+          size += token;
       } while ( valid && token != "]" );
 
       if ( !parse_signal_name() )
@@ -1043,7 +1065,7 @@ public:
     }
 
     /* callback */
-    reader.on_inputs( inputs );
+    reader.on_inputs( inputs, size );
 
     for ( const auto& i : inputs )
       on_action.declare_known( i );
@@ -1056,12 +1078,16 @@ public:
     std::vector<std::string> outputs;
     if ( token != "output" ) return false;
 
+    std::string size = "";
     if ( !parse_signal_name() && token == "[" )
     {
       do
       {
         valid = get_token( token );
         if ( !valid ) return false;
+
+        if ( token != "]" )
+          size += token;
       } while ( valid && token != "]" );
 
       if ( !parse_signal_name() )
@@ -1085,7 +1111,7 @@ public:
     }
 
     /* callback */
-    reader.on_outputs( outputs );
+    reader.on_outputs( outputs, size );
 
     return true;
   }
@@ -1095,12 +1121,16 @@ public:
     std::vector<std::string> wires;
     if ( token != "wire" ) return false;
 
+    std::string size = "";
     if ( !parse_signal_name() && token == "[" )
     {
       do
       {
         valid = get_token( token );
         if ( !valid ) return false;
+
+        if ( token != "]" )
+          size += token;
       } while ( valid && token != "]" );
 
       if ( !parse_signal_name() )
@@ -1124,7 +1154,7 @@ public:
     }
 
     /* callback */
-    reader.on_wires( wires );
+    reader.on_wires( wires, size );
 
     return true;
   }
