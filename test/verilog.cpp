@@ -108,6 +108,23 @@ public:
     ++_comments;
   }
 
+  void on_parameter( const std::string& name, const std::string& value ) const override
+  {
+    (void)name;
+    (void)value;
+    ++_parameter;
+  }
+
+  void on_module_instantiation( std::string const& module_name, std::vector<std::string> const& params, std::string const& inst_name,
+                                std::vector<std::pair<std::string,std::string>> const& args ) const override
+  {
+    (void)module_name;
+    (void)params;
+    (void)inst_name;
+    (void)args;
+    ++_instantiations;
+  }
+
   mutable uint32_t _inputs = 0;
   mutable uint32_t _outputs = 0;
   mutable uint32_t _wires = 0;
@@ -120,6 +137,8 @@ public:
   mutable uint32_t _xors3 = 0;
   mutable uint32_t _maj3 = 0;
   mutable uint32_t _comments = 0;
+  mutable uint32_t _parameter = 0;
+  mutable uint32_t _instantiations = 0;
 }; /* simple_verilog_reader */
 
 TEST_CASE( "Check return_code of read_verilog", "[verilog]")
@@ -298,18 +317,29 @@ TEST_CASE( "Module instantiation with parameters", "[verilog]" )
     "  input [N - 1:0] a0, a1, b0, b1;\n"
     "  output [N - 1:0] c0, c1;\n"
     "  wire [N - 1:0] w0, w1, w2, w3, w4, w5;\n"
-    "  mod_mul #(M) i1(.x1(a0), .x2(b0), .y1(w0));\n"
-    "  mod_mul #(M) i2(.x1(a1), .x2(b1), .y1(w1));\n"
-    "  mod_add #(M) i3(.x1(a0), .x2(a1), .y1(w2));\n"
-    "  mod_add #(M) i4(.x1(b0), .x2(b1), .y1(w3));\n"
-    "  mod_sub #(M) i5(.x1(w0), .x2(w1), .y1(c0));\n"
-    "  mod_add #(M) i6(.x1(w0), .x2(w1), .y1(w4));\n"
-    "  mod_mul #(M) i7(.x1(w2), .x2(w3), .y1(w5));\n"
-    "  mod_sub #(M) i8(.x1(w4), .x2(w5), .y1(c1));\n"
+    "  mod_mul #(M)    i1(.x1(a0), .x2(b0), .y1(w0));\n"
+    "  mod_mul #(M)    i2(.x1(a1), .x2(b1), .y1(w1));\n"
+    "  mod_add #(M)    i3(.x1(a0), .x2(a1), .y1(w2));\n"
+    "  mod_add #(M,N)  i4(.x1(b0), .x2(b1), .y1(w3));\n"
+    "  mod_sub #(M)    i5(.x1(w0), .x2(w1), .y1(c0));\n"
+    "  mod_add #(M)    i6(.x1(w0), .x2(w1), .y1(w4));\n"
+    "  mod_mul #(M, N) i7(.x1(w2), .x2(w3), .y1(w5));\n"
+    "  mod_sub #(M)    i8(.x1(w4), .x2(w5), .y1(c1));\n"
     "endmodule";
 
   std::istringstream iss( verilog_file );
   simple_verilog_reader reader;
   auto result = read_verilog( iss, reader );
   CHECK( result == return_code::success );
+  CHECK( reader._inputs == 4 );
+  CHECK( reader._outputs == 2 );
+  CHECK( reader._wires == 6 );
+  CHECK( reader._aliases == 0 );
+  CHECK( reader._ands == 0 );
+  CHECK( reader._ors == 0 );
+  CHECK( reader._xors == 0 );
+  CHECK( reader._maj3 == 0 );
+  CHECK( reader._comments == 0 );
+  CHECK( reader._parameter == 2 );
+  CHECK( reader._instantiations == 8 );
 }

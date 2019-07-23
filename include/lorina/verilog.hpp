@@ -394,7 +394,7 @@ public:
       _os << ")";
     }
 
-    _os << inst_name << "(";
+    _os << " " << inst_name << "(";
     for ( auto i = 0u; i < args.size(); ++i )
     {
       _os << args.at( i ).first << "(" << args.at( i ).second << ")";
