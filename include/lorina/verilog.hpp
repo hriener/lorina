@@ -38,6 +38,7 @@
 #include <lorina/detail/tokenizer.hpp>
 #include <lorina/verilog_regex.hpp>
 #include <iostream>
+#include <queue>
 
 namespace lorina
 {
@@ -63,28 +64,45 @@ public:
   /*! \brief Callback method for parsed inputs.
    *
    * \param inputs Input names
+   * \param size Size modifier
    */
-  virtual void on_inputs( const std::vector<std::string>& inputs ) const
+  virtual void on_inputs( const std::vector<std::string>& inputs, std::string const& size = "" ) const
   {
     (void)inputs;
+    (void)size;
   }
 
   /*! \brief Callback method for parsed outputs.
    *
    * \param outputs Output names
+   * \param size Size modifier
    */
-  virtual void on_outputs( const std::vector<std::string>& outputs ) const
+  virtual void on_outputs( const std::vector<std::string>& outputs, std::string const& size = "" ) const
   {
     (void)outputs;
+    (void)size;
   }
 
   /*! \brief Callback method for parsed wires.
    *
    * \param wires Wire names
+   * \param size Size modifier
    */
-  virtual void on_wires( const std::vector<std::string>& wires ) const
+  virtual void on_wires( const std::vector<std::string>& wires, std::string const& size = "" ) const
   {
     (void)wires;
+    (void)size;
+  }
+
+  /*! \brief Callback method for parsed parameter definition of form ` parameter M = 10;`.
+   *
+   * \param name Name of the parameter
+   * \param value Value of the parameter
+   */
+  virtual void on_parameter( const std::string& name, const std::string& value ) const
+  {
+    (void)name;
+    (void)value;
   }
 
   /*! \brief Callback method for parsed immediate assignment of form `LHS = RHS ;`.
@@ -96,6 +114,24 @@ public:
   {
     (void)lhs;
     (void)rhs;
+  }
+
+  /*! \brief Callback method for parsed module instantiation of form `NAME #(P1,P2) NAME(.SIGNAL(SIGANL), ..., .SIGNAL(SIGNAL));`
+   *
+   * \param module_name Name of the module
+   * \param params List of parameters
+   * \param inst_name Name of the instantiation
+   * \param args List (a_1,b_1), ..., (a_n,b_n) of name pairs, where
+   *             a_i is a name of a signals in module_name and b_i is a name of a
+   *             signal in inst_name.
+   */
+  virtual void on_module_instantiation( std::string const& module_name, std::vector<std::string> const& params, std::string const& inst_name,
+                                        std::vector<std::pair<std::string,std::string>> const& args ) const
+  {
+    (void)module_name;
+    (void)params;
+    (void)inst_name;
+    (void)args;
   }
 
   /*! \brief Callback method for parsed AND-gate with 2 operands `LHS = OP1 & OP2 ;`.
@@ -283,10 +319,14 @@ public:
     _os << fmt::format( "module {}( {} ) ;\n", module_name, params );
   }
 
-  void on_inputs( const std::vector<std::string>& inputs ) const override
+  void on_inputs( const std::vector<std::string>& inputs, std::string const& size = "" ) const override
   {
     if ( inputs.size() == 0 ) return;
-    _os << "input " << inputs[0];
+    _os << "input ";
+    if ( size != "" )
+      _os << "[" << size << "] ";
+
+    _os << inputs[0];
     for ( auto i = 1u; i < inputs.size(); ++i )
     {
       _os << " , ";
@@ -295,10 +335,14 @@ public:
     _os << " ;\n";
   }
 
-  void on_outputs( const std::vector<std::string>& outputs ) const override
+  void on_outputs( const std::vector<std::string>& outputs, std::string const& size = "" ) const override
   {
     if ( outputs.size() == 0 ) return;
-    _os << "output " << outputs[0];
+    _os << "output ";
+    if ( size != "" )
+      _os << "[" << size << "] ";
+
+    _os << outputs[0];
     for ( auto i = 1u; i < outputs.size(); ++i )
     {
       _os << " , ";
@@ -307,10 +351,14 @@ public:
     _os << " ;\n";
   }
 
-  void on_wires( const std::vector<std::string>& wires ) const override
+  void on_wires( const std::vector<std::string>& wires, std::string const& size = "" ) const override
   {
     if ( wires.size() == 0 ) return;
-    _os << "wire " << wires[0];
+    _os << "wire ";
+    if ( size != "" )
+      _os << "[" << size << "] ";
+
+    _os << wires[0];
     for ( auto i = 1u; i < wires.size(); ++i )
     {
       _os << " , ";
@@ -319,10 +367,43 @@ public:
     _os << " ;\n";
   }
 
+  void on_parameter( const std::string& name, const std::string& value ) const override
+  {
+    _os << "parameter " << name << " = " << value << ";\n";
+  }
+
   void on_assign( const std::string& lhs, const std::pair<std::string, bool>& rhs ) const override
   {
     const std::string param = rhs.second ? fmt::format( "~{}", rhs.first ) : rhs.first;
     _os << fmt::format("assign {} = {} ;\n", lhs, param );
+  }
+
+  virtual void on_module_instantiation( std::string const& module_name, std::vector<std::string> const& params, std::string const& inst_name,
+                                        std::vector<std::pair<std::string,std::string>> const& args ) const override
+  {
+    _os << module_name << " ";
+    if ( params.size() > 0u )
+    {
+      _os << "#(";
+      for ( auto i = 0u; i < params.size(); ++i )
+      {
+        _os << params.at( i );
+        if ( i + 1 < params.size() )
+          _os << ", ";
+      }
+      _os << ")";
+    }
+
+    _os << " " << inst_name << "(";
+    for ( auto i = 0u; i < args.size(); ++i )
+    {
+      _os << args.at( i ).first << "(" << args.at( i ).second << ")";
+      if ( i + 1 < args.size() )
+        _os << ", ";
+    }
+    _os << ")";
+
+    _os << ";\n";
   }
 
   void on_and( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2 ) const override
@@ -715,8 +796,17 @@ public:
     detail::tokenizer_return_code result;
     do
     {
-      result = tok.get_token_internal( token );
-      detail::trim( token );
+      if ( tokens.empty() )
+      {
+        result = tok.get_token_internal( token );
+        detail::trim( token );
+      }
+      else
+      {
+        token = tokens.front();
+        tokens.pop();
+        return true;
+      }
 
       /* switch to comment mode */
       if ( token == "//" && result == detail::tokenizer_return_code::valid )
@@ -733,6 +823,37 @@ public:
               result == detail::tokenizer_return_code::comment );
 
     return ( result == detail::tokenizer_return_code::valid );
+  }
+
+  void push_token( std::string const& token )
+  {
+    tokens.push( token );
+  }
+
+  bool parse_signal_name()
+  {
+    valid = get_token( token ); // name
+    if ( !valid || token == "[" ) return false;
+    auto const name = token;
+
+    valid = get_token( token );
+    if ( token == "[" )
+    {
+      valid = get_token( token ); // size
+      if ( !valid ) return false;
+      auto const size = token;
+
+      valid = get_token( token ); // size
+      if ( !valid && token != "]" ) return false;
+      token = name + "[" + size + "]";
+
+      return true;
+    }
+
+    push_token( token );
+
+    token = name;
+    return true;
   }
 
   bool parse_module()
@@ -791,31 +912,59 @@ public:
           return false;
         }
       }
-      else if ( token != "assign" &&
-                token != "endmodule" )
+      else if ( token == "parameter" )
       {
-        return false;
+        success = parse_parameter();
+        if ( !success )
+        {
+          if ( diag )
+          {
+            diag->report( diagnostic_level::error, "cannot parse wire declaration" );
+          }
+          return false;
+        }
+      }
+      else
+      {
+        break;
       }
     } while ( token != "assign" && token != "endmodule" );
 
-    while ( token == "assign" )
+    while ( token != "endmodule" )
     {
-      success = parse_assign();
-      if ( !success )
+      if ( token == "assign" )
       {
-        if ( diag )
+        success = parse_assign();
+        if ( !success )
         {
-          diag->report( diagnostic_level::error, "cannot parse assign statement" );
+          if ( diag )
+          {
+            diag->report( diagnostic_level::error, "cannot parse assign statement" );
+          }
+          return false;
         }
-        return false;
-      }
 
-      valid = get_token( token );
-      if ( !valid ) return false;
+        valid = get_token( token );
+        if ( !valid ) return false;
+      }
+      else
+      {
+        success = parse_module_instantiation();
+        if ( !success )
+        {
+          if ( diag )
+          {
+            diag->report( diagnostic_level::error, "cannot parse module instantiation statement" );
+          }
+          return false;
+        }
+
+        valid = get_token( token );
+        if ( !valid ) return false;
+      }
     }
 
     /* check dangling objects */
-
     bool result = true;
     const auto& deps = on_action.unresolved_dependencies();
     if ( deps.size() > 0 )
@@ -861,11 +1010,11 @@ public:
     std::vector<std::string> inouts;
     do
     {
-      valid = get_token( token );
-      if ( !valid ) return false;
-      inouts.push_back( token );
+      if ( !parse_signal_name() )
+        return false;
+      inouts.emplace_back( token );
 
-      valid = get_token( token );
+      valid = get_token( token ); // , or )
       if ( !valid || (token != "," && token != ")") ) return false;
     } while ( valid && token != ")" );
 
@@ -880,21 +1029,43 @@ public:
 
   bool parse_inputs()
   {
+    std::vector<std::string> inputs;
     if ( token != "input" ) return false;
 
-    std::vector<std::string> inputs;
-    do
+    std::string size = "";
+    if ( !parse_signal_name() && token == "[" )
+    {
+      do
+      {
+        valid = get_token( token );
+        if ( !valid ) return false;
+
+        if ( token != "]" )
+          size += token;
+      } while ( valid && token != "]" );
+
+      if ( !parse_signal_name() )
+        return false;
+    }
+    inputs.emplace_back( token );
+
+    while ( true )
     {
       valid = get_token( token );
-      if ( !valid ) return false;
-      inputs.push_back( token );
 
-      valid = get_token( token );
       if ( !valid || (token != "," && token != ";") ) return false;
-    } while ( valid && token != ";" );
+
+      if ( token == ";" )
+        break;
+
+      if ( !parse_signal_name() )
+        return false;
+
+      inputs.emplace_back( token );
+    }
 
     /* callback */
-    reader.on_inputs( inputs );
+    reader.on_inputs( inputs, size );
 
     for ( const auto& i : inputs )
       on_action.declare_known( i );
@@ -904,42 +1075,110 @@ public:
 
   bool parse_outputs()
   {
+    std::vector<std::string> outputs;
     if ( token != "output" ) return false;
 
-    std::vector<std::string> outputs;
-    do
+    std::string size = "";
+    if ( !parse_signal_name() && token == "[" )
+    {
+      do
+      {
+        valid = get_token( token );
+        if ( !valid ) return false;
+
+        if ( token != "]" )
+          size += token;
+      } while ( valid && token != "]" );
+
+      if ( !parse_signal_name() )
+        return false;
+    }
+    outputs.emplace_back( token );
+
+    while ( true )
     {
       valid = get_token( token );
-      if ( !valid ) return false;
-      outputs.push_back( token );
 
-      valid = get_token( token );
       if ( !valid || (token != "," && token != ";") ) return false;
-    } while ( valid && token != ";" );
+
+      if ( token == ";" )
+        break;
+
+      if ( !parse_signal_name() )
+        return false;
+
+      outputs.emplace_back( token );
+    }
 
     /* callback */
-    reader.on_outputs( outputs );
+    reader.on_outputs( outputs, size );
 
     return true;
   }
 
   bool parse_wires()
   {
+    std::vector<std::string> wires;
     if ( token != "wire" ) return false;
 
-    std::vector<std::string> wires;
-    do
+    std::string size = "";
+    if ( !parse_signal_name() && token == "[" )
+    {
+      do
+      {
+        valid = get_token( token );
+        if ( !valid ) return false;
+
+        if ( token != "]" )
+          size += token;
+      } while ( valid && token != "]" );
+
+      if ( !parse_signal_name() )
+        return false;
+    }
+    wires.emplace_back( token );
+
+    while ( true )
     {
       valid = get_token( token );
-      if ( !valid ) return false;
-      wires.push_back( token );
 
-      valid = get_token( token );
       if ( !valid || (token != "," && token != ";") ) return false;
-    } while ( valid && token != ";" );
+
+      if ( token == ";" )
+        break;
+
+      if ( !parse_signal_name() )
+        return false;
+
+      wires.emplace_back( token );
+    }
 
     /* callback */
-    reader.on_wires( wires );
+    reader.on_wires( wires, size );
+
+    return true;
+  }
+
+  bool parse_parameter()
+  {
+    if ( token != "parameter" ) return false;
+
+    valid = get_token( token );
+    if ( !valid ) return false;
+    auto const name = token;
+
+    valid = get_token( token );
+    if ( !valid || (token != "=" ) ) return false;
+
+    valid = get_token( token );
+    if ( !valid ) return false;
+    auto const value = token;
+
+    valid = get_token( token );
+    if ( !valid || (token != ";") ) return false;
+
+    /* callback */
+    reader.on_parameter( name, value );
 
     return true;
   }
@@ -948,8 +1187,8 @@ public:
   {
     if ( token != "assign" ) return false;
 
-    valid = get_token( token );
-    if ( !valid ) return false;
+    if ( !parse_signal_name() )
+      return false;
 
     const std::string lhs = token;
 
@@ -969,6 +1208,73 @@ public:
     }
 
     if ( token != ";" ) return false;
+
+    return true;
+  }
+
+  bool parse_module_instantiation()
+  {
+    std::string const module_name = token; // name of module
+    valid = get_token( token );
+    if ( !valid ) return false;
+
+    std::vector<std::string> params;
+    if ( token == "#" )
+    {
+      valid = get_token( token );  // (
+      if ( !valid || token != "(" ) return false;
+
+      do
+      {
+        valid = get_token( token ); // param
+        if ( !valid ) return false;
+        params.emplace_back( token );
+
+        valid = get_token( token ); // ,
+        if ( !valid ) return false;
+      } while ( valid && token == "," );
+
+      if ( !valid || token != ")" ) return false;
+    }
+
+    valid = get_token( token );
+    if ( !valid ) return false;
+
+    std::string const inst_name = token; // name of instantiation
+
+    valid = get_token( token );
+    if ( !valid || token != "(" ) return false;
+
+    std::vector<std::pair<std::string,std::string>> args;
+    do
+    {
+      valid = get_token( token );
+      if ( !valid ) return false; // referes to signal
+      auto const arg0 = token;
+
+      valid = get_token( token );
+      if ( !valid || token != "(" ) return false; // (
+
+      valid = get_token( token );
+      if ( !valid ) return false; // signal name
+      auto const arg1 = token;
+
+      valid = get_token( token );
+      if ( !valid || token != ")"  ) return false; // )
+
+      valid = get_token( token );
+      if ( !valid ) return false;
+
+      args.emplace_back( std::make_pair( arg0, arg1 ) );
+    } while ( token == "," );
+
+    if ( !valid || token != ")" ) return false;
+
+    valid = get_token( token );
+    if ( !valid || token != ";" ) return false;
+
+    /* callback */
+    reader.on_module_instantiation( module_name, params, inst_name, args );
 
     return true;
   }
@@ -1100,6 +1406,8 @@ private:
   diagnostic_engine* diag;
 
   std::string token;
+  std::queue<std::string> tokens; /* lookahead */
+
   bool valid = false;
 
   detail::call_in_topological_order<std::vector<std::pair<std::string,bool>>, std::string, std::string> on_action;
