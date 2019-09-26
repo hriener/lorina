@@ -292,7 +292,21 @@ inline return_code read_blif( std::istream& in, const blif_reader& reader, diagn
 
       result = return_code::parse_error;
       return true;
-  } );
+    } );
+
+  /* check dangling objects */
+  auto const& deps = on_action.unresolved_dependencies();
+  if ( deps.size() > 0 )
+    result = return_code::parse_error;
+
+  for ( const auto& r : deps )
+  {
+    if ( diag )
+    {
+      diag->report( diagnostic_level::warning,
+                    fmt::format( "unresolved dependencies: `{0}` requires `{1}`",  r.first, r.second ) );
+    }
+  }
 
   return result;
 }
