@@ -170,7 +170,6 @@ public:
 namespace blif_regex
 {
 static std::regex model( R"(.model\s+(.*))" );
-static std::regex inputs( R"(.inputs\s+(.*))" );
 static std::regex outputs( R"(.outputs\s+(.*))" );
 static std::regex names( R"(.names\s+(.*))" );
 static std::regex line_of_truthtable( R"(([01\-]*)\s*([01\-]))" );
@@ -256,9 +255,10 @@ inline return_code read_blif( std::istream& in, const blif_reader& reader, diagn
       }
 
       /* .inputs <list of whitespace separated strings> */
-      if ( std::regex_search( line, m, blif_regex::inputs ) )
+      if ( detail::starts_with( line, ".inputs" ) )
       {
-        for ( const auto& input : detail::split( detail::trim_copy( m[1] ), " " ) )
+        std::string const input_declaration = line.substr( 7 );
+        for ( const auto& input : detail::split( detail::trim_copy( input_declaration ), " " ) )
         {
           auto const s = detail::trim_copy( input );
           on_action.declare_known( s );
