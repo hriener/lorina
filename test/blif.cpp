@@ -143,3 +143,64 @@ TEST_CASE( "gate_types", "[blif]" )
   CHECK( stats.end_seen == true );
   CHECK( stats.equal_size_check == true );
 }
+
+TEST_CASE( "parse large number of inputs", "[blif]" )
+{
+  std::string blif_file_begin =
+      ".model test\n";
+
+  std::string blif_file_end =
+      ".outputs y0\n"
+      ".names y0\n"
+      " 1\n"
+      ".end\n";
+
+  for ( auto i = 0u; i <= 16; ++i )
+  {
+    std::cout << "[i] try with " << ( 1 << i ) << " inputs" << std::endl;
+    std::string input_declaration = ".inputs";
+    for ( auto j = 0; j < ( 1 << i ); ++j )
+    {
+      input_declaration += fmt::format( " x{}", j );
+    }
+    input_declaration += "\n";
+
+    std::istringstream iss( blif_file_begin + input_declaration + blif_file_end );
+
+    blif_statistics stats;
+    blif_statistics_reader reader( stats );
+    auto result = read_blif( iss, reader );
+    CHECK( result == return_code::success );
+  }
+}
+
+TEST_CASE( "parse large number of outputs", "[blif]" )
+{
+  std::string blif_file_begin =
+      ".model test\n"
+      ".inputs x0 x1\n";
+
+  std::string blif_file_end =
+      ".names y0\n"
+      " 1\n"
+      ".end\n";
+
+  for ( auto i = 0u; i <= 16; ++i )
+  {
+    std::cout << "[i] try with " << ( 1 << i ) << " outputs" << std::endl;
+    std::string output_declaration = ".outputs";
+    for ( auto j = 0; j < ( 1 << i ); ++j )
+    {
+      output_declaration += fmt::format( " y{}", j );
+    }
+    output_declaration += "\n";
+
+    std::istringstream iss( blif_file_begin + output_declaration + blif_file_end );
+
+    blif_statistics stats;
+    blif_statistics_reader reader( stats );
+    auto result = read_blif( iss, reader );
+    CHECK( result == return_code::success );
+  }
+}
+
