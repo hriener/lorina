@@ -157,7 +157,7 @@ TEST_CASE( "parse large number of inputs", "[blif]" )
 
   for ( auto i = 0u; i <= 16; ++i )
   {
-    std::cout << "[i] try with " << ( 1 << i ) << " inputs" << std::endl;
+    // std::cout << "[i] try with " << ( 1 << i ) << " inputs" << std::endl;
     std::string input_declaration = ".inputs";
     for ( auto j = 0; j < ( 1 << i ); ++j )
     {
@@ -187,7 +187,7 @@ TEST_CASE( "parse large number of outputs", "[blif]" )
 
   for ( auto i = 0u; i <= 16; ++i )
   {
-    std::cout << "[i] try with " << ( 1 << i ) << " outputs" << std::endl;
+    // std::cout << "[i] try with " << ( 1 << i ) << " outputs" << std::endl;
     std::string output_declaration = ".outputs";
     for ( auto j = 0; j < ( 1 << i ); ++j )
     {

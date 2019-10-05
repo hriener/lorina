@@ -6,11 +6,12 @@ using namespace lorina;
 
 struct bench_statistics
 {
-  std::size_t number_of_inputs = 0;
-  std::size_t number_of_outputs = 0;
+  uint32_t number_of_inputs = 0;
+  uint32_t number_of_outputs = 0;
+  uint32_t number_of_dffs = 0;
 
   /* lines without input and outputs */
-  std::size_t number_of_lines = 0;
+  uint32_t number_of_lines = 0;
 };
 
 class bench_statistics_reader : public bench_reader
@@ -31,6 +32,18 @@ public:
   {
     (void)name;
     ++_stats.number_of_outputs;
+  }
+
+  virtual void on_dff_input( const std::string& input ) const override
+  {
+    (void)input;
+  }
+
+  virtual void on_dff( const std::string& input, const std::string& output ) const override
+  {
+    (void)input;
+    (void)output;
+    ++_stats.number_of_dffs;
   }
 
   virtual void on_gate( const std::vector<std::string>& inputs, const std::string& output, const std::string& type ) const override
@@ -129,4 +142,26 @@ TEST_CASE( "whitespaces", "[bench]" )
   CHECK( std::get<0>( gate_lines[0u] )[2] == "x2" );
   CHECK( std::get<1>( gate_lines[0u] ) == "G16" );
   CHECK( std::get<2>( gate_lines[0u] ) == "0xba" );
+}
+
+TEST_CASE( "Parse DFF", "[bench]" )
+{
+  std::string bench_file =
+      "INPUT(input_x[0])\n"
+      "OUTPUT(outport[0])\n"
+      "n1 = DFF(n2)\n"
+      "n2 = AND(input_x[0], n1)\n"
+      "outport[0] = n1\n";
+
+  std::istringstream iss( bench_file );
+
+  bench_statistics stats;
+  bench_statistics_reader reader( stats );
+  auto result = read_bench( iss, reader );
+  CHECK( result == return_code::success );
+  CHECK( stats.number_of_inputs == 1 );
+  CHECK( stats.number_of_outputs == 1 );
+  CHECK( stats.number_of_dffs == 1 );
+  CHECK( stats.number_of_lines == 2 );
+  CHECK( reader.gate_lines.size() == 1 );
 }
