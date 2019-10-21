@@ -527,7 +527,7 @@ inline return_code read_ascii_aiger( std::istream& in, const aiger_reader& reade
       {
         init_value = aiger_reader::latch_init_value::ZERO;
       }
-      else if ( tokens[1u] == "1" )
+      else if ( tokens[2u] == "1" )
       {
         init_value = aiger_reader::latch_init_value::ONE;
       }
