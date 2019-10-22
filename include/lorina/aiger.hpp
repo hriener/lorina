@@ -756,7 +756,7 @@ inline return_code read_aiger( std::istream& in, const aiger_reader& reader, dia
       }
     }
 
-    reader.on_latch( _i + i + 1u, next, init_value );
+    reader.on_latch( _i + i, next, init_value );
   }
 
   for ( auto i = 0u; i < _o; ++i )
