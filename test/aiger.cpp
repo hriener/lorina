@@ -244,7 +244,7 @@ TEST_CASE( "latch_initialization", "[aiger]" )
   CHECK( std::get<2>( stats.latches[0u] ) == aiger_reader::latch_init_value::ONE );
 }
 
-TEST_CASE( "ascii_format", "[aiger]" )
+TEST_CASE( "Combinational ASCII Aiger", "[aiger]" )
 {
   std::string aiger_file =
     "aag 7 2 0 2 3\n"
@@ -281,7 +281,7 @@ TEST_CASE( "ascii_format", "[aiger]" )
   CHECK( stats.outputs.size() == stats.number_of_outputs );
 }
 
-TEST_CASE( "ascii_format_sequential", "[aiger]" )
+TEST_CASE( "Sequential ASCII Aiger", "[aiger]" )
 {
   std::string aiger_file =
     "aag 7 2 1 2 4\n"
@@ -311,6 +311,44 @@ TEST_CASE( "ascii_format_sequential", "[aiger]" )
   CHECK( stats.ands.size() == stats.number_of_ands );
   CHECK( stats.latches.size() == stats.number_of_latches );
   CHECK( stats.outputs.size() == stats.number_of_outputs );
+}
+
+TEST_CASE( "Latch initialization in ASCII Aiger", "[aiger]" )
+{
+  std::string aiger_file =
+    "aag 8 2 2 4 4\n"
+    "2\n"
+    "4\n"
+    "6 8 0\n"
+    "8 10 1\n"
+    "6\n"
+    "7\n"
+    "8\n"
+    "9\n"
+    "10 4 12\n"
+    "12 15 17\n"
+    "14 2 6\n"
+    "16 3 9\n";
+
+  std::istringstream iss( aiger_file );
+
+  aiger_statistics stats;
+  aiger_statistics_reader reader( stats );
+
+  diagnostic_engine diag;
+  auto result = read_ascii_aiger( iss, reader, &diag );
+  CHECK( result == return_code::success );
+  CHECK( stats.maximum_variable_index == 8 );
+  CHECK( stats.number_of_inputs == 2 );
+  CHECK( stats.number_of_latches == 2 );
+  CHECK( stats.number_of_outputs == 4 );
+  CHECK( stats.number_of_ands == 4 );
+  CHECK( stats.ands.size() == stats.number_of_ands );
+  CHECK( stats.latches.size() == stats.number_of_latches );
+  CHECK( stats.outputs.size() == stats.number_of_outputs );
+
+  CHECK( std::get<2>( stats.latches[0u] ) == aiger_reader::latch_init_value::ZERO );
+  CHECK( std::get<2>( stats.latches[1u] ) == aiger_reader::latch_init_value::ONE );
 }
 
 TEST_CASE( "ascii_format_bad_state", "[aiger]" )
