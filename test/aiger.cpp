@@ -55,8 +55,11 @@ public:
     _stats.number_of_justice = j;
     _stats.number_of_fairness = f;
 
-    _stats.indices.resize( m, -1 );
-    for ( auto ii = 0u; ii < i; ++ii )
+    _stats.indices.resize( m+1, -1 );
+
+    /* reserve extra space for a constant 0 at index 0 */
+    _stats.indices[0] = 0;
+    for ( auto ii = 1u; ii <= i; ++ii )
     {
       _stats.indices[ii] = ii;
     }
@@ -75,17 +78,17 @@ public:
     (void)left_lit;
     (void)right_lit;
     _stats.ands.emplace_back( std::make_tuple(index, left_lit, right_lit) );
-    assert( _stats.indices.at( index-1 ) == -1 );
-    _stats.indices[index-1] = index-1;
-    // std::cout << "gate: " << ( index - 1 ) << std::endl;
+    assert( _stats.indices.at( index ) == -1 );
+    _stats.indices[index] = index;
+    // std::cout << "gate: " << ( index ) << std::endl;
   }
 
   void on_latch( uint32_t index, uint32_t next, latch_init_value init_value ) const override
   {
     _stats.latches.emplace_back( std::make_tuple(index, next, init_value) );
-    assert( _stats.indices.at( index-1 ) == -1 );
-    _stats.indices[index-1] = index-1;
-    // std::cout << "latch: " << ( index - 1 ) << std::endl;
+    assert( _stats.indices.at( index ) == -1 );
+    _stats.indices[index] = index;
+    // std::cout << "latch: " << ( index ) << std::endl;
   }
 
   void on_bad_state( uint32_t index, uint32_t lit ) const override
@@ -171,7 +174,7 @@ TEST_CASE( "Combinational Aiger", "[aiger]" )
   CHECK( stats.ands.size()== stats.number_of_ands );
   CHECK( stats.outputs.size() == stats.number_of_outputs );
 
-  CHECK( stats.indices.size() == stats.maximum_variable_index );
+  CHECK( stats.indices.size() == stats.maximum_variable_index+1 );
   for ( auto i = 0u; i < stats.indices.size(); ++i )
   {
     CHECK( i == stats.indices.at( i ) );
@@ -236,7 +239,7 @@ TEST_CASE( "Sequential Aiger", "[aiger]" )
 
   CHECK( std::get<2>( stats.latches[0u] ) == aiger_reader::latch_init_value::NONDETERMINISTIC );
 
-  CHECK( stats.indices.size() == stats.maximum_variable_index );
+  CHECK( stats.indices.size() == stats.maximum_variable_index+1 );
   for ( auto i = 0u; i < stats.indices.size(); ++i )
   {
     CHECK( i == stats.indices.at( i ) );
@@ -305,11 +308,11 @@ TEST_CASE( "Combinational ASCII Aiger", "[aiger]" )
   CHECK( stats.latches.size() == stats.number_of_latches );
   CHECK( stats.outputs.size() == stats.number_of_outputs );
 
-  CHECK( stats.indices.size() == stats.maximum_variable_index );
+  CHECK( stats.indices.size() == stats.maximum_variable_index+1 );
   for ( auto i = 0u; i < stats.indices.size(); ++i )
   {
     /* no gates defined for index 4 and 5 (literals 8,9 and 10,11) */
-    if ( i == 3 || i == 4 )
+    if ( i == 4 || i == 5 )
       continue;
     CHECK( i == stats.indices.at( i ) );
   }
@@ -346,7 +349,7 @@ TEST_CASE( "Sequential ASCII Aiger", "[aiger]" )
   CHECK( stats.latches.size() == stats.number_of_latches );
   CHECK( stats.outputs.size() == stats.number_of_outputs );
 
-  CHECK( stats.indices.size() == stats.maximum_variable_index );
+  CHECK( stats.indices.size() == stats.maximum_variable_index+1 );
   for ( auto i = 0u; i < stats.indices.size(); ++i )
   {
     CHECK( i == stats.indices.at( i ) );
