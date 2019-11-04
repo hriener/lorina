@@ -31,6 +31,7 @@ struct aiger_statistics
   std::map<uint32_t, std::string> input_names;
   std::map<uint32_t, std::string> output_names;
   std::string comment;
+  std::vector<int32_t> indices;
 };
 
 class aiger_statistics_reader : public aiger_reader
@@ -53,6 +54,15 @@ public:
     _stats.number_of_constraints = c;
     _stats.number_of_justice = j;
     _stats.number_of_fairness = f;
+
+    _stats.indices.resize( m+1, -1 );
+
+    /* reserve extra space for a constant 0 at index 0 */
+    _stats.indices[0] = 0;
+    for ( auto ii = 1u; ii <= i; ++ii )
+    {
+      _stats.indices[ii] = ii;
+    }
   }
 
   void on_output( uint32_t index, uint32_t lit ) const override
@@ -68,11 +78,17 @@ public:
     (void)left_lit;
     (void)right_lit;
     _stats.ands.emplace_back( std::make_tuple(index, left_lit, right_lit) );
+    assert( _stats.indices.at( index ) == -1 );
+    _stats.indices[index] = index;
+    // std::cout << "gate: " << ( index ) << std::endl;
   }
 
   void on_latch( uint32_t index, uint32_t next, latch_init_value init_value ) const override
   {
     _stats.latches.emplace_back( std::make_tuple(index, next, init_value) );
+    assert( _stats.indices.at( index ) == -1 );
+    _stats.indices[index] = index;
+    // std::cout << "latch: " << ( index ) << std::endl;
   }
 
   void on_bad_state( uint32_t index, uint32_t lit ) const override
@@ -136,7 +152,7 @@ TEST_CASE( "Check return_code of read_aiger", "[aiger]" )
   }
 }
 
-TEST_CASE( "combinational", "[aiger]" )
+TEST_CASE( "Combinational Aiger", "[aiger]" )
 {
   char aiger_file[] = {
       0x61, 0x69, 0x67, 0x20, 0x36, 0x20, 0x32, 0x20, 0x30, 0x20, 0x32,
@@ -157,6 +173,12 @@ TEST_CASE( "combinational", "[aiger]" )
   CHECK( stats.number_of_ands == 4 );
   CHECK( stats.ands.size()== stats.number_of_ands );
   CHECK( stats.outputs.size() == stats.number_of_outputs );
+
+  CHECK( stats.indices.size() == stats.maximum_variable_index+1 );
+  for ( auto i = 0u; i < stats.indices.size(); ++i )
+  {
+    CHECK( i == stats.indices.at( i ) );
+  }
 }
 
 TEST_CASE( "symbol_table", "[aiger]" )
@@ -192,7 +214,7 @@ TEST_CASE( "symbol_table", "[aiger]" )
   CHECK( stats.output_names[1] == "c" );
 }
 
-TEST_CASE( "sequential", "[aiger]" )
+TEST_CASE( "Sequential Aiger", "[aiger]" )
 {
   char aiger_file[] = {
       0x61, 0x69, 0x67, 0x20, 0x37, 0x20, 0x32, 0x20, 0x31, 0x20, 0x32,
@@ -216,6 +238,12 @@ TEST_CASE( "sequential", "[aiger]" )
   CHECK( stats.outputs.size() == stats.number_of_outputs );
 
   CHECK( std::get<2>( stats.latches[0u] ) == aiger_reader::latch_init_value::NONDETERMINISTIC );
+
+  CHECK( stats.indices.size() == stats.maximum_variable_index+1 );
+  for ( auto i = 0u; i < stats.indices.size(); ++i )
+  {
+    CHECK( i == stats.indices.at( i ) );
+  }
 }
 
 TEST_CASE( "latch_initialization", "[aiger]" )
@@ -244,7 +272,7 @@ TEST_CASE( "latch_initialization", "[aiger]" )
   CHECK( std::get<2>( stats.latches[0u] ) == aiger_reader::latch_init_value::ONE );
 }
 
-TEST_CASE( "ascii_format", "[aiger]" )
+TEST_CASE( "Combinational ASCII Aiger", "[aiger]" )
 {
   std::string aiger_file =
     "aag 7 2 0 2 3\n"
@@ -279,9 +307,18 @@ TEST_CASE( "ascii_format", "[aiger]" )
   CHECK( stats.ands.size() == stats.number_of_ands );
   CHECK( stats.latches.size() == stats.number_of_latches );
   CHECK( stats.outputs.size() == stats.number_of_outputs );
+
+  CHECK( stats.indices.size() == stats.maximum_variable_index+1 );
+  for ( auto i = 0u; i < stats.indices.size(); ++i )
+  {
+    /* no gates defined for index 4 and 5 (literals 8,9 and 10,11) */
+    if ( i == 4 || i == 5 )
+      continue;
+    CHECK( i == stats.indices.at( i ) );
+  }
 }
 
-TEST_CASE( "ascii_format_sequential", "[aiger]" )
+TEST_CASE( "Sequential ASCII Aiger", "[aiger]" )
 {
   std::string aiger_file =
     "aag 7 2 1 2 4\n"
@@ -311,6 +348,12 @@ TEST_CASE( "ascii_format_sequential", "[aiger]" )
   CHECK( stats.ands.size() == stats.number_of_ands );
   CHECK( stats.latches.size() == stats.number_of_latches );
   CHECK( stats.outputs.size() == stats.number_of_outputs );
+
+  CHECK( stats.indices.size() == stats.maximum_variable_index+1 );
+  for ( auto i = 0u; i < stats.indices.size(); ++i )
+  {
+    CHECK( i == stats.indices.at( i ) );
+  }
 }
 
 TEST_CASE( "ascii_format_bad_state", "[aiger]" )
