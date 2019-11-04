@@ -76,16 +76,16 @@ public:
     (void)right_lit;
     _stats.ands.emplace_back( std::make_tuple(index, left_lit, right_lit) );
     assert( _stats.indices.at( index-1 ) == -1 );
-    _stats.indices[index-1] = index;
-    std::cout << "gate: " << ( index - 1 ) << std::endl;
+    _stats.indices[index-1] = index-1;
+    // std::cout << "gate: " << ( index - 1 ) << std::endl;
   }
 
   void on_latch( uint32_t index, uint32_t next, latch_init_value init_value ) const override
   {
     _stats.latches.emplace_back( std::make_tuple(index, next, init_value) );
     assert( _stats.indices.at( index-1 ) == -1 );
-    _stats.indices[index-1] = index;
-    std::cout << "latch: " << ( index - 1 ) << std::endl;
+    _stats.indices[index-1] = index-1;
+    // std::cout << "latch: " << ( index - 1 ) << std::endl;
   }
 
   void on_bad_state( uint32_t index, uint32_t lit ) const override
@@ -149,7 +149,7 @@ TEST_CASE( "Check return_code of read_aiger", "[aiger]" )
   }
 }
 
-TEST_CASE( "combinational", "[aiger]" )
+TEST_CASE( "Combinational Aiger", "[aiger]" )
 {
   char aiger_file[] = {
       0x61, 0x69, 0x67, 0x20, 0x36, 0x20, 0x32, 0x20, 0x30, 0x20, 0x32,
@@ -174,7 +174,7 @@ TEST_CASE( "combinational", "[aiger]" )
   CHECK( stats.indices.size() == stats.maximum_variable_index );
   for ( auto i = 0u; i < stats.indices.size(); ++i )
   {
-    std::cout << stats.indices.at( i ) << std::endl;
+    CHECK( i == stats.indices.at( i ) );
   }
 }
 
@@ -211,7 +211,7 @@ TEST_CASE( "symbol_table", "[aiger]" )
   CHECK( stats.output_names[1] == "c" );
 }
 
-TEST_CASE( "sequential", "[aiger]" )
+TEST_CASE( "Sequential Aiger", "[aiger]" )
 {
   char aiger_file[] = {
       0x61, 0x69, 0x67, 0x20, 0x37, 0x20, 0x32, 0x20, 0x31, 0x20, 0x32,
@@ -237,11 +237,9 @@ TEST_CASE( "sequential", "[aiger]" )
   CHECK( std::get<2>( stats.latches[0u] ) == aiger_reader::latch_init_value::NONDETERMINISTIC );
 
   CHECK( stats.indices.size() == stats.maximum_variable_index );
-  std::cout << "size = " << stats.indices.size() << std::endl;
   for ( auto i = 0u; i < stats.indices.size(); ++i )
   {
-    std::cout << i << std::endl;
-    std::cout << stats.indices.at( i ) << std::endl;
+    CHECK( i == stats.indices.at( i ) );
   }
 }
 
@@ -271,7 +269,7 @@ TEST_CASE( "latch_initialization", "[aiger]" )
   CHECK( std::get<2>( stats.latches[0u] ) == aiger_reader::latch_init_value::ONE );
 }
 
-TEST_CASE( "ascii_format", "[aiger]" )
+TEST_CASE( "Combinational ASCII Aiger", "[aiger]" )
 {
   std::string aiger_file =
     "aag 7 2 0 2 3\n"
@@ -308,14 +306,16 @@ TEST_CASE( "ascii_format", "[aiger]" )
   CHECK( stats.outputs.size() == stats.number_of_outputs );
 
   CHECK( stats.indices.size() == stats.maximum_variable_index );
-  std::cout << "size = " << stats.indices.size() << std::endl;
   for ( auto i = 0u; i < stats.indices.size(); ++i )
   {
-    std::cout << i << " " << stats.indices.at( i ) << std::endl;
+    /* no gates defined for index 4 and 5 (literals 8,9 and 10,11) */
+    if ( i == 3 || i == 4 )
+      continue;
+    CHECK( i == stats.indices.at( i ) );
   }
 }
 
-TEST_CASE( "ascii_format_sequential", "[aiger]" )
+TEST_CASE( "Sequential ASCII Aiger", "[aiger]" )
 {
   std::string aiger_file =
     "aag 7 2 1 2 4\n"
@@ -345,6 +345,12 @@ TEST_CASE( "ascii_format_sequential", "[aiger]" )
   CHECK( stats.ands.size() == stats.number_of_ands );
   CHECK( stats.latches.size() == stats.number_of_latches );
   CHECK( stats.outputs.size() == stats.number_of_outputs );
+
+  CHECK( stats.indices.size() == stats.maximum_variable_index );
+  for ( auto i = 0u; i < stats.indices.size(); ++i )
+  {
+    CHECK( i == stats.indices.at( i ) );
+  }
 }
 
 TEST_CASE( "ascii_format_bad_state", "[aiger]" )
