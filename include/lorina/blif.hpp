@@ -25,7 +25,7 @@
 
 /*!
   \file blif.hpp
-  \brief Implements blif parser
+  \brief Implements BLIF parser
 
   \author Heinz Riener
 */
@@ -37,6 +37,7 @@
 #include <lorina/detail/utils.hpp>
 #include <regex>
 #include <iostream>
+#include <optional>
 
 namespace lorina
 {
