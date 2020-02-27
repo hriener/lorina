@@ -279,6 +279,13 @@ inline return_code read_blif( std::istream& in, const blif_reader& reader, diagn
 
   const auto dispatch_function = [&]( std::vector<std::string> inputs, std::string output, std::vector<std::pair<std::string, std::string>> tt )
     {
+      /* ignore latches */
+      if ( output == "" )
+      {
+        assert( inputs.size() == 0u );
+        return;
+      }
+
       reader.on_gate( inputs, output, tt );
     };
 

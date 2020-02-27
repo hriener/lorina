@@ -37,9 +37,8 @@ public:
 
   virtual void on_gate( const std::vector<std::string>& inputs, const std::string& output, const output_cover_t& cover ) const override
   {
-    if ( output == "" ) return;
-
     (void)inputs;
+    (void)output;
     (void)cover;
 
     for ( const auto& c : cover )
