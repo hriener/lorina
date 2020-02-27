@@ -1,14 +1,16 @@
 #include <catch.hpp>
 
 #include <lorina/blif.hpp>
+#include <optional>
 
 using namespace lorina;
 
 struct blif_statistics
 {
-  std::size_t number_of_inputs = 0;
-  std::size_t number_of_outputs = 0;
-  std::size_t number_of_gates = 0;
+  uint32_t number_of_inputs{0};
+  uint32_t number_of_outputs{0};
+  uint32_t number_of_gates{0};
+  uint32_t number_of_latches{0};
   bool end_seen = false;
   bool equal_size_check = true;
 };
@@ -48,6 +50,17 @@ public:
     }
 
     ++_stats.number_of_gates;
+  }
+
+  virtual void on_latch( const std::string& input, const std::string& output, const std::optional<latch_type>& type, const std::optional<std::string>& control, const std::optional<latch_init_value>& reset ) const override
+  {
+    (void)input;
+    (void)output;
+    (void)type;
+    (void)control;
+    (void)reset;
+
+    ++_stats.number_of_latches;
   }
 
   virtual void on_end() const override
@@ -204,3 +217,125 @@ TEST_CASE( "parse large number of outputs", "[blif]" )
   }
 }
 
+TEST_CASE( "read a combinational BLIF file", "[blif]" )
+{
+  std::string file{
+    ".model top\n"
+    ".inputs a b c\n"
+    ".outputs y1 y2\n"
+    ".names a b n1\n"
+    "11 1\n"
+    ".names c n1 n2\n"
+    "1- 1\n"
+    "-1 1\n"
+    ".names n2 y1\n"
+    "0 1\n"
+    ".names n2 y2\n"
+    "1 1\n"
+    ".end\n"};
+
+  blif_statistics stats;
+  blif_statistics_reader reader( stats );
+
+  std::istringstream in( file );
+  auto const result = lorina::read_blif( in, reader );
+
+  /* structural checks */
+  CHECK( result == lorina::return_code::success );
+  CHECK( stats.number_of_gates == 4 );
+  CHECK( stats.number_of_inputs == 3 );
+  CHECK( stats.number_of_outputs == 2 );
+  CHECK( stats.number_of_latches == 0 );
+}
+
+TEST_CASE( "read a sequential BLIF file with 5 parameter latches that is not in topological order", "[blif]" )
+{
+  std::string file{
+    ".model top\n"
+    ".inputs clock a b c d\n"
+    ".outputs f\n"
+    ".names li1 a li0\n"
+    "01 1\n"
+    ".names lo0 new_new_n19__ li1\n"
+    "01 1\n"
+    ".names a lo1 new_new_n15__\n"
+    "01 1\n"
+    ".names d new_new_n15__ new_new_n16__\n"
+    "00 1\n"
+    ".names b lo2 new_new_n17__\n"
+    "00 1\n"
+    ".names new_new_n15__ new_new_n17__ new_new_n18__\n"
+    "00 1\n"
+    ".names new_new_n16__ new_new_n18__ new_new_n19__\n"
+    "00 1\n"
+    ".names new_new_n19__ new_new_n17__ li3\n"
+    "00 1\n"
+    ".names lo3 lo4 new_new_n20__\n"
+    "00 1\n"
+    ".names new_new_n20__ new_new_n18__ li4\n"
+    "00 1\n"
+    ".names c new_new_n17__ li2\n"
+    "00 1\n"
+    ".names li1 li4 f\n"
+    "00 1\n"
+    ".latch li0 lo0 fe clock 0\n"
+    ".latch li1 lo1 re clock 1\n"
+    ".latch li2 lo2 ah clock 2\n"
+    ".latch li3 lo3 al clock 3\n"
+    ".latch li4 lo4 as clock 1\n"
+    ".end\n"};
+
+  blif_statistics stats;
+  blif_statistics_reader reader( stats );
+
+  std::istringstream in( file );
+  auto const result = lorina::read_blif( in, reader );
+
+  CHECK( result == lorina::return_code::success );
+  CHECK( stats.number_of_gates == 12 );
+  CHECK( stats.number_of_inputs == 5 );
+  CHECK( stats.number_of_outputs == 1 );
+  CHECK( stats.number_of_latches == 5 );
+}
+
+TEST_CASE( "read a BLIF file containing latch declaration bug that requires updated 'split' function", "[blif]" )
+{
+  std::string file{
+    ".model top\n"
+    ".inputs clock a b c d\n"
+    ".outputs f\n"
+    ".latch     lo0_in        lo0  1\n"
+    ".latch     lo1_in        lo1  1\n"
+    ".latch     lo2_in        lo2  1\n"
+    ".names a lo1 new_n16_\n"
+    "01 1\n"
+    ".names d new_n16_ new_n17_\n"
+    "00 1\n"
+    ".names b lo2 new_n18_\n"
+    "00 1\n"
+    ".names new_n16_ new_n18_ new_n19_\n"
+    "00 1\n"
+    ".names new_n17_ new_n19_ new_n20_\n"
+    "00 1\n"
+    ".names lo0 new_n20_ lo1_in\n"
+    "01 1\n"
+    ".names a lo1_in lo0_in\n"
+    "10 1\n"
+    ".names c new_n18_ lo2_in\n"
+    "00 1\n"
+    ".names lo1_in f\n"
+    "0 1\n"
+    ".end\n"};
+
+  blif_statistics stats;
+  blif_statistics_reader reader( stats );
+
+  std::istringstream in( file );
+  auto const result = lorina::read_blif( in, reader );
+
+  CHECK( result == lorina::return_code::success );
+  CHECK( stats.number_of_gates == 9 );
+  CHECK( stats.number_of_inputs == 5 );
+  CHECK( stats.number_of_outputs == 1 );
+  CHECK( stats.number_of_latches == 3 );
+}
