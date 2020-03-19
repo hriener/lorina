@@ -14,10 +14,36 @@ class LorinaConan(ConanFile):
   generators = "cmake"
   exports_sources = "include/*", "cmake/*", "LICENSE", "CMakeLists.txt"
   requires = "fmt/6.1.2", "rang/3.1.0@rang/stable"
-  no_copy_source = False
+  no_copy_source = True
 
   def source(self):
     self.run("git clone git@github.com:hriener/lorina.git")
+
+    # Conan setup
+    tools.replace_in_file(
+      "CMakeLists.txt",
+      "project(lorina LANGUAGES CXX)",
+      '''project(lorina LANGUAGES CXX)\n\n'''
+      '''# Conan\n'''
+      '''include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)\n'''
+      '''conan_basic_setup()\n''',
+      strict=True
+    )
+
+    # Packaged rang does not export a target
+    tools.replace_in_file(
+      "include/CMakeLists.txt",
+      "target_link_libraries(lorina INTERFACE fmt rang gcov)",
+      "target_link_libraries(lorina INTERFACE fmt gcov)",
+      strict=True
+    )
+    tools.replace_in_file(
+      "include/CMakeLists.txt",
+      "target_link_libraries(lorina INTERFACE fmt rang)",
+      "target_link_libraries(lorina INTERFACE fmt)",
+      strict=True
+    )
+
 
     # Remove manually inserted libraries
     tools.replace_in_file(
@@ -49,6 +75,7 @@ class LorinaConan(ConanFile):
       '''  add_subdirectory(test)\n'''
       '''endif()\n''',
       '''# Install\n'''
+      '''include(CMakePackageConfigHelpers)\n'''
       '''include(GNUInstallDirs)\n\n'''
       '''# Export targets\n'''
       '''install(\n'''
@@ -60,15 +87,16 @@ class LorinaConan(ConanFile):
       '''install(EXPORT lorina-targets\n'''
       '''  FILE lorina-targets.cmake\n'''
       '''  NAMESPACE lorina::\n'''
-      '''  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/\n'''
+      '''  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/lorina\n'''
       ''')\n'''
+      '''# Create config file\n'''
+      '''configure_package_config_file(cmake/lorina-config.cmake.in lorina-config.cmake\n'''
+      '''    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/lorina\n'''
+      '''    NO_SET_AND_CHECK_MACRO\n'''
+      '''    NO_CHECK_REQUIRED_COMPONENTS_MACRO)\n'''
       '''# Install lorina-config.cmake\n'''
-      '''install(\n'''
-      '''  FILES\n'''
-      '''    ${CMAKE_SOURCE_DIR}/cmake/lorina-config.cmake\n'''
-      '''  DESTINATION\n'''
-      '''    ${CMAKE_INSTALL_LIBDIR}/cmake/\n'''
-      ''')\n'''
+      '''install(FILES ${CMAKE_CURRENT_BINARY_DIR}/lorina-config.cmake\n'''
+      '''    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/lorina)\n'''
       '''# Install headers\n'''
       '''install(\n'''
       '''  DIRECTORY\n'''
@@ -89,6 +117,7 @@ class LorinaConan(ConanFile):
   def package(self):
     cmake = CMake(self)
     cmake.configure()
+    cmake.build()
     cmake.install()
     self.copy("*.hpp", dst="include", src="include")
     self.copy("LICENSE", ignore_case=True, keep_path=False)
