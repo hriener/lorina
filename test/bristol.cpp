@@ -6,6 +6,21 @@ class bristol_test_reader : public lorina::bristol_reader
 {
 public:
   explicit bristol_test_reader() {}
+
+  virtual void on_header( uint32_t num_gates, uint32_t num_wires, uint32_t num_inputs, uint32_t num_wires_per_input, uint32_t num_outputs, uint32_t num_wires_per_output ) const
+  {
+    std::cout << num_gates << " " << num_wires << " " << num_inputs << " " << num_wires_per_input << " " << num_outputs << " " << num_wires_per_output << std::endl;
+  }
+
+  virtual void on_gate( std::vector<uint32_t> const& in, uint32_t out, std::string const& gate ) const
+  {
+    std::cout << out << " = " << gate << " ";
+    for ( const auto& i : in )
+    {
+      std::cout << i << ' ';
+    }
+    std::cout << std::endl;
+  }
 };
 
 TEST_CASE( "Read brstiol file", "[bristol]")
