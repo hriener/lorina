@@ -26,7 +26,7 @@ public:
 
 TEST_CASE( "Read brstiol file", "[bristol]")
 {
-  static constexpr std::string_view zero_equal
+  std::string const zero_equal
   {
     "127 191\n"
     "1 64\n"
