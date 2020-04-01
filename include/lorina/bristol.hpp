@@ -37,7 +37,7 @@
 #include "common.hpp"
 
 #include <fstream>
-#include <iostream>
+#include <cassert>
 
 namespace lorina
 {
@@ -74,30 +74,6 @@ public:
     : is( is )
     , reader( reader )
   {
-  }
-
-  bool get_tokens_of_next_line( std::vector<std::string>& tokens )
-  {
-    tokens.clear();
-
-    std::string line;
-    do
-    {
-      if ( is.eof() )
-        return false;
-
-      std::getline( is, line );
-    } while ( line == "" );
-
-    std::istringstream iss( line );
-    std::string token;
-    while ( !iss.eof() )
-    {
-      iss >> token;
-      tokens.push_back( token );
-    }
-
-    return true;
   }
 
   return_code run()
@@ -147,6 +123,31 @@ public:
     }
 
     return return_code::success;
+  }
+
+private:
+  bool get_tokens_of_next_line( std::vector<std::string>& tokens )
+  {
+    tokens.clear();
+
+    std::string line;
+    do
+    {
+      if ( is.eof() )
+        return false;
+
+      std::getline( is, line );
+    } while ( line == "" );
+
+    std::istringstream iss( line );
+    std::string token;
+    while ( !iss.eof() )
+    {
+      iss >> token;
+      tokens.push_back( token );
+    }
+
+    return true;
   }
 
 private:

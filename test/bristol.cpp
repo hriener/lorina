@@ -1,6 +1,7 @@
 #include <catch.hpp>
 
 #include <lorina/bristol.hpp>
+#include <iostream>
 
 class bristol_test_reader : public lorina::bristol_reader
 {
