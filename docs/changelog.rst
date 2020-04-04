@@ -7,6 +7,7 @@ v0.3 (Not yet released)
 * Writer visitor for Verilog (`verilog_writer`)
 * Verilog reader: module instantiation (`on_module_instantiation`), parameter (`on_parameter`)
 * Verilog reader: multi-bit inputs, outputs, and wires (`on_inputs`, `on_outputs`, `on_wires`)
+* Support for Bristol fashion (`bristol_reader`)
 
 v0.2 (October 18, 2018)
 -----------------------
