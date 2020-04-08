@@ -2,25 +2,28 @@
 
 #include <lorina/bristol.hpp>
 #include <iostream>
+#include <sstream>
 
 class bristol_test_reader : public lorina::bristol_reader
 {
 public:
   explicit bristol_test_reader() {}
 
-  virtual void on_header( uint32_t num_gates, uint32_t num_wires, uint32_t num_inputs, uint32_t num_wires_per_input, uint32_t num_outputs, uint32_t num_wires_per_output ) const
+  virtual void on_header( uint32_t num_gates, uint32_t num_wires, uint32_t num_inputs, std::vector<uint32_t> const& num_wires_per_input, uint32_t num_outputs, std::vector<uint32_t> const& num_wires_per_output ) const override
   {
-    std::cout << num_gates << " " << num_wires << " " << num_inputs << " " << num_wires_per_input << " " << num_outputs << " " << num_wires_per_output << std::endl;
+    std::ostringstream s;
+    s << num_gates << " " << num_wires << " " << num_inputs << " " << num_wires_per_input.size() << " " << num_outputs << " " << num_wires_per_output.size() << std::endl;
   }
 
-  virtual void on_gate( std::vector<uint32_t> const& in, uint32_t out, std::string const& gate ) const
+  virtual void on_gate( std::vector<uint32_t> const& in, uint32_t out, std::string const& gate ) const override
   {
-    std::cout << out << " = " << gate << " ";
+    std::ostringstream s;
+    s << out << " = " << gate << " ";
     for ( const auto& i : in )
     {
-      std::cout << i << ' ';
+      s << i << ' ';
     }
-    std::cout << std::endl;
+    s << std::endl;
   }
 };
 
