@@ -38,6 +38,8 @@
 
 #include <fstream>
 #include <cassert>
+#include <sstream>
+#include <vector>
 
 namespace lorina
 {
