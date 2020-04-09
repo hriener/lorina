@@ -27,7 +27,28 @@ public:
   }
 };
 
-TEST_CASE( "Read brstiol file", "[bristol]")
+TEST_CASE( "Read MAJ as Bristol file", "[bristol]")
+{
+  std::string const maj
+  {
+    "4 7\n"
+    "3 1 1 1\n"
+    "1 1\n"
+    "\n"
+    "2 1 0 1 3 XOR\n"
+    "2 1 1 2 4 XOR\n"
+    "2 1 3 4 5 AND\n"
+    "2 1 1 5 6 XOR\n"
+  };
+
+  std::stringstream ss; ss << maj;
+
+  bristol_test_reader reader;
+  auto result{lorina::read_bristol( ss, reader )};
+  CHECK( result == lorina::return_code::success );
+}
+
+TEST_CASE( "Read Bristol file", "[bristol]")
 {
   std::string const zero_equal
   {
