@@ -2,29 +2,53 @@
 
 #include <lorina/bristol.hpp>
 #include <iostream>
+#include <sstream>
 
 class bristol_test_reader : public lorina::bristol_reader
 {
 public:
   explicit bristol_test_reader() {}
 
-  virtual void on_header( uint32_t num_gates, uint32_t num_wires, uint32_t num_inputs, uint32_t num_wires_per_input, uint32_t num_outputs, uint32_t num_wires_per_output ) const
+  virtual void on_header( uint32_t num_gates, uint32_t num_wires, uint32_t num_inputs, std::vector<uint32_t> const& num_wires_per_input, uint32_t num_outputs, std::vector<uint32_t> const& num_wires_per_output ) const override
   {
-    std::cout << num_gates << " " << num_wires << " " << num_inputs << " " << num_wires_per_input << " " << num_outputs << " " << num_wires_per_output << std::endl;
+    std::ostringstream s;
+    s << num_gates << " " << num_wires << " " << num_inputs << " " << num_wires_per_input.size() << " " << num_outputs << " " << num_wires_per_output.size() << std::endl;
   }
 
-  virtual void on_gate( std::vector<uint32_t> const& in, uint32_t out, std::string const& gate ) const
+  virtual void on_gate( std::vector<uint32_t> const& in, uint32_t out, std::string const& gate ) const override
   {
-    std::cout << out << " = " << gate << " ";
+    std::ostringstream s;
+    s << out << " = " << gate << " ";
     for ( const auto& i : in )
     {
-      std::cout << i << ' ';
+      s << i << ' ';
     }
-    std::cout << std::endl;
+    s << std::endl;
   }
 };
 
-TEST_CASE( "Read brstiol file", "[bristol]")
+TEST_CASE( "Read MAJ as Bristol file", "[bristol]")
+{
+  std::string const maj
+  {
+    "4 7\n"
+    "3 1 1 1\n"
+    "1 1\n"
+    "\n"
+    "2 1 0 1 3 XOR\n"
+    "2 1 1 2 4 XOR\n"
+    "2 1 3 4 5 AND\n"
+    "2 1 1 5 6 XOR\n"
+  };
+
+  std::stringstream ss; ss << maj;
+
+  bristol_test_reader reader;
+  auto result{lorina::read_bristol( ss, reader )};
+  CHECK( result == lorina::return_code::success );
+}
+
+TEST_CASE( "Read Bristol file", "[bristol]")
 {
   std::string const zero_equal
   {

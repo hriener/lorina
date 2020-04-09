@@ -35,9 +35,13 @@
 #pragma once
 
 #include "common.hpp"
+#include "detail/utils.hpp"
 
-#include <fstream>
+#include <algorithm>
 #include <cassert>
+#include <fstream>
+#include <sstream>
+#include <vector>
 
 namespace lorina
 {
@@ -49,7 +53,7 @@ public:
 
   virtual ~bristol_reader() {}
 
-  virtual void on_header( uint32_t num_gates, uint32_t num_wires, uint32_t num_inputs, uint32_t num_wires_per_input, uint32_t num_outputs, uint32_t num_wires_per_output ) const
+  virtual void on_header( uint32_t num_gates, uint32_t num_wires, uint32_t num_inputs, std::vector<uint32_t> const& num_wires_per_input, uint32_t num_outputs, std::vector<uint32_t> const& num_wires_per_output ) const
   {
     (void)num_gates;
     (void)num_wires;
@@ -84,20 +88,24 @@ public:
     if ( !get_tokens_of_next_line( tokens ) || tokens.size() != 2u )
       return return_code::parse_error;
 
-    uint32_t num_gates = std::atoi( tokens[0u].c_str() );
-    uint32_t num_wires = std::atoi( tokens[1u].c_str() );
+    uint32_t num_gates = static_cast<uint32_t>( std::stoul( tokens[0u] ) );
+    uint32_t num_wires = static_cast<uint32_t>( std::stoul( tokens[1u] ) );
 
-    if ( !get_tokens_of_next_line( tokens ) || tokens.size() != 2u )
+    if ( !get_tokens_of_next_line( tokens ) || tokens.empty() )
       return return_code::parse_error;
-
-    uint32_t num_inputs = std::atoi( tokens[0u].c_str() );
-    uint32_t num_inputs_per_wire = std::atoi( tokens[1u].c_str() );
-
-    if ( !get_tokens_of_next_line( tokens ) || tokens.size() != 2u )
+    uint32_t num_inputs = static_cast<uint32_t>( std::stoul( tokens[0u] ) );
+    if ( tokens.size() != num_inputs + 1 )
       return return_code::parse_error;
+    std::vector<uint32_t> num_inputs_per_wire( num_inputs );
+    std::transform( tokens.begin() + 1, tokens.end(), num_inputs_per_wire.begin(), [&]( std::string const& s ) { return static_cast<uint32_t>( std::stoul( s ) ); } );
 
-    uint32_t num_outputs = std::atoi( tokens[0u].c_str() );
-    uint32_t num_outputs_per_wire = std::atoi( tokens[1u].c_str() );
+    if ( !get_tokens_of_next_line( tokens ) || tokens.empty() )
+      return return_code::parse_error;
+    uint32_t num_outputs = static_cast<uint32_t>( std::stoul( tokens[0u] ) );
+    if ( tokens.size() != num_outputs + 1 )
+      return return_code::parse_error;
+    std::vector<uint32_t> num_outputs_per_wire( num_outputs );
+    std::transform( tokens.begin() + 1, tokens.end(), num_outputs_per_wire.begin(), [&]( std::string const& s ) { return static_cast<uint32_t>( std::stoul( s ) ); } );
 
     reader.on_header( num_gates, num_wires, num_inputs, num_inputs_per_wire, num_outputs, num_outputs_per_wire );
 
@@ -137,6 +145,7 @@ private:
         return false;
 
       std::getline( is, line );
+      detail::trim( line );
     } while ( line == "" );
 
     std::istringstream iss( line );
