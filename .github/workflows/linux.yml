@@ -19,7 +19,8 @@ jobs:
         submodules: true
     - name: Install coveralls
       run: |
-        pip install coveralls
+        pip install install --user cpp-coveralls
+        locate coveralls
     - name: Build lorina
       run: |
         mkdir build
