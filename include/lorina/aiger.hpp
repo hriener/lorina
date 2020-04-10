@@ -202,78 +202,78 @@ public:
 
   /*! \brief Callback method for parsed input name.
    *
-   * \param index Index of the input
+   * \param pos Position in input list
    * \param name Input name
    */
-  virtual void on_input_name( uint32_t index, const std::string& name ) const
+  virtual void on_input_name( uint32_t pos, const std::string& name ) const
   {
-    (void)index;
+    (void)pos;
     (void)name;
   }
 
   /*! \brief Callback method for parsed latch name.
    *
-   * \param index Index of the latch
+   * \param pos Position in latch list
    * \param name Latch name
    */
-  virtual void on_latch_name( uint32_t index, const std::string& name ) const
+  virtual void on_latch_name( uint32_t pos, const std::string& name ) const
   {
-    (void)index;
+    (void)pos;
     (void)name;
   }
 
   /*! \brief Callback method for parsed output name.
    *
-   * \param index Index of the output
+   * \param pos Position in output list
    * \param name Output name
    */
-  virtual void on_output_name( uint32_t index, const std::string& name ) const
+  virtual void on_output_name( uint32_t pos, const std::string& name ) const
   {
-    (void)index;
+    (void)pos;
     (void)name;
   }
 
   /*! \brief Callback method for a parsed name of a bad state property.
    *
-   * \param index Index of the bad state property
+   * \param pos Position in list of bad state property
    * \param name Name of the bad state property
    */
-  virtual void on_bad_state_name( uint32_t index, const std::string& name ) const
+  virtual void on_bad_state_name( uint32_t pos, const std::string& name ) const
   {
-    (void)index;
+    (void)pos;
     (void)name;
   }
 
   /*! \brief Callback method for a parsed name of an invariant constraint.
    *
-   * \param index Index of the constraint
+   * \param pos Position in constraint list
    * \param name Constraint name
    */
-  virtual void on_constraint_name( uint32_t index, const std::string& name ) const
+  virtual void on_constraint_name( uint32_t pos, const std::string& name ) const
   {
-    (void)index;
+    (void)pos;
     (void)name;
   }
 
   /*! \brief Callback method for a parsed name of a justice property.
    *
-   * \param index Index of the justice property
+   * \param pos Position in the list of justice property
    * \param name Name of the fairness constraint
    */
-  virtual void on_justice_name( uint32_t index, const std::string& name ) const
+  virtual void on_justice_name( uint32_t pos, const std::string& name ) const
   {
-    (void)index;
+    (void)pos;
     (void)name;
   }
 
   /*! \brief Callback method for a parsed name of a fairness constraint.
    *
-   * \param index Index of the fairness constraint
+   * \param pos Position in list of fairness constraint
    * \param name Name of the fairness constraint
    */
-  virtual void on_fairness_name( uint32_t index, const std::string& name ) const
+  virtual void on_fairness_name( uint32_t pos, const std::string& name ) const
   {
-    (void)index;
+    (void)pos;
     (void)name;
   }
 
