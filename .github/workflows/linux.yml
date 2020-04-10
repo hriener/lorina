@@ -27,7 +27,7 @@ jobs:
       run: |
         cd build
         ./test/run_tests
-        npn run coveralls
+        npm run coveralls
     - name: Show files
       run: find .
     - name: Coveralls
