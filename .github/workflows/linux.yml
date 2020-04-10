@@ -28,6 +28,7 @@ jobs:
         cd build
         ./test/run_tests
     - name: Run lcov
+      run: |
         sudo apt-get install lcov
         lcov -t "result" -o lcov.info -c -d .
     - name: Coveralls
