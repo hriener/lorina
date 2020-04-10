@@ -30,7 +30,8 @@ jobs:
     - name: Run lcov
       run: |
         sudo apt-get install lcov
-        lcov -t "result" -o lcov.info -c -d . --include lorina/include
+        lcov --help
+        lcov -t "result" -o lcov.info -c -d . --include "*lorina/include*"
         lcov -l lcov.info
     - name: Coveralls
       uses: coverallsapp/github-action@master
