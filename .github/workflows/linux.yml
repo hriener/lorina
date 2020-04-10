@@ -27,11 +27,12 @@ jobs:
       run: |
         cd build
         ./test/run_tests
-        lcov
     - name: Coveralls
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Show files
+      run: find .
   build-gcc7:
     runs-on: ubuntu-latest
     name: Build with GNU GCC 7
