@@ -31,6 +31,7 @@ jobs:
       run: |
         sudo apt-get install lcov
         lcov -t "result" -o lcov.info -c -d .
+        lcov -l lcov.info
     - name: Coveralls
       uses: coverallsapp/github-action@master
       with:
