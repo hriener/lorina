@@ -12,15 +12,15 @@ jobs:
   build-gcc7-coveralls:
     runs-on: ubuntu-latest
     name: Build with GNU GCC 7 and run coveralls
-
+    
     steps:
     - uses: actions/checkout@v1
       with:
         submodules: true
-    -name: Install coveralls
+    - name: Install coveralls
       run: |
         pip install coveralls
-    -name: Build lorina
+    - name: Build lorina
       run: |
         mkdir build
         cd build
