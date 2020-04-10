@@ -28,9 +28,9 @@ jobs:
         cd build
         ./test/run_tests
     - name: Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
   build-gcc7:
     runs-on: ubuntu-latest
     name: Build with GNU GCC 7
