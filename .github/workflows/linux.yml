@@ -9,6 +9,21 @@ on:
     - master
 
 jobs:
+  build-gcc7-coveralls:
+    runs-on: ubuntu-latest
+    name: Build with GNU GCC 7 and run coveralls
+
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+    -name: Build lorina (coveralls)
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_CXX_COMPILER=g++-7 -DLORINA_TEST=ON -DENABLE_COVERAGE=ON ..
+        make run_tests
+        coveralls --gcov-options '\-lp' --exclude CMakeFiles --exclude lib --exclude examples --exclude test
   build-gcc7:
     runs-on: ubuntu-latest
     name: Build with GNU GCC 7
