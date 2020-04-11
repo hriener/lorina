@@ -274,7 +274,7 @@ TEST_CASE( "latch_initialization", "[aiger]" )
 
 TEST_CASE( "Combinational ASCII Aiger", "[aiger]" )
 {
-  std::string aiger_file =
+  std::string const aiger_file{
     "aag 7 2 0 2 3\n"
     "2\n"
     "4\n"
@@ -288,33 +288,37 @@ TEST_CASE( "Combinational ASCII Aiger", "[aiger]" )
     "o0 s\n"
     "o1 c\n"
     "c\n"
-    "half adder\n";
+    "half adder\n"};
 
-  std::istringstream iss( aiger_file );
-
-  aiger_statistics stats;
-  aiger_statistics_reader reader( stats );
-
-  diagnostic_engine diag;
-  auto result = read_ascii_aiger( iss, reader, &diag );
-  CHECK( result == return_code::success );
-
-  CHECK( stats.maximum_variable_index == 7 );
-  CHECK( stats.number_of_inputs == 2 );
-  CHECK( stats.number_of_latches == 0 );
-  CHECK( stats.number_of_outputs == 2 );
-  CHECK( stats.number_of_ands == 3 );
-  CHECK( stats.ands.size() == stats.number_of_ands );
-  CHECK( stats.latches.size() == stats.number_of_latches );
-  CHECK( stats.outputs.size() == stats.number_of_outputs );
-
-  CHECK( stats.indices.size() == stats.maximum_variable_index+1 );
-  for ( auto i = 0u; i < stats.indices.size(); ++i )
   {
-    /* no gates defined for index 4 and 5 (literals 8,9 and 10,11) */
-    if ( i == 4 || i == 5 )
-      continue;
-    CHECK( i == stats.indices.at( i ) );
+    std::istringstream iss( aiger_file );
+    lorina::return_code result = read_ascii_aiger( iss, aiger_reader{} );
+    CHECK( result == return_code::success );
+  }
+
+  {
+    std::istringstream iss( aiger_file );
+    aiger_statistics stats;
+    lorina::return_code result = read_ascii_aiger( iss, aiger_statistics_reader{stats} );
+    CHECK( result == return_code::success );
+
+    CHECK( stats.maximum_variable_index == 7 );
+    CHECK( stats.number_of_inputs == 2 );
+    CHECK( stats.number_of_latches == 0 );
+    CHECK( stats.number_of_outputs == 2 );
+    CHECK( stats.number_of_ands == 3 );
+    CHECK( stats.ands.size() == stats.number_of_ands );
+    CHECK( stats.latches.size() == stats.number_of_latches );
+    CHECK( stats.outputs.size() == stats.number_of_outputs );
+    CHECK( stats.indices.size() == stats.maximum_variable_index + 1 );
+
+    for ( auto i = 0u; i < stats.indices.size(); ++i )
+    {
+      /* no gates defined for index 4 and 5 (literals 8,9 and 10,11) */
+      if ( i == 4 || i == 5 )
+        continue;
+      CHECK( i == stats.indices.at( i ) );
+    }
   }
 }
 
