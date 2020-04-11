@@ -99,23 +99,23 @@ public:
 
   /*! \brief Callback method for parsed input.
    *
-   * \param index Index of the input
+   * \param pos Position in input list
    * \param lit Assigned literal
    */
-  virtual void on_input( uint32_t index, uint32_t lit ) const
+  virtual void on_input( uint32_t pos, uint32_t lit ) const
   {
-    (void)index;
+    (void)pos;
     (void)lit;
   }
 
   /*! \brief Callback method for parsed output.
    *
-   * \param index Index of the output
+   * \param pos Position in output list
    * \param lit Assigned literal
    */
-  virtual void on_output( uint32_t index, uint32_t lit ) const
+  virtual void on_output( uint32_t pos, uint32_t lit ) const
   {
-    (void)index;
+    (void)pos;
     (void)lit;
   }
 
@@ -379,39 +379,39 @@ public:
     _os << lit << std::endl;
   }
 
-  void on_input_name( uint32_t index, const std::string& name ) const override
+  void on_input_name( uint32_t pos, const std::string& name ) const override
   {
-    _os << "i" << index << ' ' << name << std::endl;
+    _os << "i" << pos << ' ' << name << std::endl;
   }
 
-  void on_latch_name( uint32_t index, const std::string& name ) const override
+  void on_latch_name( uint32_t pos, const std::string& name ) const override
   {
-    _os << "l" << index << ' ' << name << std::endl;
+    _os << "l" << pos << ' ' << name << std::endl;
   }
 
-  void on_output_name( uint32_t index, const std::string& name ) const override
+  void on_output_name( uint32_t pos, const std::string& name ) const override
   {
-    _os << "o" << index << ' ' << name << std::endl;
+    _os << "o" << pos << ' ' << name << std::endl;
   }
 
-  void on_bad_state_name( uint32_t index, const std::string& name ) const override
+  void on_bad_state_name( uint32_t pos, const std::string& name ) const override
   {
-    _os << "b" << index << ' ' << name << std::endl;
+    _os << "b" << pos << ' ' << name << std::endl;
   }
 
-  void on_constraint_name( uint32_t index, const std::string& name ) const override
+  void on_constraint_name( uint32_t pos, const std::string& name ) const override
   {
-    _os << "c" << index << ' ' << name << std::endl;
+    _os << "c" << pos << ' ' << name << std::endl;
   }
 
-  void on_justice_name( uint32_t index, const std::string& name ) const override
+  void on_justice_name( uint32_t pos, const std::string& name ) const override
   {
-    _os << "j" << index << ' ' << name << std::endl;
+    _os << "j" << pos << ' ' << name << std::endl;
   }
 
-  void on_fairness_name( uint32_t index, const std::string& name ) const override
+  void on_fairness_name( uint32_t pos, const std::string& name ) const override
   {
-    _os << "f" << index << ' ' << name << std::endl;
+    _os << "f" << pos << ' ' << name << std::endl;
   }
 
   void on_comment( const std::string& comment ) const override
