@@ -1,532 +1,295 @@
 #include <catch.hpp>
 
 #include <lorina/aiger.hpp>
+
 #include <fmt/format.h>
+#include <nlohmann/json.hpp>
 #include <map>
 #include <iostream>
 
-using namespace lorina;
-
-struct aiger_statistics
+namespace benchmarks
 {
-  /* header information AIGER v1.9 */
-  uint64_t maximum_variable_index = 0;
-  uint64_t number_of_inputs = 0;
-  uint64_t number_of_latches = 0;
-  uint64_t number_of_outputs = 0;
-  uint64_t number_of_ands = 0;
-  uint64_t number_of_bad_states = 0;
-  uint64_t number_of_constraints = 0;
-  uint64_t number_of_justice = 0;
-  uint64_t number_of_fairness = 0;
+  /* AIGs in binary AIGER format */
+  std::vector<std::string> aig_benchmarks{
+    "empty", "false", "true", "buffer", "inverter", "and", "half_adder", "toggle_ff", "toggle_ff2",
+    "prio", "counter", "invariant"    
+  };
 
-  std::vector<std::tuple<uint32_t, uint32_t>> outputs;
-  std::vector<std::tuple<uint32_t,uint32_t,aiger_reader::latch_init_value>> latches;
-  std::vector<std::tuple<uint32_t,uint32_t,uint32_t>> ands;
-  std::vector<std::tuple<uint32_t, uint32_t>> bad_states;
-  std::vector<std::tuple<uint32_t, uint32_t>> constraints;
-  std::vector<std::tuple<uint32_t, std::vector<uint32_t>>> justice;
-  std::vector<std::tuple<uint32_t, uint32_t>> fairness;
+  /* AIGs in ASCII AIGER format */
+  std::vector<std::string> aag_benchmarks{
+    "empty", "false", "true", "buffer", "inverter", "and", "half_adder", "toggle_ff", "toggle_ff2",
+    "prio", "counter", "invariant"
+  };
 
-  std::map<uint32_t, std::string> input_names;
-  std::map<uint32_t, std::string> output_names;
-  std::string comment;
-  std::vector<int32_t> indices;
-};
-
-class aiger_statistics_reader : public aiger_reader
-{
-public:
-  aiger_statistics_reader( aiger_statistics& stats )
-      : _stats( stats )
+  std::string path( std::string const& subpath, std::string const& benchmark_name, std::string const& extension )
   {
+#ifndef BENCHMARKS_PATH
+    return fmt::format( "{}/{}.{}", subpath, benchmark_name, extension );
+#else
+    return fmt::format( "{}benchmarks/{}/{}.{}", BENCHMARKS_PATH, subpath, benchmark_name, extension );
+#endif
+  }
+  
+  std::string path( std::string const& benchmark_name, std::string const& extension )
+  {
+#ifndef BENCHMARKS_PATH
+    return fmt::format( "{}.{}", benchmark_name, extension );
+#else
+    return fmt::format( "{}benchmarks/{}.{}", BENCHMARKS_PATH, benchmark_name, extension );
+#endif
   }
 
-  void on_header( uint64_t m, uint64_t i, uint64_t l, uint64_t o, uint64_t a,
-                  uint64_t b, uint64_t c, uint64_t j, uint64_t f ) const override
+  struct aig_info
   {
-    _stats.maximum_variable_index = m;
-    _stats.number_of_inputs = i;
-    _stats.number_of_latches = l;
-    _stats.number_of_outputs = o;
-    _stats.number_of_ands = a;
-    _stats.number_of_bad_states = b;
-    _stats.number_of_constraints = c;
-    _stats.number_of_justice = j;
-    _stats.number_of_fairness = f;
+    /* header information */
+    uint32_t maximum_variable_index{0};
+    uint32_t number_of_inputs{0};
+    uint32_t number_of_latches{0};
+    uint32_t number_of_outputs{0};
+    uint32_t number_of_ands{0};
+    
+    uint32_t number_of_bad_states{0};
+    uint32_t number_of_constraints{0};
+    uint32_t number_of_justice{0};
+    uint32_t number_of_fairness{0};
 
-    _stats.indices.resize( m+1, -1 );
+    /* count calls */
+    uint32_t on_input_calls{0};
+    uint32_t on_output_calls{0};
+    uint32_t on_and_calls{0};
+    uint32_t on_latch_calls{0};
 
-    /* reserve extra space for a constant 0 at index 0 */
-    _stats.indices[0] = 0;
-    for ( auto ii = 1u; ii <= i; ++ii )
+    uint32_t on_bad_state_calls{0};
+    uint32_t on_constraints_calls{0};
+    uint32_t on_justice_calls{0};
+    uint32_t on_fairness_calls{0};
+    
+    /* indices */
+    std::vector<std::optional<uint32_t>> indices;
+
+    /* metadata */
+    nlohmann::json metadata;
+
+    void reset()
     {
-      _stats.indices[ii] = ii;
+      *this = {};
     }
-  }
 
-  void on_output( uint32_t index, uint32_t lit ) const override
-  {
-    (void)index;
-    (void)lit;
-    _stats.outputs.emplace_back( std::make_tuple(index, lit) );
-  }
-
-  void on_and( uint32_t index, uint32_t left_lit, uint32_t right_lit ) const override
-  {
-    (void)index;
-    (void)left_lit;
-    (void)right_lit;
-    _stats.ands.emplace_back( std::make_tuple(index, left_lit, right_lit) );
-    assert( _stats.indices.at( index ) == -1 );
-    _stats.indices[index] = index;
-    // std::cout << "gate: " << ( index ) << std::endl;
-  }
-
-  void on_latch( uint32_t index, uint32_t next, latch_init_value init_value ) const override
-  {
-    _stats.latches.emplace_back( std::make_tuple(index, next, init_value) );
-    assert( _stats.indices.at( index ) == -1 );
-    _stats.indices[index] = index;
-    // std::cout << "latch: " << ( index ) << std::endl;
-  }
-
-  void on_bad_state( uint32_t index, uint32_t lit ) const override
-  {
-    _stats.bad_states.emplace_back( std::make_tuple(index, lit) );
-  }
-
-  void on_constraint( uint32_t index, uint32_t lit ) const override
-  {
-    _stats.constraints.emplace_back( std::make_tuple(index, lit) );
-  }
-
-  void on_justice( uint32_t index, const std::vector<uint32_t>& lits ) const override
-  {
-    _stats.justice.emplace_back( std::make_tuple(index, lits) );
-  }
-
-  void on_fairness( uint32_t index, uint32_t lit ) const override
-  {
-    _stats.fairness.emplace_back( std::make_tuple(index, lit) );
-  }
-
-  void on_input_name( uint32_t index, const std::string& name ) const override
-  {
-    _stats.input_names.insert( std::make_pair( index, name ) );
-  }
-
-  void on_output_name( uint32_t index, const std::string& name ) const override
-  {
-    _stats.output_names.insert( std::make_pair( index, name ) );
-  }
-
-  void on_comment( const std::string& comment ) const override
-  {
-    _stats.comment = comment;
-  }
-
-  aiger_statistics& _stats;
-}; /* aiger_statistics_reader */
-
-TEST_CASE( "Check return_code of read_aiger", "[aiger]" )
-{
-  char broken_file[] = {
-      0x00, 0x69, 0x67, 0x20, 0x36, 0x20, 0x32, 0x20, 0x30, 0x20, 0x32,
-      0x20, 0x34, 0x0a, 0x31, 0x30, 0x0a, 0x31, 0x32, 0x0a, 0x02, 0x02,
-      0x03, 0x02, 0x01, 0x02, 0x07, 0x03}; /* aiger_file */
-
-  {
-    std::istringstream iss( broken_file );
-    CHECK( read_aiger( iss, aiger_reader{} ) == return_code::parse_error );
-  }
-
-  char correct_file[] = {
-      0x61, 0x69, 0x67, 0x20, 0x36, 0x20, 0x32, 0x20, 0x30, 0x20, 0x32,
-      0x20, 0x34, 0x0a, 0x31, 0x30, 0x0a, 0x31, 0x32, 0x0a, 0x02, 0x02,
-      0x03, 0x02, 0x01, 0x02, 0x07, 0x03}; /* aiger_file */
-
-  {
-    std::istringstream iss( correct_file );
-    CHECK( read_aiger( iss, aiger_reader{} ) == return_code::success );
-  }
-}
-
-TEST_CASE( "Combinational Aiger", "[aiger]" )
-{
-  char aiger_file[] = {
-      0x61, 0x69, 0x67, 0x20, 0x36, 0x20, 0x32, 0x20, 0x30, 0x20, 0x32,
-      0x20, 0x34, 0x0a, 0x31, 0x30, 0x0a, 0x31, 0x32, 0x0a, 0x02, 0x02,
-      0x03, 0x02, 0x01, 0x02, 0x07, 0x03}; /* aiger_file */
-
-  std::istringstream iss( aiger_file );
-
-  aiger_statistics stats;
-  aiger_statistics_reader reader( stats );
-
-  auto result = read_aiger( iss, reader );
-  CHECK( result == return_code::success );
-  CHECK( stats.maximum_variable_index == 6 );
-  CHECK( stats.number_of_inputs == 2 );
-  CHECK( stats.number_of_latches == 0 );
-  CHECK( stats.number_of_outputs == 2 );
-  CHECK( stats.number_of_ands == 4 );
-  CHECK( stats.ands.size()== stats.number_of_ands );
-  CHECK( stats.outputs.size() == stats.number_of_outputs );
-
-  CHECK( stats.indices.size() == stats.maximum_variable_index+1 );
-  for ( auto i = 0u; i < stats.indices.size(); ++i )
-  {
-    CHECK( i == stats.indices.at( i ) );
-  }
-}
-
-TEST_CASE( "symbol_table", "[aiger]" )
-{
-  char aiger_file[] = {
-      0x61, 0x69, 0x67, 0x20, 0x35, 0x20, 0x32, 0x20, 0x30, 0x20,
-      0x32, 0x20, 0x33, 0x0a, 0x31, 0x30, 0x0a, 0x36, 0x0a, 0x02,
-      0x02, 0x03, 0x02, 0x01, 0x02, 0x69, 0x30, 0x20, 0x78, 0x0a,
-      0x69, 0x31, 0x20, 0x79, 0x0a, 0x6f, 0x30, 0x20, 0x73, 0x0a,
-      0x6f, 0x31, 0x20, 0x63, 0x0a, 0x63, 0x0a, 0x68, 0x61, 0x6c,
-      0x66, 0x20, 0x61, 0x64, 0x64, 0x65, 0x72, 0x0a, 0x00};
-      /* aiger_file */
-
-  std::istringstream iss( aiger_file );
-
-  aiger_statistics stats;
-  aiger_statistics_reader reader( stats );
-
-  auto result = read_aiger( iss, reader );
-  CHECK( result == return_code::success );
-  CHECK( stats.maximum_variable_index == 5 );
-  CHECK( stats.number_of_inputs == 2 );
-  CHECK( stats.number_of_latches == 0 );
-  CHECK( stats.number_of_outputs == 2 );
-  CHECK( stats.number_of_ands == 3 );
-  CHECK( stats.ands.size() == stats.number_of_ands );
-  CHECK( stats.outputs.size() == stats.number_of_outputs );
-
-  CHECK( stats.comment == "half adder" );
-  CHECK( stats.input_names[0] == "x" );
-  CHECK( stats.input_names[1] == "y" );
-  CHECK( stats.output_names[0] == "s" );
-  CHECK( stats.output_names[1] == "c" );
-}
-
-TEST_CASE( "Sequential Aiger", "[aiger]" )
-{
-  char aiger_file[] = {
-      0x61, 0x69, 0x67, 0x20, 0x37, 0x20, 0x32, 0x20, 0x31, 0x20, 0x32,
-      0x20, 0x34, 0x0a, 0x31, 0x34, 0x0a, 0x36, 0x0a, 0x37, 0x0a, 0x02,
-      0x04, 0x03, 0x04, 0x01, 0x02, 0x02, 0x08}; /* aiger_file */
-
-  std::istringstream iss( aiger_file );
-
-  aiger_statistics stats;
-  aiger_statistics_reader reader( stats );
-
-  auto result = read_aiger( iss, reader );
-  CHECK( result == return_code::success );
-  CHECK( stats.maximum_variable_index == 7 );
-  CHECK( stats.number_of_inputs == 2 );
-  CHECK( stats.number_of_latches == 1 );
-  CHECK( stats.number_of_outputs == 2 );
-  CHECK( stats.number_of_ands == 4 );
-  CHECK( stats.ands.size() == stats.number_of_ands );
-  CHECK( stats.latches.size() == stats.number_of_latches );
-  CHECK( stats.outputs.size() == stats.number_of_outputs );
-
-  CHECK( std::get<2>( stats.latches[0u] ) == aiger_reader::latch_init_value::NONDETERMINISTIC );
-
-  CHECK( stats.indices.size() == stats.maximum_variable_index+1 );
-  for ( auto i = 0u; i < stats.indices.size(); ++i )
-  {
-    CHECK( i == stats.indices.at( i ) );
-  }
-}
-
-TEST_CASE( "latch_initialization", "[aiger]" )
-{
-  char aiger_file[] = {
-      0x61, 0x69, 0x67, 0x20, 0x37, 0x20, 0x32, 0x20, 0x31, 0x20, 0x32,
-      0x20, 0x34, 0x0a, 0x31, 0x34, 0x20, 0x31, 0x0a, 0x36, 0x0a, 0x37,
-      0x0a, 0x02, 0x04, 0x03, 0x04, 0x01, 0x02, 0x02, 0x08}; /* aiger_file */
-
-  std::istringstream iss( aiger_file );
-
-  aiger_statistics stats;
-  aiger_statistics_reader reader( stats );
-
-  auto result = read_aiger( iss, reader );
-  CHECK( result == return_code::success );
-  CHECK( stats.maximum_variable_index == 7 );
-  CHECK( stats.number_of_inputs == 2 );
-  CHECK( stats.number_of_latches == 1 );
-  CHECK( stats.number_of_outputs == 2 );
-  CHECK( stats.number_of_ands == 4 );
-  CHECK( stats.ands.size() == stats.number_of_ands );
-  CHECK( stats.latches.size() == stats.number_of_latches );
-  CHECK( stats.outputs.size() == stats.number_of_outputs );
-
-  CHECK( std::get<2>( stats.latches[0u] ) == aiger_reader::latch_init_value::ONE );
-}
-
-TEST_CASE( "Combinational ASCII Aiger", "[aiger]" )
-{
-  std::string const aiger_file{
-    "aag 7 2 0 2 3\n"
-    "2\n"
-    "4\n"
-    "6\n"
-    "12\n"
-    "6 13 15\n"
-    "12 2 4\n"
-    "14 3 5\n"
-    "i0 x\n"
-    "i1 y\n"
-    "o0 s\n"
-    "o1 c\n"
-    "c\n"
-    "half adder\n"};
-
-  {
-    std::istringstream iss( aiger_file );
-    lorina::return_code result = read_ascii_aiger( iss, aiger_reader{} );
-    CHECK( result == return_code::success );
-  }
-
-  {
-    std::istringstream iss( aiger_file );
-    aiger_statistics stats;
-    lorina::return_code result = read_ascii_aiger( iss, aiger_statistics_reader{stats} );
-    CHECK( result == return_code::success );
-
-    CHECK( stats.maximum_variable_index == 7 );
-    CHECK( stats.number_of_inputs == 2 );
-    CHECK( stats.number_of_latches == 0 );
-    CHECK( stats.number_of_outputs == 2 );
-    CHECK( stats.number_of_ands == 3 );
-    CHECK( stats.ands.size() == stats.number_of_ands );
-    CHECK( stats.latches.size() == stats.number_of_latches );
-    CHECK( stats.outputs.size() == stats.number_of_outputs );
-    CHECK( stats.indices.size() == stats.maximum_variable_index + 1 );
-
-    for ( auto i = 0u; i < stats.indices.size(); ++i )
+    bool check_all_indices_defined() const
     {
-      /* no gates defined for index 4 and 5 (literals 8,9 and 10,11) */
-      if ( i == 4 || i == 5 )
-        continue;
-      CHECK( i == stats.indices.at( i ) );
+      for ( const auto& i : indices )
+      {
+        if ( !i )
+        {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    bool check_header_info() const
+    {
+      return maximum_variable_index == number_of_inputs + number_of_latches + number_of_ands + 1u &&
+        on_input_calls == number_of_inputs &&
+        on_output_calls == number_of_outputs &&
+        on_and_calls == number_of_ands &&
+        on_latch_calls == number_of_latches &&
+        on_bad_state_calls == number_of_bad_states &&
+        on_constraints_calls == number_of_constraints &&
+        on_justice_calls == number_of_justice &&
+        on_fairness_calls == number_of_justice;
+    }    
+  }; /* aig_info */
+  
+  struct test_reader : public lorina::aiger_reader
+  {
+  public:
+    explicit test_reader( aig_info& info )
+      : info( info )
+    {
+    }
+
+    void on_header( uint64_t m, uint64_t i, uint64_t l, uint64_t o, uint64_t a,
+                    uint64_t b, uint64_t c, uint64_t j, uint64_t f ) const override
+    {
+      /* update header information in info struct */
+      info.maximum_variable_index = m;
+      info.number_of_inputs = i;
+      info.number_of_latches = l;
+      info.number_of_outputs = o;
+      info.number_of_ands = a;
+      info.number_of_bad_states = b;
+      info.number_of_constraints = c;
+      info.number_of_justice = j;
+      info.number_of_fairness = f;
+
+      /* reserve extra space for a constant 0 at index 0 */      
+      info.indices.resize( m+1, std::nullopt );
+      info.indices[0] = 0;
+      for ( auto index = 1u; index <= i; ++index )
+      {
+        info.indices[index] = index;
+      }
+    }
+
+    void on_input( uint32_t pos, uint32_t lit ) const override
+    {
+      (void)pos;
+      (void)lit;
+
+      ++info.on_input_calls;
+    }
+
+    void on_output( uint32_t pos, uint32_t lit ) const override
+    {
+      (void)pos;
+      (void)lit;
+
+      ++info.on_output_calls;
+    }
+    
+    void on_and( uint32_t index, uint32_t left_lit, uint32_t right_lit ) const override
+    {
+      (void)left_lit;
+      (void)right_lit;
+
+      ++info.on_and_calls;
+      
+       /* ensure that this index is not already in use */
+      CHECK( !info.indices[index] );
+
+      info.indices[index] = index;
+    }
+
+    void on_latch( uint32_t index, uint32_t next_lit, latch_init_value init_value ) const override
+    {
+      (void)next_lit;
+      (void)init_value;
+
+      ++info.on_latch_calls;
+      
+      /* ensure that this index is not already in use */
+      CHECK( !info.indices[index] );
+
+      info.indices[index] = index;
+    }
+
+    void on_bad_state( uint32_t pos, uint32_t lit ) const override
+    {
+      (void)pos;
+      (void)lit;
+
+      ++info.on_bad_state_calls;
+    }
+
+    void on_constraint( uint32_t pos, uint32_t lit ) const override
+    {
+      (void)pos;
+      (void)lit;
+
+      ++info.on_constraints_calls;
+    }
+
+    void on_justice( uint32_t pos, std::vector<uint32_t> const& lits ) const override
+    {
+      (void)pos;
+      (void)lits;
+
+      ++info.on_justice_calls;
+    }
+
+    void on_fairness( uint32_t pos, uint32_t lit ) const override
+    {
+      (void)pos;
+      (void)lit;
+
+      ++info.on_fairness_calls;
+    }
+    
+    void on_comment( std::string const& comment ) const override
+    {
+      /* setup metadata by interpreting comment as JSON file */
+      std::stringstream iss{comment};
+      iss >> info.metadata;
+    }
+
+    aig_info& info;
+  }; /* test_reader */
+} /* namespace benchmarks */
+
+TEST_CASE( "test ASCII Aiger reader", "[aiger]" )
+{
+  for ( const auto& benchmark : benchmarks::aag_benchmarks )
+  {
+    std::string const benchmark_path = benchmarks::path( "aag", benchmark, "aag" );
+    std::cout << benchmark_path << std::endl;
+
+    /* read benchmark with default reader (increases the test coverage for the default visitor)*/
+    {
+      lorina::diagnostic_engine diag;
+      auto const result = lorina::read_ascii_aiger( benchmark_path, lorina::aiger_reader{}, &diag );
+      CHECK( result == lorina::return_code::success );
+    }
+
+    /* read benchmarks with test reader */    
+    {
+      lorina::diagnostic_engine diag;
+      benchmarks::aig_info info;
+      auto const result = lorina::read_ascii_aiger( benchmark_path, benchmarks::test_reader{info}, &diag );
+      CHECK( result == lorina::return_code::success );
+
+      /* check if all indices are defined */
+      if ( info.metadata.count( "disable_checks" ) && info.metadata["disable_checks"].count( "all_indices_defined" ) )
+      {
+        auto const result = info.check_all_indices_defined();
+        if ( !result )
+        {
+          fmt::print( "[e] benchmark `{}`: all indices defined\n", benchmark );
+        }
+      }
+
+      /* check if header is correct */
+      if ( info.metadata.count( "disable_checks" ) && info.metadata["disable_checks"].count( "header_info" ) )
+      {
+        auto const result = info.check_header_info();
+        if ( !result )
+        {
+          fmt::print( "[e] benchmark `{}`: header info\n", benchmark );
+        }
+      }
     }
   }
 }
 
-TEST_CASE( "Sequential ASCII Aiger", "[aiger]" )
+TEST_CASE( "test binary Aiger reader", "[aiger]" )
 {
-  std::string aiger_file =
-    "aag 7 2 1 2 4\n"
-    "2\n"
-    "4\n"
-    "6 8\n"
-    "6\n"
-    "7\n"
-    "8 4 10\n"
-    "10 13 15\n"
-    "12 2 6\n"
-    "14 3 7\n";
-
-  std::istringstream iss( aiger_file );
-
-  aiger_statistics stats;
-  aiger_statistics_reader reader( stats );
-
-  diagnostic_engine diag;
-  auto result = read_ascii_aiger( iss, reader, &diag );
-  CHECK( result == return_code::success );
-  CHECK( stats.maximum_variable_index == 7 );
-  CHECK( stats.number_of_inputs == 2 );
-  CHECK( stats.number_of_latches == 1 );
-  CHECK( stats.number_of_outputs == 2 );
-  CHECK( stats.number_of_ands == 4 );
-  CHECK( stats.ands.size() == stats.number_of_ands );
-  CHECK( stats.latches.size() == stats.number_of_latches );
-  CHECK( stats.outputs.size() == stats.number_of_outputs );
-
-  CHECK( stats.indices.size() == stats.maximum_variable_index+1 );
-  for ( auto i = 0u; i < stats.indices.size(); ++i )
+  for ( const auto& benchmark : benchmarks::aig_benchmarks )
   {
-    CHECK( i == stats.indices.at( i ) );
+    std::string const benchmark_path = benchmarks::path( "aig", benchmark, "aig" );
+    
+    /* read benchmark with default reader (increases the test coverage for the default visitor)*/
+    {
+      lorina::diagnostic_engine diag;
+      auto const result = lorina::read_aiger( benchmark_path, lorina::aiger_reader{}, &diag );
+      CHECK( result == lorina::return_code::success );
+    }
+
+    /* read benchmarks with test reader */    
+    {
+      lorina::diagnostic_engine diag;
+      benchmarks::aig_info info;
+      auto const result = lorina::read_aiger( benchmark_path, benchmarks::test_reader{info}, &diag );
+      CHECK( result == lorina::return_code::success );
+
+      /* check if header is correct */
+      if ( info.metadata.count( "disable_checks" ) && info.metadata["disable_checks"].count( "header_info" ) )
+      {
+        auto const result = info.check_header_info();
+        if ( !result )
+        {
+          fmt::print( "[e] benchmark `{}`: header info\n", benchmark );
+        }
+      }
+    }
   }
-}
-
-TEST_CASE( "ascii_format_bad_state", "[aiger]" )
-{
-  std::string aiger_file =
-    "aag 5 1 1 0 3 1\n"
-    "2\n"
-    "4 10 0\n"
-    "4\n"
-    "6 5 3\n"
-    "8 4 2\n"
-    "10 9 7\n";
-
-  std::istringstream iss( aiger_file );
-
-  aiger_statistics stats;
-  aiger_statistics_reader reader( stats );
-
-  diagnostic_engine diag;
-  auto result = read_ascii_aiger( iss, reader, &diag );
-  CHECK( result == return_code::success );
-  CHECK( stats.number_of_bad_states == 1u );
-  CHECK( stats.bad_states.size() == stats.number_of_bad_states );
-}
-
-TEST_CASE( "ascii_format_invariants", "[aiger]" )
-{
-  std::string aiger_file =
-    "aag 5 1 1 0 3 1 1\n"
-    "2\n"
-    "4 10 0\n"
-    "4\n"
-    "3\n"
-    "6 5 3\n"
-    "8 4 2\n"
-    "10 9 7\n";
-
-  std::istringstream iss( aiger_file );
-
-  aiger_statistics stats;
-  aiger_statistics_reader reader( stats );
-
-  diagnostic_engine diag;
-  auto result = read_ascii_aiger( iss, reader, &diag );
-  CHECK( result == return_code::success );
-  CHECK( stats.number_of_constraints == 1u );
-  CHECK( stats.constraints.size() == stats.number_of_constraints );
-}
-
-TEST_CASE( "ascii_format_justice", "[aiger]" )
-{
-  /**
-   * Generated with AIGER tools and NuSMV2:
-   *   `smv2aig -L ltl2smv prio.smv > prio.aig; aigtoaig prio.aag`
-   */
-  std::string aiger_file =
-    "aag 72 10 12 0 50 0 0 1\n"
-    "2\n"
-    "4\n"
-    "6\n"
-    "8\n"
-    "10\n"
-    "12\n"
-    "14\n"
-    "16\n"
-    "18\n"
-    "20\n"
-    "22 2\n"
-    "24 4\n"
-    "26 6\n"
-    "28 8\n"
-    "30 10\n"
-    "32 12\n"
-    "34 14\n"
-    "36 16\n"
-    "38 18\n"
-    "40 20\n"
-    "42 122\n"
-    "44 1\n"
-    "3\n"
-    "138\n"
-    "142\n"
-    "144\n"
-    "46 8 6\n"
-    "48 13 9\n"
-    "50 48 4\n"
-    "52 51 47\n"
-    "54 11 2\n"
-    "56 55 52\n"
-    "58 56 15\n"
-    "60 59 35\n"
-    "62 58 34\n"
-    "64 63 61\n"
-    "66 10 9\n"
-    "68 67 7\n"
-    "70 69 31\n"
-    "72 68 30\n"
-    "74 73 71\n"
-    "76 74 64\n"
-    "78 49 33\n"
-    "80 48 32\n"
-    "82 81 79\n"
-    "84 82 76\n"
-    "86 17 2\n"
-    "88 87 19\n"
-    "90 89 39\n"
-    "92 88 38\n"
-    "94 93 91\n"
-    "96 94 84\n"
-    "98 87 37\n"
-    "100 86 36\n"
-    "102 101 99\n"
-    "104 102 96\n"
-    "106 105 41\n"
-    "108 40 21\n"
-    "110 109 107\n"
-    "112 110 42\n"
-    "114 113 44\n"
-    "116 88 59\n"
-    "118 117 21\n"
-    "120 118 45\n"
-    "122 121 115\n"
-    "124 28 26\n"
-    "126 33 29\n"
-    "128 126 24\n"
-    "130 129 125\n"
-    "132 31 22\n"
-    "134 133 130\n"
-    "136 134 34\n"
-    "138 137 42\n"
-    "140 36 22\n"
-    "142 141 42\n"
-    "144 42 41\n"
-    "i0 AIGER_NEXT_r_m\n"
-    "i1 AIGER_NEXT_r_0\n"
-    "i2 AIGER_NEXT_g_m\n"
-    "i3 AIGER_NEXT_g_0\n"
-    "i4 AIGER_NEXT_LTL_1_SPECF_8\n"
-    "i5 AIGER_NEXT_LTL_1_SPECF_7\n"
-    "i6 AIGER_NEXT_LTL_1_SPECF_5\n"
-    "i7 AIGER_NEXT_LTL_1_SPECF_3\n"
-    "i8 AIGER_NEXT_LTL_1_SPECF_1\n"
-    "i9 AIGER_NEXT_IGNORE_LTL_1\n"
-    "l0 r_m\n"
-    "l1 r_0\n"
-    "l2 g_m\n"
-    "l3 g_0\n"
-    "l4 LTL_1_SPECF_8\n"
-    "l5 LTL_1_SPECF_7\n"
-    "l6 LTL_1_SPECF_5\n"
-    "l7 LTL_1_SPECF_3\n"
-    "l8 LTL_1_SPECF_1\n"
-    "l9 IGNORE_LTL_1\n"
-    "l10 AIGER_VALID\n"
-    "l11 AIGER_INITIALIZED\n"
-    "j0 AIGER_JUST_0\n"
-    "c\n"
-    "smvtoaig\n"
-    "1.9\n"
-    "prio.smv\n";
-
-  std::istringstream iss( aiger_file );
-
-  aiger_statistics stats;
-  aiger_statistics_reader reader( stats );
-
-  diagnostic_engine diag;
-  auto result = read_ascii_aiger( iss, reader, &diag );
-  CHECK( result == return_code::success );
-  CHECK( stats.number_of_justice == 1u );
-  CHECK( stats.justice.size() == stats.number_of_justice );
 }

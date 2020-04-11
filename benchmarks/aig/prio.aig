@@ -1,0 +1,47 @@
+aig 72 10 12 0 50 0 0 1
+2
+4
+6
+8
+10
+12
+14
+16
+18
+20
+122
+1
+3
+138
+142
+144
+&#,+	)8<&&
+ ED22
+22@DDE`I`]fe	d_hcfi0 AIGER_NEXT_r_m
+i1 AIGER_NEXT_r_0
+i2 AIGER_NEXT_g_m
+i3 AIGER_NEXT_g_0
+i4 AIGER_NEXT_LTL_1_SPECF_8
+i5 AIGER_NEXT_LTL_1_SPECF_7
+i6 AIGER_NEXT_LTL_1_SPECF_5
+i7 AIGER_NEXT_LTL_1_SPECF_3
+i8 AIGER_NEXT_LTL_1_SPECF_1
+i9 AIGER_NEXT_IGNORE_LTL_1
+l0 r_m
+l1 r_0
+l2 g_m
+l3 g_0
+l4 LTL_1_SPECF_8
+l5 LTL_1_SPECF_7
+l6 LTL_1_SPECF_5
+l7 LTL_1_SPECF_3
+l8 LTL_1_SPECF_1
+l9 IGNORE_LTL_1
+l10 AIGER_VALID
+l11 AIGER_INITIALIZED
+j0 AIGER_JUST_0
+c
+{
+  "name": "prio",
+  "description": "Example generated with AIGER tools and NuSMV2: `smv2aig -L ltl2smv prio.smv > prio.aig; aigtoaig prio.aag`"
+}
