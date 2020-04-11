@@ -222,7 +222,6 @@ TEST_CASE( "test ASCII Aiger reader", "[aiger]" )
   for ( const auto& benchmark : benchmarks::aag_benchmarks )
   {
     std::string const benchmark_path = benchmarks::path( "aag", benchmark, "aag" );
-    std::cout << benchmark_path << std::endl;
 
     /* read benchmark with default reader (increases the test coverage for the default visitor)*/
     {
