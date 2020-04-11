@@ -147,56 +147,56 @@ public:
 
   /*! \brief Callback method for parsed bad state property.
    *
-   * \param index Index of the bad state property
+   * \param index Position in the list of bad state property
    * \param lit Assigned literal
    */
-  virtual void on_bad_state( uint32_t index, uint32_t lit ) const
+  virtual void on_bad_state( uint32_t pos, uint32_t lit ) const
   {
-    (void)index;
+    (void)pos;
     (void)lit;
   }
 
   /*! \brief Callback method for parsed constraint.
    *
-   * \param index Index of the constraint
+   * \param index Position in the list of constraint
    * \param lit Assigned literal
    */
-  virtual void on_constraint( uint32_t index, uint32_t lit ) const
+  virtual void on_constraint( uint32_t pos, uint32_t lit ) const
   {
-    (void)index;
+    (void)pos;
     (void)lit;
   }
 
   /*! \brief Callback method for parsed fairness constraints.
    *
-   * \param index Index of the fairness constraint
+   * \param index Position in the list of fairness constraint
    * \param lit Assigned literal
    */
-  virtual void on_fairness( uint32_t index, uint32_t lit ) const
+  virtual void on_fairness( uint32_t pos, uint32_t lit ) const
   {
-    (void)index;
+    (void)pos;
     (void)lit;
   }
 
   /*! \brief Callback method for parsed header of justice property.
    *
-   * \param index Index of the justice property
+   * \param index Position in the list of the justice property
    * \param size Number of assigned literals
    */
-  virtual void on_justice_header( uint32_t index, uint64_t size ) const
+  virtual void on_justice_header( uint32_t pos, uint64_t size ) const
   {
-    (void)index;
+    (void)pos;
     (void)size;
   }
 
   /*! \brief Callback method for parsed justice property.
    *
-   * \param index Index of the justice property
+   * \param index Position in the list of the justice property
    * \param lits Assigned literals
    */
-  virtual void on_justice( uint32_t index, const std::vector<uint32_t>& lits ) const
+  virtual void on_justice( uint32_t pos, const std::vector<uint32_t>& lits ) const
   {
-    (void)index;
+    (void)pos;
     (void)lits;
   }
 
