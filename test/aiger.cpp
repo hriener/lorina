@@ -4,8 +4,9 @@
 
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
-#include <map>
 #include <iostream>
+#include <map>
+#include <optional>
 
 namespace benchmarks
 {
