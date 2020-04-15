@@ -343,3 +343,46 @@ TEST_CASE( "Module instantiation with parameters", "[verilog]" )
   CHECK( reader._parameter == 2 );
   CHECK( reader._instantiations == 8 );
 }
+
+TEST_CASE( "Input and output registers", "[verilog]" )
+{
+  std::string verilog_file =
+    "module gf24_inversion(x, y);\n"
+    "    input [3:0] x;\n"
+    "    output [3:0] y;\n"
+    "    wire t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13;\n\n"
+    "    assign t1 = x[2] ^ x[3];\n"
+    "    assign t2 = x[2] & x[0];\n"
+    "    assign t3 = x[1] ^ t2;\n"
+    "    assign t4 = x[0] ^ x[1];\n"
+    "    assign t5 = x[3] ^ t2;\n"
+    "    assign t6 = t5 & t4;\n"
+    "    assign t7 = t3 & t1;\n"
+    "    assign t8 = x[0] & x[3];\n"
+    "    assign t9 = t4 & t8;\n"
+    "    assign t10 = t4 ^ t9;\n"
+    "    assign t11 = x[1] & x[2];\n"
+    "    assign t12 = t1 & t11;\n"
+    "    assign t13 = t1 ^ t12;\n"
+    "    assign y[0] = t2 ^ t13;\n"
+    "    assign y[1] = x[3] ^ t7;\n"
+    "    assign y[2] = t2 ^ t10;\n"
+    "    assign y[3] = x[1] ^ t6;\n"
+    "endmodule\n";
+
+  std::istringstream iss( verilog_file );
+  simple_verilog_reader reader;
+  auto result = read_verilog( iss, reader );
+  CHECK( result == return_code::success );
+  CHECK( reader._inputs == 1 );
+  CHECK( reader._outputs == 1 );
+  CHECK( reader._wires == 13 );
+  CHECK( reader._aliases == 0 );
+  CHECK( reader._ands == 7 );
+  CHECK( reader._ors == 0 );
+  CHECK( reader._xors == 10 );
+  CHECK( reader._maj3 == 0 );
+  CHECK( reader._comments == 0 );
+  CHECK( reader._parameter == 0 );
+  CHECK( reader._instantiations == 0 );
+}
