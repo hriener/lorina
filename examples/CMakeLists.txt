@@ -1,8 +1,11 @@
-# No debugging and optimization for examples
-function(add_example name)
-  add_executable(${name} ${name}.cpp)
-  target_link_libraries(${name} lorina)
-endfunction()
+file(GLOB FILENAMES *.cpp)
 
-add_example(pretty_print pretty_print.cpp)
-target_link_libraries(pretty_print cli11)
+foreach(filename ${FILENAMES})
+  get_filename_component(basename ${filename} NAME_WE)
+  add_executable(${basename} ${filename})
+  target_link_libraries(${basename} PUBLIC cli11 lorina)
+
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${basename}.cmake")
+    include(${basename}.cmake)
+  endif()
+endforeach()
