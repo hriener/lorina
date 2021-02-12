@@ -1461,6 +1461,11 @@ inline return_code read_verilog( const std::string& filename, const verilog_read
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );
   if ( !in.is_open() )
   {
+    if ( diag )
+    {
+      diag->report( diagnostic_level::fatal,
+                    fmt::format( "could not open file `{0}`", filename ) );
+    }
     return return_code::parse_error;
   }
   else
