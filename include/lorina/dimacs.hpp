@@ -86,6 +86,12 @@ public:
   {
     (void)clause;
   }
+
+  /*! \brief Callback method for parse end.
+   *
+   */
+  virtual void on_end() const {}
+
 }; /* dimacs_reader */
 
 namespace dimacs_regex
@@ -176,6 +182,7 @@ inline return_code read_dimacs( std::istream& in, const dimacs_reader& reader, d
   }
   else
   {
+    reader.on_end();
     return return_code::success;
   }
 }
