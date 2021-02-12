@@ -98,3 +98,43 @@ TEST_CASE( "cnf_dimacs single line of clauses", "[dimacs]" )
   std::vector<uint32_t> expected = { 2, 0, 2, 3, 2 };
   CHECK( stats.variable_appearance_count == expected );
 }
+
+TEST_CASE( "cnf_dimacs missing problem specification", "[dimacs]" )
+{
+  std::string dimacs =
+      "c\n"
+      "c start with comments\n"
+      "c\n"
+      "c\n"
+      "1 -5 4 0 "
+      "-1 5 3 4 0 "
+      "-3 -4 0\n";
+
+  std::istringstream iss( dimacs );
+
+  dimacs_statistics stats;
+  dimacs_statistics_reader reader( stats );
+  auto result = read_dimacs( iss, reader );
+
+  CHECK( result == return_code::parse_error );
+}
+
+TEST_CASE( "cnf_dimacs missing clause delimiter", "[dimacs]" )
+{
+  std::string dimacs =
+      "c\n"
+      "c start with comments\n"
+      "c\n"
+      "c\n"
+      "1 -5 4\n"
+      "-1 5 3 4 0\n"
+      "-3 -4 0\n";
+
+  std::istringstream iss( dimacs );
+
+  dimacs_statistics stats;
+  dimacs_statistics_reader reader( stats );
+  auto result = read_dimacs( iss, reader );
+
+  CHECK( result == return_code::parse_error );
+}
