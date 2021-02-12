@@ -462,7 +462,16 @@ inline return_code read_blif( std::istream& in, const blif_reader& reader, diagn
 inline return_code read_blif( const std::string& filename, const blif_reader& reader, diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );
-  return read_blif( in, reader, diag );
+  if ( !in.is_open() )
+  {
+    return file_error;
+  }
+  else
+  {
+    auto const ret = read_blif( in, reader, diag );
+    in.close();
+    return ret;
+  }
 }
 
 } // namespace lorina

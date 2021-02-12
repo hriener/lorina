@@ -671,7 +671,16 @@ inline return_code read_ascii_aiger( std::istream& in, const aiger_reader& reade
 inline return_code read_ascii_aiger( const std::string& filename, const aiger_reader& reader, diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );
-  return read_ascii_aiger( in, reader, diag );
+  if ( !in.is_open() )
+  {
+    return file_error;
+  }
+  else
+  {
+    auto const ret = read_ascii_aiger( in, reader, diag );
+    in.close();
+    return ret;
+  }
 }
 
 /*! \brief Reader function for binary AIGER format.
@@ -892,7 +901,16 @@ inline return_code read_aiger( std::istream& in, const aiger_reader& reader, dia
 inline return_code read_aiger( const std::string& filename, const aiger_reader& reader, diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::binary );
-  return read_aiger( in, reader, diag );
+  if ( !in.is_open() )
+  {
+    return file_error;
+  }
+  else
+  {
+    auto const ret = read_aiger( in, reader, diag );
+    in.close();
+    return ret;
+  }
 }
 
 } // namespace lorina

@@ -1459,7 +1459,16 @@ inline return_code read_verilog( std::istream& in, const verilog_reader& reader,
 inline return_code read_verilog( const std::string& filename, const verilog_reader& reader, diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );
-  return read_verilog( in, reader, diag );
+  if ( !in.is_open() )
+  {
+    return file_error;
+  }
+  else
+  {
+    auto const ret = read_verilog( in, reader, diag );
+    in.close();
+    return ret;
+  }
 }
 
 } // namespace lorina
