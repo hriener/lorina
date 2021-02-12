@@ -184,11 +184,11 @@ inline return_code read_bristol( std::string const& filename, bristol_reader con
   std::ifstream in( filename, std::ifstream::in );
   if ( !in.is_open() )
   {
-    return return_code::file_error;
+    return return_code::parse_error;
   }
   else
   {
-    auto const ret = read_bristol( in, reader, diag );
+    auto const ret = read_bristol( in, reader );
     in.close();
     return ret;
   }
