@@ -39,7 +39,6 @@ enum class return_code
 {
   success = 0,
   parse_error,
-  file_error, // cannot open the given filename
 };
 
 } // namespace lorina
