@@ -301,7 +301,7 @@ inline return_code read_bench( const std::string& filename, const bench_reader& 
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );
   if ( !in.is_open() )
   {
-    return file_error;
+    return return_code::file_error;
   }
   else
   {

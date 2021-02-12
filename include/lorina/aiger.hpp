@@ -673,7 +673,7 @@ inline return_code read_ascii_aiger( const std::string& filename, const aiger_re
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );
   if ( !in.is_open() )
   {
-    return file_error;
+    return return_code::file_error;
   }
   else
   {
@@ -903,7 +903,7 @@ inline return_code read_aiger( const std::string& filename, const aiger_reader& 
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::binary );
   if ( !in.is_open() )
   {
-    return file_error;
+    return return_code::file_error;
   }
   else
   {
