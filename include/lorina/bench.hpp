@@ -299,7 +299,21 @@ inline return_code read_bench( std::istream& in, const bench_reader& reader, dia
 inline return_code read_bench( const std::string& filename, const bench_reader& reader, diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );
-  return read_bench( in, reader, diag );
+  if ( !in.is_open() )
+  {
+    if ( diag )
+    {
+      diag->report( diagnostic_level::fatal,
+                    fmt::format( "could not open file `{0}`", filename ) );
+    }
+    return return_code::parse_error;
+  }
+  else
+  {
+    auto const ret = read_bench( in, reader, diag );
+    in.close();
+    return ret;
+  }
 }
 
 } // namespace lorina

@@ -181,8 +181,17 @@ inline return_code read_bristol( std::istream& is, bristol_reader const& reader 
  */
 inline return_code read_bristol( std::string const& filename, bristol_reader const& reader )
 {
-  std::ifstream is( filename, std::ifstream::in );
-  return read_bristol( is, reader );
+  std::ifstream in( filename, std::ifstream::in );
+  if ( !in.is_open() )
+  {
+    return return_code::parse_error;
+  }
+  else
+  {
+    auto const ret = read_bristol( in, reader );
+    in.close();
+    return ret;
+  }
 }
 
 } // namespace lorina

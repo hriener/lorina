@@ -342,7 +342,21 @@ inline return_code read_pla( std::istream& in, const pla_reader& reader, diagnos
 inline return_code read_pla( const std::string& filename, const pla_reader& reader, diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );
-  return read_pla( in, reader, diag );
+  if ( !in.is_open() )
+  {
+    if ( diag )
+    {
+      diag->report( diagnostic_level::fatal,
+                    fmt::format( "could not open file `{0}`", filename ) );
+    }
+    return return_code::parse_error;
+  }
+  else
+  {
+    auto const ret = read_pla( in, reader, diag );
+    in.close();
+    return ret;
+  }
 }
 
 } // namespace lorina
