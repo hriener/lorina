@@ -4,7 +4,8 @@ Change Log
 v0.3 (Not yet released)
 -----------------------
 
-* Bristol fashion reader: ``bristol_reader`` `#32 <https://github.com/hriener/lorina/pull/32>`_
+* DIMACS reader: ``on_format``, ``on_number_of_variables``, ``onnumber_of_clauses``, ``on_clause``, ``on_end`` (contributed by Bruno Schmitt) `#39 <https://github.com/hriener/lorina/pull/39>`_
+* Bristol reader: ``on_header``, ``on_gate`` #32 <https://github.com/hriener/lorina/pull/32>`_
 * BLIF reader: ``on_latch`` (contributed by Max Austin) `#28 <https://github.com/hriener/lorina/pull/28>`_
 * Writer visitor: ``verilog_writer``
 * Verilog reader: ``on_module_instantiation``, ``on_parameter``
