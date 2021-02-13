@@ -32,9 +32,9 @@
 
 #pragma once
 
-#include <lorina/common.hpp>
-#include <lorina/diagnostics.hpp>
-#include <lorina/detail/utils.hpp>
+#include "common.hpp"
+#include "diagnostics.hpp"
+#include "detail/utils.hpp"
 #include <cassert>
 #include <fstream>
 #include <iostream>
@@ -248,7 +248,7 @@ static std::regex term( R"(^([01\-]+)\s+([01\-]+)$)" );
  * \param in Input stream
  * \param reader A PLA reader with callback methods invoked for parsed primitives
  * \param diag An optional diagnostic engine with callback methods for parse errors
- * \return Success if parsing have been successful, or parse error if parsing have failed
+ * \return Success if parsing has been successful, or parse error if parsing has failed
  */
 inline return_code read_pla( std::istream& in, const pla_reader& reader, diagnostic_engine* diag = nullptr )
 {
@@ -337,7 +337,7 @@ inline return_code read_pla( std::istream& in, const pla_reader& reader, diagnos
  * \param filename Name of the file
  * \param reader A PLA reader with callback methods invoked for parsed primitives
  * \param diag An optional diagnostic engine with callback methods for parse errors
- * \return Success if parsing have been successful, or parse error if parsing have failed
+ * \return Success if parsing has been successful, or parse error if parsing has failed
  */
 inline return_code read_pla( const std::string& filename, const pla_reader& reader, diagnostic_engine* diag = nullptr )
 {

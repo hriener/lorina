@@ -32,9 +32,9 @@
 
 #pragma once
 
-#include <lorina/common.hpp>
-#include <lorina/diagnostics.hpp>
-#include <lorina/detail/utils.hpp>
+#include "common.hpp"
+#include "diagnostics.hpp"
+#include "detail/utils.hpp"
 #include <cassert>
 #include <fstream>
 #include <iostream>
@@ -109,7 +109,7 @@ static std::regex clause( R"(((-?[1-9]+)+ +)+0)" );
  * \param in Input stream
  * \param reader A DIMACS reader with callback methods invoked for parsed primitives
  * \param diag An optional diagnostic engine with callback methods for parse errors
- * \return Success if parsing have been successful, or parse error if parsing have failed
+ * \return Success if parsing has been successful, or parse error if parsing has failed
  */
 inline return_code read_dimacs( std::istream& in, const dimacs_reader& reader, diagnostic_engine* diag = nullptr )
 {
@@ -195,7 +195,7 @@ inline return_code read_dimacs( std::istream& in, const dimacs_reader& reader, d
  * \param filename Name of the file
  * \param reader A DIMACS reader with callback methods invoked for parsed primitives
  * \param diag An optional diagnostic engine with callback methods for parse errors
- * \return Success if parsing have been successful, or parse error if parsing have failed
+ * \return Success if parsing has been successful, or parse error if parsing has failed
  */
 inline return_code read_dimacs( const std::string& filename, const dimacs_reader& reader, diagnostic_engine* diag = nullptr )
 {
