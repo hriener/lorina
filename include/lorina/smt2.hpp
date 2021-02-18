@@ -108,7 +108,7 @@ public:
 
   virtual void on_preorder( index_type id ) const
   {
-    std::cout << "(" << this->g[id].data;
+    std::cout << "(" << this->g[id].data << ' ';
   }
 
   virtual void on_postorder( index_type id ) const
@@ -298,11 +298,17 @@ public:
     }
 
     std::vector<index_type> args;
+    std::string keyword{};
+
     while ( !in.eof() )
     {
       tok = get_token();
 
-      if ( tok.value == ")" )
+      if ( tok.kind == token_kind::tok_keyword )
+      {
+        keyword = tok.value;
+      }
+      else if ( tok.value == ")" )
       {
         /* parse the end of this S-expression */
         break;
@@ -320,14 +326,13 @@ public:
       }
       else
       {
-        /* otherwise, create a single node */
+        /* otherwise, create a leave node */
         args.emplace_back( reader.g.create_node( snode{tok.value} ) );
       }
     }
 
     /* create a node for the S-expression */
-    std::vector<index_type> args_( std::begin( args ) + 1, std::end( args ) );
-    return reader.g.create_node( snode{reader.g[args[0]].data, args_} );
+    return reader.g.create_node( snode{keyword, args} );
   }
 
   void visit_sexpr( index_type id )
