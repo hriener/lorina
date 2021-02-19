@@ -37,5 +37,6 @@
 #include "blif.hpp"
 #include "bristol.hpp"
 #include "diamcs.hpp"
+#include "genlib.hpp"
 #include "pla.hpp"
 #include "verilog.hpp"
