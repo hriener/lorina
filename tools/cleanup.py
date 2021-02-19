@@ -19,4 +19,4 @@ for file in hpp_files:
     print("processing ", file)
     with fileinput.FileInput(file, inplace=True, backup='~') as file:
         for line in file:
-            print( re.sub( r'\* Copyright \(C\) [\d-]+', '* Copyright (C) 2017-2021', line ), end='' )
+            print( re.sub( r'\* Copyright \(C\) [\d-]+', '* Copyright (C) 2018-2021', line ), end='' )
