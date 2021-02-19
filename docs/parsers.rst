@@ -34,6 +34,39 @@ BLIF format
 
 .. doxygenclass:: lorina::blif_reader
 
+BRISTOL format
+~~~~~~~~~~~
+
+**Header:** ``lorina/bristol.hpp``
+
+.. toctree::
+
+   bristol
+
+.. doxygenclass:: lorina::bristol_reader
+
+DIMACS format
+~~~~~~~~~~~
+
+**Header:** ``lorina/dimacs.hpp``
+
+.. toctree::
+
+   dimacs
+
+.. doxygenclass:: lorina::dimacs_reader
+
+GENLIB format
+~~~~~~~~~~~
+
+**Header:** ``lorina/genlib.hpp``
+
+.. toctree::
+
+   genlib
+
+.. doxygenclass:: lorina::genlib_reader
+
 PLA format
 ~~~~~~~~~~
 
