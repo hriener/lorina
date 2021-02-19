@@ -28,6 +28,7 @@
   \brief Implements GENLIB parser
 
   \author Heinz Riener
+  \author Shubham Rai
 */
 
 #pragma once
@@ -99,7 +100,7 @@ private:
   bool parse_gate_definition( std::string const& line )
   {
     std::stringstream ss( line );
-    std::string const deliminators  = " \t\r\n";
+    std::string const deliminators{" \t\r\n"};
 
     std::string token;
 
