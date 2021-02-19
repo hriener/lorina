@@ -102,6 +102,14 @@ public:
     }
   }
 
+  /* \brief Returns the number of nodes
+   *
+   */
+  uint64_t num_nodes() const
+  {
+    return nodes.size();
+  }
+
 protected:
   std::vector<node_type> nodes;
 }; /* asg */

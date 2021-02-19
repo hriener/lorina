@@ -97,42 +97,47 @@ public:
   using index_type = typename ASG::index_type;
 
 public:
-  explicit smt2_pretty_printer( ASG& g )
+  explicit smt2_pretty_printer( ASG& g, std::ostream& os = std::cout )
     : smt2_reader<ASG>( g )
+    , os( os )
   {}
 
-  virtual void on_top( index_type id ) const
+  void on_top( index_type id ) const override
   {
     (void)id;
   }
 
-  virtual void on_preorder( index_type id ) const
+  void on_preorder( index_type id ) const override
   {
-    std::cout << "(" << this->g[id].data << ' ';
+    os << "(" << this->g[id].data;
   }
 
-  virtual void on_postorder( index_type id ) const
+  void on_postorder( index_type id ) const override
   {
     (void)id;
-    std::cout << ")";
+    os << ")";
   }
 
-  virtual void on_leave( index_type id ) const
+  void on_leave( index_type id ) const override
   {
-    std::cout << this->g[id].data;
+    os << this->g[id].data;
   }
 
-  virtual void on_child( index_type id ) const
-  {
-    (void)id;
-    std::cout << ' ';
-  }
-
-  virtual void on_end( index_type id ) const
+  void on_child( index_type id ) const override
   {
     (void)id;
-    std::cout << std::endl;
+    os << ' ';
   }
+
+  void on_end( index_type id ) const override
+  {
+    (void)id;
+    os << '\n';
+    os.flush();
+  }
+
+public:
+  std::ostream& os;
 }; /* smt2_pretty_printer */
 
 /*! \brief SNode
@@ -235,6 +240,8 @@ public:
     if ( tok == "set-logic" ||
          tok == "set-option" ||
          tok == "define-fun" ||
+         tok == "declare-fun" ||
+         tok == "declare-const" ||
          tok == "not" ||
          tok == "and" ||
          tok == "or" ||
@@ -332,7 +339,10 @@ public:
     }
 
     /* create a node for the S-expression */
-    return reader.g.create_node( snode{keyword, args} );
+    if ( keyword == "" )
+      return reader.g.create_node( snode{"()", args} );
+    else
+      return reader.g.create_node( snode{keyword, args} );
   }
 
   void visit_sexpr( index_type id )
