@@ -33,10 +33,12 @@
 #pragma once
 
 #include "common.hpp"
+#include "detail/utils.hpp"
 #include "diagnostics.hpp"
 #include <istream>
 #include <fstream>
 #include <string>
+#include <optional>
 
 namespace lorina
 {
@@ -48,17 +50,131 @@ namespace lorina
 class genlib_reader
 {
 public:
+  virtual void on_gate( std::string const& name, std::string const& expression, double area, std::optional<double> delay ) const
+  {
+    (void)name;
+    (void)expression;
+    (void)area;
+    (void)delay;
+  }
 }; /* genlib_reader */
 
-/*! \brief A reader for pretty-printing the GENLIB format.
- *
- * Callbacks for prettyprinting of GENLIB.
+/*! \brief Parse for the GENLIB format.
  *
  */
-class genlib_pretty_printer : public genlib_reader
+class genlib_parser
 {
 public:
-};
+  explicit genlib_parser( std::istream& in, genlib_reader const& reader, diagnostic_engine* diag )
+    : in( in )
+    , reader( reader )
+    , diag( diag )
+  {}
+
+public:
+  bool run()
+  {
+    std::string line;
+    while ( std::getline( in, line ) )
+    {
+      /* remove whitespaces */
+      detail::trim( line );
+
+      /* skip comments and empty lines */
+      if ( line[0] == '#' || line.empty() )
+      {
+        continue;
+      }
+
+      if ( !parse_gate_definition( line ) )
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+private:
+  bool parse_gate_definition( std::string const& line )
+  {
+    std::stringstream ss( line );
+    std::string const deliminators  = " \t\r\n";
+
+    std::string token;
+
+    std::vector<std::string> tokens;
+    while ( std::getline( ss, token ) )
+    {
+      std::size_t prev = 0, pos;
+      while ( ( pos = line.find_first_of( deliminators, prev ) ) != std::string::npos )
+      {
+        if ( pos > prev )
+        {
+          tokens.emplace_back( token.substr( prev, pos - prev ) );
+        }
+        prev = pos + 1;
+      }
+
+      if ( prev < line.length() )
+      {
+        tokens.emplace_back( token.substr( prev, std::string::npos ) );
+      }
+    }
+
+    if ( diag && tokens.size() < 4u )
+    {
+      diag->report( diagnostic_level::error, fmt::format( "line `{}` has unexpected structure (expected `GATE <name> <area> <expression>;`)`",
+                                                          line ) );
+      return false;
+    }
+
+    if ( diag && tokens[0] != "GATE" )
+    {
+      diag->report( diagnostic_level::error, fmt::format( "line `{}` does not start with keyword `GATE`",
+                                                          line ) );
+      return false;
+    }
+    auto const beg = tokens[3].find_first_of( "=" );
+    auto const end = tokens[3].find_first_of( ";" );
+    if ( diag && ( beg == std::string::npos || end == std::string::npos ) )
+    {
+      diag->report( diagnostic_level::error, fmt::format( "expression `{}` is not immediately terminated with `;``",
+                                                          tokens[3] ) );
+      return false;
+    }
+
+    std::string const& name = tokens[1];
+    std::string const& expression = tokens[3].substr( beg + 1, end - beg - 1 );
+    double const area = std::stod( tokens[2] );
+    if ( tokens.size() > 4u )
+    {
+      /* find delay information for gate */
+      double delay{0.0};
+      for ( auto i = 4u; i < tokens.size(); ++i )
+      {
+        if ( tokens[i] == "PIN" )
+        {
+          delay = std::stod( tokens[ i + 3 ] );
+        }
+      }
+
+      reader.on_gate( name, expression, area, delay );
+    }
+    else
+    {
+      reader.on_gate( name, expression, area, std::nullopt );
+    }
+
+    return true;
+  }
+
+protected:
+  std::istream& in;
+  genlib_reader const& reader;
+  diagnostic_engine* diag;
+}; /* genlib_parser */
+
 
 /*! \brief Reader function for the GENLIB format.
  *
@@ -72,8 +188,8 @@ public:
  */
 inline return_code read_genlib( std::istream& in, const genlib_reader& reader, diagnostic_engine* diag = nullptr )
 {
-  gelib_parser parser( in, reader, diag );
-  auto result = parser.parse_module();
+  genlib_parser parser( in, reader, diag );
+  auto result = parser.run();
   if ( !result )
   {
     return return_code::parse_error;
@@ -108,7 +224,7 @@ inline return_code read_genlib( const std::string& filename, const genlib_reader
   }
   else
   {
-    auto const ret = read_genlibg( in, reader, diag );
+    auto const ret = read_genlib( in, reader, diag );
     in.close();
     return ret;
   }
