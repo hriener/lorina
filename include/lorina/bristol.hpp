@@ -177,6 +177,7 @@ private:
  */
 inline return_code read_bristol( std::istream& is, bristol_reader const& reader, diagnostic_engine* diag = nullptr )
 {
+  (void)diag;
   return bristol_parser( is, reader ).run();
 }
 
