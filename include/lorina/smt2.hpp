@@ -197,9 +197,10 @@ public:
   };
 
 public:
-  explicit sexpr_parser( std::istream& in, Reader const& reader )
+  explicit sexpr_parser( std::istream& in, Reader const& reader, std::vector<std::string> const& keywords )
     : in( in )
     , reader( reader )
+    , keywords( keywords )
   {}
 
   token get_token()
@@ -237,17 +238,7 @@ public:
     }
 
     detail::trim( tok );
-    if ( tok == "set-logic" ||
-         tok == "set-option" ||
-         tok == "define-fun" ||
-         tok == "declare-fun" ||
-         tok == "declare-const" ||
-         tok == "not" ||
-         tok == "and" ||
-         tok == "or" ||
-         tok == "synth-fun" ||
-         tok == "constraint" ||
-         tok == "check-synth" )
+    if ( std::find( std::begin( keywords ), std::end( keywords ), tok ) != std::end( keywords ) )
     {
       return token{token_kind::tok_keyword, tok};
     }
@@ -374,6 +365,7 @@ public:
 protected:
   std::istream& in;
   Reader const& reader;
+  std::vector<std::string> const keywords;
 
   token tok;
 }; /* sexpr_parser */
@@ -381,7 +373,11 @@ protected:
 template<typename Reader>
 inline bool read_smt2( std::istream& in, Reader const& reader )
 {
-  sexpr_parser<Reader> parser( in, reader );
+  std::vector<std::string> keywords =
+    { "set-logic", "set-option", "define-fun", "declare-fun",
+      "declare-const", "not", "and", "or", "xor", "=>", "synth-fun",
+      "constraint", "check-synth", "check-sat" };
+  sexpr_parser<Reader> parser( in, reader, keywords );
   return parser.run();
 }
 
