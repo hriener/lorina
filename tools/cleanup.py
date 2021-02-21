@@ -72,23 +72,24 @@ def write_file( filename, content ):
     with open( filename, "w" ) as f:
         f.write( '\n'.join( content ) )
 
+def match_replace( content, pattern, replace ):
+    found = False
+    for match in pattern.finditer( content ):
+        found = True
+        content = ''.join( [content[:match.start()], replace, content[match.end():]] )
+    return found, content
+
 # find all `.hpp` files
 hpp_files = find_files( '.', '.hpp' )
 
-# process content
 header_pattern = re.compile( header )
 for file in hpp_files:
-    print("processing ", file)
-
     content = read_file( file )
     content = '\n'.join( content )
     new_content = content
 
-    # detect file header
-    header_found = False
-    for match in header_pattern.finditer( new_content ):
-        header_found = True
-        new_content = ''.join( [ new_content[:match.start()], header_replace, new_content[match.end():] ] )
+    # update file header if necessary
+    header_found, new_content = match_replace( new_content, header_pattern, header_replace )
 
     # add file header if not found
     if not header_found:
