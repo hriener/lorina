@@ -717,7 +717,19 @@ inline return_code read_aiger( std::istream& in, const aiger_reader& reader, dia
   {
     std::cout << "matched test0" << std::endl;
   }
+  
+  std::regex test1( R"(^aig (\d+) (\d+) (\d+) (\d+) (\d+)( \d+)?( \d+)?( \d+)?( \d+)?)" );
+  if ( std::regex_search( header_line, m, test1 ) )
+  {
+    std::cout << "matched test1" << std::endl;
+  }
 
+  std::regex test2( R"(^aig (\d+) (\d+) (\d+) (\d+) (\d+))" );
+  if ( std::regex_search( header_line, m, test2 ) )
+  {
+    std::cout << "matched test2" << std::endl;
+  }
+  
   if ( std::regex_search( header_line, m, aig_regex::header ) )
   {
     std::vector<uint32_t> header;

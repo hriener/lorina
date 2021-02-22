@@ -49,10 +49,10 @@ namespace benchmarks
     uint64_t number_of_outputs{0};
     uint64_t number_of_ands{0};
     
-    uint32_t number_of_bad_states{0};
-    uint32_t number_of_constraints{0};
-    uint32_t number_of_justice{0};
-    uint32_t number_of_fairness{0};
+    uint64_t number_of_bad_states{0};
+    uint64_t number_of_constraints{0};
+    uint64_t number_of_justice{0};
+    uint64_t number_of_fairness{0};
 
     /* count calls */
     uint32_t on_input_calls{0};
