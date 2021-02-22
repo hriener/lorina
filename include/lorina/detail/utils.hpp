@@ -60,20 +60,22 @@ inline std::istream& getline( std::istream& is, std::string& t )
 {
   t.clear();
 
-  // The characters in the stream are read one-by-one using a std::streambuf.
-  // That is faster than reading them one-by-one using the std::istream.
-  // Code that uses streambuf this way must be guarded by a sentry object.
-  // The sentry object performs various tasks,
-  // such as thread synchronization and updating the stream state.
+  /* The characters in the stream are read one-by-one using a std::streambuf.
+   * That is faster than reading them one-by-one using the std::istream.
+   * Code that uses streambuf this way must be guarded by a sentry object.
+   * The sentry object performs various tasks,
+   * such as thread synchronization and updating the stream state.
+   */
 
   std::istream::sentry se( is, true );
   std::streambuf* sb = is.rdbuf();
 
-  for (;;)
+  for ( ;; )
   {
     int c = sb->sbumpc();
-    switch (c)
+    switch ( c )
     {
+    /* deal with file endings */
     case '\n':
       return is;
     case '\r':
@@ -82,13 +84,22 @@ inline std::istream& getline( std::istream& is, std::string& t )
         sb->sbumpc();
       }
       return is;
+
+    /* handles the case when the last line has no line ending */
     case std::streambuf::traits_type::eof():
-      // Also handle the case when the last line has no line ending
       if ( t.empty() )
       {
-        is.setstate(std::ios::eofbit);
+        is.setstate( std::ios::eofbit );
       }
       return is;
+
+    /* preserve failbit */
+    case std::streambuf::traits_type::fail():
+      {
+        is.setstate( std::ios::failbit );
+      }
+      return is;
+
     default:
       t += (char)c;
     }
@@ -249,7 +260,7 @@ inline void foreach_line_in_file_escape( std::istream& in, const std::function<b
 {
   std::string line, line2;
 
-  while ( std::getline( in, line ) )
+  while ( getline( in, line ) )
   {
     trim( line );
 
@@ -257,7 +268,9 @@ inline void foreach_line_in_file_escape( std::istream& in, const std::function<b
     {
       line.pop_back();
       trim( line );
-      if ( !std::getline( in, line2 ) )
+
+      /* check for the failbit */
+      if ( !getline( in, line2 ) )
       {
         assert( false );
       }
