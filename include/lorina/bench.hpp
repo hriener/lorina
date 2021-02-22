@@ -174,6 +174,8 @@ static std::regex gate_asgn( R"((.*)\s+=\s+(.*))" );
  */
 inline return_code read_bench( std::istream& in, const bench_reader& reader, diagnostic_engine* diag = nullptr )
 {
+  std::cout << "read_bench" << std::endl;
+  
   return_code result = return_code::success;
 
   const auto dispatch_function = [&]( std::vector<std::string> inputs, std::string output, std::string type )
@@ -198,6 +200,8 @@ inline return_code read_bench( std::istream& in, const bench_reader& reader, dia
 
   std::smatch m;
   detail::foreach_line_in_file_escape( in, [&]( const std::string& line ) {
+    std::cout << "parsing: " << line << std::endl;
+    
     /* empty line or comment */
     if ( line.empty() || line[0] == '#' )
       return true;
