@@ -19,12 +19,14 @@ public:
   {
     (void)size;
     _inputs = uint32_t( inputs.size() );
+    _input_declarations.emplace_back( inputs, size );
   }
 
   void on_outputs( const std::vector<std::string>& outputs, std::string const& size = "" ) const override
   {
     (void)size;
     _outputs = uint32_t( outputs.size() );
+    _output_declarations.emplace_back( outputs, size );
   }
 
   void on_wires( const std::vector<std::string>& wires, std::string const& size = "" ) const override
@@ -112,6 +114,8 @@ public:
   {
     (void)name;
     (void)value;
+
+    _parameter_definitions.emplace_back( name, value );
     ++_parameter;
   }
 
@@ -139,6 +143,10 @@ public:
   mutable uint32_t _comments = 0;
   mutable uint32_t _parameter = 0;
   mutable uint32_t _instantiations = 0;
+
+  mutable std::vector<std::pair<std::string,std::string>> _parameter_definitions;
+  mutable std::vector<std::pair<std::vector<std::string>,std::string>> _input_declarations;
+  mutable std::vector<std::pair<std::vector<std::string>,std::string>> _output_declarations;
 }; /* simple_verilog_reader */
 
 TEST_CASE( "Check return_code of read_verilog", "[verilog]")
@@ -308,9 +316,50 @@ TEST_CASE( "Parse constants in Verilog file", "[verilog]" )
   CHECK( reader._comments == 0 );
 }
 
+TEST_CASE( "Parameter definition", "[verilog]" )
+{
+  std::string const verilog_file =
+    "module top(a, b, c);\n"
+    "  parameter A = 10;\n"
+    "  parameter B = 20;\n"
+    "  parameter C = 30;\n"
+    "  input [A - 1:0] a;\n"
+    "  input [B-1:0] b;\n"
+    "  output [C -   1:0] c;\n"
+    "endmodule";
+
+  lorina::diagnostic_engine diag;
+  std::istringstream iss( verilog_file );
+  simple_verilog_reader reader;
+  auto const result = read_verilog( iss, reader, &diag );
+  CHECK( result == return_code::success );
+
+  CHECK( reader._parameter_definitions.size() == 3u );
+  CHECK( reader._parameter_definitions[0u].first == "A" );
+  CHECK( reader._parameter_definitions[0u].second == "10" );
+  CHECK( reader._parameter_definitions[1u].first == "B" );
+  CHECK( reader._parameter_definitions[1u].second == "20" );
+  CHECK( reader._parameter_definitions[2u].first == "C" );
+  CHECK( reader._parameter_definitions[2u].second == "30" );
+
+  CHECK( reader._input_declarations.size() == 2u );
+  CHECK( reader._input_declarations[0u].first.size() == 1u );
+  CHECK( reader._input_declarations[0u].first[0u] == "a" );
+  CHECK( reader._input_declarations[0u].second == "A-1:0" );
+
+  CHECK( reader._input_declarations[1u].first.size() == 1u );
+  CHECK( reader._input_declarations[1u].first[0u] == "b" );
+  CHECK( reader._input_declarations[1u].second == "B-1:0" );
+
+  CHECK( reader._output_declarations.size() == 1u );
+  CHECK( reader._output_declarations[0u].first.size() == 1u );
+  CHECK( reader._output_declarations[0u].first[0u] == "c" );
+  CHECK( reader._output_declarations[0u].second == "C-1:0" );
+}
+
 TEST_CASE( "Module instantiation with parameters", "[verilog]" )
 {
-  std::string verilog_file =
+  std::string const verilog_file =
     "module fp2mult(a0, a1, b0, b1, c0, c1);\n"
     "  parameter N = 5;\n"
     "  parameter M = 29;\n"
