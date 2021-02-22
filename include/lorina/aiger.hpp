@@ -709,7 +709,7 @@ inline return_code read_aiger( std::istream& in, const aiger_reader& reader, dia
   uint32_t _m, _i, _l, _o, _a, _b, _c, _j, _f;
 
   /* parse header */
-  std::cout << "header line = " << header_line << stD::endl;
+  std::cout << "header line = " << header_line << std::endl;
   // static std::regex header( R"(^aig (\d+) (\d+) (\d+) (\d+) (\d+)( \d+)?( \d+)?( \d+)?( \d+)?$)" );
 
   std::regex test0( R"(^aig)" );
