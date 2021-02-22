@@ -72,7 +72,7 @@ inline std::istream& getline( std::istream& is, std::string& t )
 
   for ( ;; )
   {
-    int c = sb->sbumpc();
+    int const c = sb->sbumpc();
     switch ( c )
     {
     /* deal with file endings */
@@ -85,18 +85,11 @@ inline std::istream& getline( std::istream& is, std::string& t )
       }
       return is;
 
-    /* handles the case when the last line has no line ending */
+    /* handle the case when the last line has no line ending */
     case std::streambuf::traits_type::eof():
       if ( t.empty() )
       {
         is.setstate( std::ios::eofbit );
-      }
-      return is;
-
-    /* preserve failbit */
-    case std::streambuf::traits_type::fail():
-      {
-        is.setstate( std::ios::failbit );
       }
       return is;
 
@@ -260,7 +253,7 @@ inline void foreach_line_in_file_escape( std::istream& in, const std::function<b
 {
   std::string line, line2;
 
-  while ( getline( in, line ) )
+  while ( !getline( in, line ).eof() )
   {
     trim( line );
 
@@ -273,6 +266,7 @@ inline void foreach_line_in_file_escape( std::istream& in, const std::function<b
       if ( !getline( in, line2 ) )
       {
         assert( false );
+        std::abort();
       }
       line += line2;
     }
