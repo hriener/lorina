@@ -65,6 +65,8 @@ public:
 
 TEST_CASE( "Check return_code of read_bench", "[bench]" )
 {
+  std::cout << "test 1" << std::endl;
+  
   std::string broken_file =
     "INPUT(x[0])\n"
     "OUTPUT(y[0])\n"
@@ -88,6 +90,8 @@ TEST_CASE( "Check return_code of read_bench", "[bench]" )
 
 TEST_CASE( "bench_parse", "[bench]" )
 {
+  std::cout << "test 2" << std::endl;
+
   std::string bench_file =
       "INPUT(input_x[0])\n"
       "INPUT(input_x[1])\n"
@@ -117,6 +121,8 @@ TEST_CASE( "bench_parse", "[bench]" )
 
 TEST_CASE( "whitespaces", "[bench]" )
 {
+  std::cout << "test 3" << std::endl;
+
   std::string bench_file =
       "INPUT(x0)\n"
       "INPUT(x1)\n"
@@ -146,6 +152,8 @@ TEST_CASE( "whitespaces", "[bench]" )
 
 TEST_CASE( "Parse DFF", "[bench]" )
 {
+  std::cout << "test 4" << std::endl;
+
   std::string bench_file =
       "INPUT(input_x[0])\n"
       "OUTPUT(outport[0])\n"
