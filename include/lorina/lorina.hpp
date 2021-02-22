@@ -1,5 +1,5 @@
 /* lorina: C++ parsing library
- * Copyright (C) 2018-2020  EPFL
+ * Copyright (C) 2018-2021  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -32,9 +32,11 @@
 
 #pragma once
 
-#include <lorina/aiger.hpp>
-#include <lorina/bench.hpp>
-#include <lorina/blif.hpp>
-#include <lorina/bristol.hpp>
-#include <lorina/pla.hpp>
-#include <lorina/verilog.hpp>
+#include "aiger.hpp"
+#include "bench.hpp"
+#include "blif.hpp"
+#include "bristol.hpp"
+#include "dimacs.hpp"
+#include "genlib.hpp"
+#include "pla.hpp"
+#include "verilog.hpp"

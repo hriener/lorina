@@ -22,6 +22,8 @@ if (UNIX)
   if (ENABLE_COVERAGE)
     add_compile_options(-O0 -g --coverage -fprofile-arcs -ftest-coverage)
   endif()
+elseif (WIN32)
+  add_compile_definitions(NOMINMAX=1)
 endif()
 
 add_subdirectory(lib)
