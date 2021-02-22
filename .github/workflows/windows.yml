@@ -31,5 +31,4 @@ jobs:
       run: |
         cd build
         echo "aiger"
-        .\test\Debug\run_tests -s "[aiger]"
-        .\test\Debug\run_tests -s "[bench]"
+        .\test\Debug\run_tests

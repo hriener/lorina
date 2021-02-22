@@ -249,7 +249,7 @@ inline void foreach_line_in_file_escape( std::istream& in, const std::function<b
 {
   std::string line, line2;
 
-  while ( getline( in, line ) )
+  while ( std::getline( in, line ) )
   {
     trim( line );
 
@@ -257,7 +257,7 @@ inline void foreach_line_in_file_escape( std::istream& in, const std::function<b
     {
       line.pop_back();
       trim( line );
-      if ( !getline( in, line2 ) )
+      if ( !std::getline( in, line2 ) )
       {
         assert( false );
       }
