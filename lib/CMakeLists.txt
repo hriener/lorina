@@ -13,3 +13,8 @@ if (NOT TARGET rang)
   add_library(rang INTERFACE)
   target_include_directories(rang INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/rang)
 endif()
+
+if (NOT TARGET json)
+  add_library(json INTERFACE) # v3.5.0
+  target_include_directories(json INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/json)
+endif()

@@ -1,0 +1,14 @@
+aag 5 1 1 0 3 1 1
+2
+4 10 0
+4
+3
+6 5 3
+8 4 2
+10 9 7
+c
+{
+  "name": "invariant",
+  "description": "Example from ``AIGER 1.9 and Beyond'', Armin Biere, Keijo Heljanko,  Siert Wieringa",
+  "url": "http://fmv.jku.at/papers/BiereHeljankoWieringa-FMV-TR-11-2.pdf"
+}

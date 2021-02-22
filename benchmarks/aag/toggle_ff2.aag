@@ -1,0 +1,16 @@
+aag 7 2 1 2 4
+2
+4
+6 8
+6
+7
+8 4 10
+10 13 15
+12 2 6
+14 3 7
+c
+{
+  "name": "toggle_ff2",
+  "description": "Example from ``The AIGER And-Inverter Graph (AIG) Format Version 20071012'', Armin Biere, Johannes Kepler University Linz, Austria",
+  "url": "http://fmv.jku.at/papers/Biere-FMV-TR-07-1.pdf"
+}

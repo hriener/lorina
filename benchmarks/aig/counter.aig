@@ -1,0 +1,9 @@
+aig 5 1 1 0 3 1
+10
+4
+c
+{
+  "name": "counter",
+  "description": "Example from ``AIGER 1.9 and Beyond'', Armin Biere, Keijo Heljanko,  Siert Wieringa",
+  "url": "http://fmv.jku.at/papers/BiereHeljankoWieringa-FMV-TR-11-2.pdf"
+}
