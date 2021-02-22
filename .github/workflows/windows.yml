@@ -30,21 +30,5 @@ jobs:
     - name: Run tests
       run: |
         cd build
-        echo "bench"
-        .\test\Debug\run_tests -s "[bench]"
-        echo "bristol"
-        .\test\Debug\run_tests -s "[bristol]"
-        echo "dimacs"
-        .\test\Debug\run_tests -s "[dimacs]"
-        echo "pla"
-        .\test\Debug\run_tests -s "[pla]"
-        echo "utils"
-        .\test\Debug\run_tests -s "[utils]"
-        echo "verilog"
-        .\test\Debug\run_tests -s "[verilog]"
-        echo "genlib"
-        .\test\Debug\run_tests -s "[genlib]"
         echo "aiger"
         .\test\Debug\run_tests -s "[aiger]"
-        echo "blif"
-        .\test\Debug\run_tests -s "[blif]"
