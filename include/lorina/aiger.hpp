@@ -811,7 +811,7 @@ inline return_code read_aiger( std::istream& in, const aiger_reader& reader, dia
   /* latches */
   for ( auto i = 0u; i < _l; ++i )
   {
-    detail::getline( in, line );
+    std::getline( in, line );
     const auto tokens = detail::split( line, " " );
     const auto next = std::atoi( tokens[0u].c_str() );
     aiger_reader::latch_init_value init_value = aiger_reader::latch_init_value::NONDETERMINISTIC;
@@ -832,21 +832,21 @@ inline return_code read_aiger( std::istream& in, const aiger_reader& reader, dia
 
   for ( auto i = 0u; i < _o; ++i )
   {
-    detail::getline( in, line );
+    std::getline( in, line );
     reader.on_output( i, std::atol( line.c_str() ) );
   }
 
   /* bad state properties */
   for ( auto i = 0u; i < _b; ++i )
   {
-    detail::getline( in, line );
+    std::getline( in, line );
     reader.on_bad_state( i, std::atol( line.c_str() ) );
   }
 
   /* constraints */
   for ( auto i = 0u; i < _c; ++i )
   {
-    detail::getline( in, line );
+    std::getline( in, line );
     reader.on_constraint( i, std::atol( line.c_str() ) );
   }
 
@@ -854,7 +854,7 @@ inline return_code read_aiger( std::istream& in, const aiger_reader& reader, dia
   std::vector<uint64_t> justice_sizes;
   for ( auto i = 0u; i < _j; ++i )
   {
-    detail::getline( in, line );
+    std::getline( in, line );
     const auto justice_size = std::atol( line.c_str() );
     justice_sizes.emplace_back( justice_size );
     reader.on_justice_header( i, justice_size );
@@ -865,7 +865,7 @@ inline return_code read_aiger( std::istream& in, const aiger_reader& reader, dia
     std::vector<uint32_t> lits;
     for ( auto j = 0u; j < justice_sizes[i]; ++j )
     {
-      detail::getline( in, line );
+      std::getline( in, line );
       const auto lit = std::atol( line.c_str() );
       lits.emplace_back( lit );
     }
@@ -875,7 +875,7 @@ inline return_code read_aiger( std::istream& in, const aiger_reader& reader, dia
   /* fairness */
   for ( auto i = 0u; i < _f; ++i )
   {
-    detail::getline( in, line );
+    std::getline( in, line );
     reader.on_fairness( i, std::atol( line.c_str() ) );
   }
 
@@ -905,7 +905,7 @@ inline return_code read_aiger( std::istream& in, const aiger_reader& reader, dia
   }
 
   /* parse names and comments */
-  while ( detail::getline( in, line ) )
+  while ( std::getline( in, line ) )
   {
     if ( std::regex_search( line, m, aig_regex::input ) )
     {
@@ -938,7 +938,7 @@ inline return_code read_aiger( std::istream& in, const aiger_reader& reader, dia
     else if ( line == "c" )
     {
       std::string comment{};
-      while ( detail::getline( in, line ) )
+      while ( std::getline( in, line ) )
       {
         comment += line;
       }
