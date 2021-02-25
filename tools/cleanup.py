@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-import os
 import fileinput
+import os
 import re
+import subprocess
 
-header = """/\* lorina: C\+\+ parsing library
+copyright_header = """/\* lorina: C\+\+ parsing library
  \* Copyright \(C\) ([\d-]+)  EPFL
  \*
  \* Permission is hereby granted, free of charge, to any person
@@ -29,7 +30,7 @@ header = """/\* lorina: C\+\+ parsing library
  \*/
 """
 
-header_replace = """/* lorina: C++ parsing library
+copyright_header_replace = """/* lorina: C++ parsing library
  * Copyright (C) 2018-2021  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
@@ -55,6 +56,19 @@ header_replace = """/* lorina: C++ parsing library
  */
 """
 
+file_header_match = """/\*\!
+\s+\\\\file\s+([\w.]+)
+\s+\\\\brief\s+([^\n\\\\]*)
+(\s+\\\\author[^\*]*)\*/"""
+
+file_header_replace = """/*!
+  \\file {}
+  \\brief {}
+
+{}
+*/"""
+
+
 def find_files( path, ext ):
     items = []
     for root, dirs, files in os.walk( path ):
@@ -79,26 +93,78 @@ def match_replace( content, pattern, replace ):
         content = ''.join( [content[:match.start()], replace, content[match.end():]] )
     return found, content
 
+def match_file_header( content, pattern, filename, authors ):
+    found = False
+    for match in pattern.finditer( content ):
+        found = True
+
+        if match[1] != filename:
+            print( "[w] filename does not match {} {}".format( match[1], filename ) )
+
+        replace = file_header_replace.format( filename, match[2], "".join( ["  \\author {}\n".format( a ) for a in authors] ).rstrip() )
+        content = ''.join( [content[:match.start()], replace, content[match.end():]] )
+
+    return found, content
+
+author_pseudonyms = {
+    'Eleonora' : 'Eleonora Testa',
+    'b1f6c1c4' : 'Jinzheng Tu',
+    'eletesta' : 'Eleonora Testa',
+    'gmeuli' : 'Giulia Meuli',
+    'lee30sonia' : 'Siang-Yun (Sonia) Lee',
+    'mdsudara' : 'Dewmini Sudara',
+    'wlneto' : 'Walter Lau Neto',
+    'zfchu' : 'Zhufei Chu',
+}
+def git_authors( file ):
+    result = subprocess.check_output(['git', 'shortlog', '-s', '--', file])
+
+    authors = []
+    lines = result.decode('utf-8').split('\n')
+    for l in lines:
+        author_information = l.split( '\t' )
+        if len( author_information ) > 1:
+            name = author_information[1]
+            if ( name in author_pseudonyms ):
+                authors.append( author_pseudonyms[name] )
+            else:
+                authors.append( name )
+
+    # remove duplicate names
+    authors = list( dict.fromkeys( authors ) )
+    return sorted( authors )
+
 # find all `.hpp` files
 hpp_files = find_files( '.', '.hpp' )
 
-header_pattern = re.compile( header )
-for file in hpp_files:
-    content = read_file( file )
+# prepare regular expression patterns
+copyright_header_pattern = re.compile( copyright_header )
+file_header_pattern = re.compile( file_header_match )
+
+for path in hpp_files:
+    filename = os.path.basename( path )
+
+    # determine authors of file
+    authors = git_authors( path )
+
+    content = read_file( path )
     content = '\n'.join( content )
     new_content = content
 
+    # update copyright header if necessary
+    copyright_header_found, new_content = match_replace( new_content, copyright_header_pattern, copyright_header_replace )
+
+    # add copyright header if not found
+    if not copyright_header_found:
+        new_content = ''.join( [ copyright_header_replace, new_content ] )
+
     # update file header if necessary
-    header_found, new_content = match_replace( new_content, header_pattern, header_replace )
+    found, new_content = match_file_header( new_content, file_header_pattern, filename, authors )
 
-    # add file header if not found
-    if not header_found:
-        new_content = ''.join( [ header_replace, new_content ] )
-
-    # update the file if it exists
+    # rewrite the file
     if ( content != new_content ):
-        print( "create backup ", file + "~" )
-        write_file( file + "~", [ content ] )
+        print( "create backup ", path + "~" )
+        write_file( path + "~", [ content ] )
 
-        print( "update file ", file )
-        write_file( file, [ new_content ] )
+        print( "update file ", path )
+        write_file( path, [ new_content ] )
