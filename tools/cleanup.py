@@ -99,22 +99,40 @@ def match_file_header( content, pattern, filename, authors ):
         found = True
 
         if match[1] != filename:
-            print( "[w] filename does not match {} {}", match[1], filename )
+            print( "[w] filename does not match {} {}".format( match[1], filename ) )
 
         replace = file_header_replace.format( filename, match[2], "".join( ["  \\author {}\n".format( a ) for a in authors] ).rstrip() )
-        content = ''.join( [new_content[:match.start()], replace, new_content[match.end():]] )
+        content = ''.join( [content[:match.start()], replace, content[match.end():]] )
+
     return found, content
 
+author_pseudonyms = {
+    'Eleonora' : 'Eleonora Testa',
+    'b1f6c1c4' : 'Jinzheng Tu',
+    'eletesta' : 'Eleonora Testa',
+    'gmeuli' : 'Giulia Meuli',
+    'lee30sonia' : 'Siang-Yun (Sonia) Lee',
+    'mdsudara' : 'Dewmini Sudara',
+    'wlneto' : 'Walter Lau Neto',
+    'zfchu' : 'Zhufei Chu',
+}
 def git_authors( file ):
     result = subprocess.check_output(['git', 'shortlog', '-s', '--', file])
 
     authors = []
     lines = result.decode('utf-8').split('\n')
     for l in lines:
-        l = l.split( '\t' )
-        if len( l ) > 1:
-            authors.append( l[1] )
-    return authors
+        author_information = l.split( '\t' )
+        if len( author_information ) > 1:
+            name = author_information[1]
+            if ( name in author_pseudonyms ):
+                authors.append( author_pseudonyms[name] )
+            else:
+                authors.append( name )
+
+    # remove duplicate names
+    authors = list( dict.fromkeys( authors ) )
+    return sorted( authors )
 
 # find all `.hpp` files
 hpp_files = find_files( '.', '.hpp' )
@@ -136,12 +154,12 @@ for path in hpp_files:
     # update copyright header if necessary
     copyright_header_found, new_content = match_replace( new_content, copyright_header_pattern, copyright_header_replace )
 
-    # add file header if not found
+    # add copyright header if not found
     if not copyright_header_found:
         new_content = ''.join( [ copyright_header_replace, new_content ] )
 
     # update file header if necessary
-    found, new_conent = match_file_header( new_content, file_header_pattern, filename, authors )
+    found, new_content = match_file_header( new_content, file_header_pattern, filename, authors )
 
     # rewrite the file
     if ( content != new_content ):
