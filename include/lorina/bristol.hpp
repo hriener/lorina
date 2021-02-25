@@ -27,9 +27,11 @@
   \file bristol.hpp
   \brief Implements a parser for Bristol fashion
 
-  \author Heinz Riener
-
   Reference: https://homes.esat.kuleuven.be/~nsmart/MPC/
+
+  \author Heinz Riener
+  \author Mathias Soeken
+  \author Siang-Yun (Sonia) Lee
 */
 
 #pragma once
