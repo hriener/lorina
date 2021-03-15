@@ -144,25 +144,28 @@ private:
       }
     }
 
-    if ( diag && tokens.size() < 4u )
+    if ( tokens.size() < 4u )
     {
-      diag->report( diagnostic_level::error, fmt::format( "line `{}` has unexpected structure (expected `GATE <name> <area> <expression>;`)`",
-                                                          line ) );
+      if ( diag )
+        diag->report( diagnostic_level::error, fmt::format( "line `{}` has unexpected structure (expected `GATE <name> <area> <expression>;`)`",
+                                                            line ) );
       return false;
     }
 
-    if ( diag && tokens[0] != "GATE" )
+    if ( tokens[0] != "GATE" )
     {
-      diag->report( diagnostic_level::error, fmt::format( "line `{}` does not start with keyword `GATE`",
-                                                          line ) );
+      if ( diag )
+        diag->report( diagnostic_level::error, fmt::format( "line `{}` does not start with keyword `GATE`",
+                                                            line ) );
       return false;
     }
     auto const beg = tokens[3].find_first_of( "=" );
     auto const end = tokens[3].find_first_of( ";" );
-    if ( diag && ( beg == std::string::npos || end == std::string::npos ) )
+    if ( beg == std::string::npos || end == std::string::npos )
     {
-      diag->report( diagnostic_level::error, fmt::format( "expression `{}` is not immediately terminated with `;``",
-                                                          tokens[3] ) );
+      if ( diag )
+        diag->report( diagnostic_level::error, fmt::format( "expression `{}` is not immediately terminated with `;``",
+                                                            tokens[3] ) );
       return false;
     }
 
@@ -176,10 +179,11 @@ private:
     for ( ; i+8 < tokens.size(); i += 9 )
     {
       /* check PIN specification */
-      if ( diag && tokens[i] != "PIN" )
+      if ( tokens[i] != "PIN" )
       {
-        diag->report( diagnostic_level::error, fmt::format( "unexpected `{}` token (expected `PIN`)",
-                                                            tokens[i] ) );
+        if ( diag )
+          diag->report( diagnostic_level::error, fmt::format( "unexpected `{}` token (expected `PIN`)",
+                                                              tokens[i] ) );
         return false;
       }
 
@@ -195,10 +199,11 @@ private:
       }
       else
       {
-        if ( diag && tokens[i+2] != "UNKNOWN" )
+        if ( tokens[i+2] != "UNKNOWN" )
         {
-          diag->report( diagnostic_level::warning, fmt::format( "unknown PIN phase type `{}` (expected `INV`, `NONINV`, or `UNKNOWN`)",
-                                                                tokens[i+1] ) );
+          if ( diag )
+            diag->report( diagnostic_level::warning, fmt::format( "unknown PIN phase type `{}` (expected `INV`, `NONINV`, or `UNKNOWN`)",
+                                                                  tokens[i+1] ) );
         }
       }
 
@@ -212,10 +217,11 @@ private:
       pins.emplace_back( pin_spec{name,phase,input_load,max_load,rise_block_delay,rise_fanout_delay,fall_block_delay,fall_fanout_delay} );
     }
 
-    if ( diag && i != tokens.size() )
+    if ( i != tokens.size() )
     {
-      diag->report( diagnostic_level::error, fmt::format( "parsing failed at token `{}`",
-                                                          tokens[i] ) );
+      if ( diag )
+        diag->report( diagnostic_level::error, fmt::format( "parsing failed at token `{}`",
+                                                            tokens[i] ) );
       return false;
     }
 
