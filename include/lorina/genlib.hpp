@@ -45,6 +45,26 @@
 namespace lorina
 {
 
+enum class phase_type : uint8_t
+{
+  INV = 0,
+  NONINV = 1,
+  UNKNOWN = 2,
+};
+
+// PIN <pin-name> <phase> <input-load> <max-load> <rise-block-delay> <rise-fanout-delay> <fall-block-delay> <fall-fanout-delay>
+struct pin_spec
+{
+  std::string name;
+  phase_type phase;
+  double input_load;
+  double max_load;
+  double rise_block_delay;
+  double rise_fanout_delay;
+  double fall_block_delay;
+  double fall_fanout_delay;
+}; /* pin_spec */
+
 /*! \brief A reader visitor for a GENLIB format.
  *
  * Callbacks for the GENLIB format.
@@ -52,12 +72,12 @@ namespace lorina
 class genlib_reader
 {
 public:
-  virtual void on_gate( std::string const& name, std::string const& expression, double area, std::optional<double> delay ) const
+  virtual void on_gate( std::string const& name, std::string const& expression, double area, std::vector<pin_spec> const& pins ) const
   {
     (void)name;
     (void)expression;
     (void)area;
-    (void)delay;
+    (void)pins;
   }
 }; /* genlib_reader */
 
@@ -149,25 +169,57 @@ private:
     std::string const& name = tokens[1];
     std::string const& expression = tokens[3].substr( beg + 1, end - beg - 1 );
     double const area = std::stod( tokens[2] );
-    if ( tokens.size() > 4u )
+
+    std::vector<pin_spec> pins;
+
+    uint64_t i{4};
+    for ( ; i+8 < tokens.size(); i += 9 )
     {
-      /* find delay information for gate */
-      double delay{0.0};
-      for ( auto i = 4u; i < tokens.size(); ++i )
+      /* check PIN specification */
+      if ( diag && tokens[i] != "PIN" )
       {
-        if ( tokens[i] == "PIN" )
+        diag->report( diagnostic_level::error, fmt::format( "unexpected `{}` token (expected `PIN`)",
+                                                            tokens[i] ) );
+        return false;
+      }
+
+      std::string const& name = tokens[i+1];
+      phase_type phase{phase_type::UNKNOWN};
+      if ( tokens[i+2] == "INV" )
+      {
+        phase = phase_type::INV;
+      }
+      else if ( tokens[i+2] == "NONINV" )
+      {
+        phase = phase_type::NONINV;
+      }
+      else
+      {
+        if ( diag && tokens[i+2] != "UNKNOWN" )
         {
-          delay = std::stod( tokens[ i + 3 ] );
+          diag->report( diagnostic_level::warning, fmt::format( "unknown PIN phase type `{}` (expected `INV`, `NONINV`, or `UNKNOWN`)",
+                                                                tokens[i+1] ) );
         }
       }
 
-      reader.on_gate( name, expression, area, delay );
-    }
-    else
-    {
-      reader.on_gate( name, expression, area, std::nullopt );
+      double const input_load = std::stod( tokens[i+3] );
+      double const max_load = std::stod( tokens[i+4] );
+      double const rise_block_delay = std::stod( tokens[i+5] );
+      double const rise_fanout_delay = std::stod( tokens[i+6] );
+      double const fall_block_delay = std::stod( tokens[i+7] );
+      double const fall_fanout_delay = std::stod( tokens[i+8] );
+
+      pins.emplace_back( pin_spec{name,phase,input_load,max_load,rise_block_delay,rise_fanout_delay,fall_block_delay,fall_fanout_delay} );
     }
 
+    if ( diag && i != tokens.size() )
+    {
+      diag->report( diagnostic_level::error, fmt::format( "parsing failed at token `{}`",
+                                                          tokens[i] ) );
+      return false;
+    }
+
+    reader.on_gate( name, expression, area, pins );
     return true;
   }
 
