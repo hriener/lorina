@@ -51,42 +51,48 @@ TEST_CASE( "error cases", "[genlib]")
     /* not all required fields have been specified */
     std::string const genlib_file = "GATE zero";
     std::istringstream iss( genlib_file );
-    CHECK( read_genlib( iss, genlib_reader{} ) == return_code::parse_error );
+    silent_diagnostic_engine diag;
+    CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::parse_error );
   }
 
   {
     /* the keyword `GATE` in the beginning is missing */
     std::string const genlib_file = "zero 0 O=0; PIN * INV 1 999 1 1 1 1";
     std::istringstream iss( genlib_file );
-    CHECK( read_genlib( iss, genlib_reader{} ) == return_code::parse_error );
+    silent_diagnostic_engine diag;
+    CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::parse_error );
   }
 
   {
     /* the expression is not terminated by a semicolon */
     std::string const genlib_file = "GATE zero 0 O=0 PIN * INV 1 999 1 1 1 1";
     std::istringstream iss( genlib_file );
-    CHECK( read_genlib( iss, genlib_reader{} ) == return_code::parse_error );
+    silent_diagnostic_engine diag;
+    CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::parse_error );
   }
 
   {
     /* the pin specification does not start with the keyword `PIN` */
     std::string const genlib_file = "GATE zero 0 O=0; a INV 1 999 1 1 1 1 1";
     std::istringstream iss( genlib_file );
-    CHECK( read_genlib( iss, genlib_reader{} ) == return_code::parse_error );
+    silent_diagnostic_engine diag;
+    CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::parse_error );
   }
 
   {
     /* the phase has been specified with an unknown keyword (NONINV is misspelled)  */
     std::string const genlib_file = "GATE zero 0 O=0; PIN * NOINV 1 999 1 1 1 1\n";
     std::istringstream iss( genlib_file );
-    CHECK( read_genlib( iss, genlib_reader{} ) == return_code::success );
+    silent_diagnostic_engine diag;
+    CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::success );
   }
 
   {
     /* the PIN spec is incomplete and not all tokens are consumed  */
-    std::string const genlib_file = "GATE zero 0 O=0 PIN a 1";
+    std::string const genlib_file = "GATE zero 0 O=0; PIN a 1";
     std::istringstream iss( genlib_file );
-    CHECK( read_genlib( iss, genlib_reader{} ) == return_code::parse_error );
+    silent_diagnostic_engine diag;
+    CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::parse_error );
   }
 }
 
