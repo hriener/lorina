@@ -51,26 +51,32 @@ for path in args.files:
                     print( '[', colorama.Style.BRIGHT + colorama.Fore.GREEN + "OK", ']' )
                 
             ### file and author information
-            m = utils.match_block( content, block, re.compile( file_header_mask.format( *file_header_regex ) ) )
+            m = utils.match_block( content, block, re.compile( file_header_match_mask ) )
             if ( m ):
                 print( "matched file and author information:", m.groups(), end=' ' )
 
-                assert len(m.groups()) == len(file_header_replace)
+                filename = m.groups()[0]
+                description = m.groups()[1].strip()
+                authors = re.findall( re.compile( author_match_mask ), m.groups()[2] )
 
-                # prepare replacement
-                authors = utils.git_authors( path, author_pseudonyms )
-                replace = file_header_replace
-                replace[0] = file_header_replace[0].format( os.path.basename( path ) )
-                replace[1] = file_header_replace[1].format( m.groups()[1] )
-                replace[2] = '\n'.join([file_header_replace[2].format( a ) for a in authors])
+                expected_filename = os.path.basename( path )
+                expected_authors = utils.git_authors( path, author_pseudonyms )
 
-                if list(m.groups()) != replace:
-                    # add an extra newline
-                    replace[2] = '\n' + replace[2]
-                    utils.replace_block( content, blocks, index, utils.string_remove_escape( file_header_mask ).format( *replace ).split( '\n' ) )
+                new_file_header = file_header_replace_mask.format( expected_filename, description,
+                                                                   ''.join( [author_replace_mask.format( author ) for author in expected_authors] ) )
+                new_file_header = utils.string_remove_escape( new_file_header )
+
+                if ( '\n'.join( content[block[0]:block[1]] ) != new_file_header ):
+                    utils.replace_block( content, blocks, index, new_file_header.split('\n') )
                     print( '[', colorama.Style.BRIGHT + colorama.Fore.BLUE + "UPDATE", ']' )
                 else:
                     print( '[', colorama.Style.BRIGHT + colorama.Fore.GREEN + "OK", ']' )
+            # else:
+            #     expected_filename = os.path.basename( path )
+            #     expected_authors = utils.git_authors( path, author_pseudonyms )
+            # 
+            #     new_file_header = file_header_replace_mask.format( expected_filename, "No description.",
+            #                                                        ''.join( [author_replace_mask.format( author ) for author in expected_authors] ) )
 
         content = '\n'.join(content)
 

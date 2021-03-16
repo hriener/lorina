@@ -41,7 +41,6 @@ def string_remove_escape( string ):
 #---------------------------------------------------------------------------
 def git_authors( file, author_pseudonyms ):
     result = subprocess.check_output(['git', 'shortlog', '-s', '--', file])
-
     authors = []
     lines = result.decode('utf-8').split('\n')
     for l in lines:
@@ -100,13 +99,16 @@ def replace_block( content, blocks, index, replacement ):
     block = blocks[index]
     offset = len(replacement) - ( block[1] - block[0] )
 
-    for i in range( block[0], min(block[1], block[0] + len(replacement)) ):
+    for i in range( block[0], min( block[1], block[0] + len(replacement) ) ):
         content[i] = replacement[i - block[0]]
 
+    # replacement is longer than the original block
     if ( offset > 0 ):
         content[block[1]:block[1]] = replacement[block[1] - block[0]:]
+
+    # replacement is shorter than the original block
     elif ( offset < 0 ):
-        for i in range(-offset):
-            del content[block[1] + i]
+        for i in range( -offset ):
+            del content[block[1] - i - 1]
 
     update_blocks_by_offset( blocks, index, offset )

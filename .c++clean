@@ -37,11 +37,13 @@ copyright_header_mask = """/\* {}
 copyright_header_regex = [ "(.*)", "(.*)" ]
 copyright_header_replace = [ "lorina: C++ parsing library", "Copyright (C) 2018-2021  EPFL" ]
 
-file_header_mask = """/\*\!
-{}
-{}
-{}
-\*/"""
+file_header_match_mask = """/\*!
+\s*(?:\\\\file\s+(.*)\\n)?\s*(?:\\\\brief\s+([^\\\\]*)\\n)?((?:\s*\\\\author\s+(?:.*)\\n)*)?\s*\*/"""
+file_header_replace_mask = """/\*\!
+  \\file {}
+  \\brief {}
 
-file_header_regex = [ "\s*\\\\file\s+(.*)", "\s*\\\\brief\s+([^\n]*)", "\s*((?:\s*\\\\author\s+[^\n]+)+)" ]
-file_header_replace = [ "  \\file {}", "  \\brief {}", "  \\author {}" ]
+{}\*/"""
+
+author_match_mask = "\s*\\\\author\s+([^\\n]+)"
+author_replace_mask = "  \\author {}\n"
