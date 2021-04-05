@@ -9,9 +9,9 @@ on:
     - master
 
 jobs:
-  build-gcc9-coveralls:
-    runs-on: ubuntu-latest
-    name: GNU GCC 9 and run coveralls
+  build-gcc9-coverage:
+    runs-on: ubuntu-20.04
+    name: GNU GCC 9 and run coverage
     
     steps:
     - uses: actions/checkout@v1
@@ -36,8 +36,3 @@ jobs:
     - name: CodeCov
       run: |
         bash <(curl -s https://codecov.io/bash) -f lcov_filtered.info || echo "Codecov did not collect coverage reports"
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: ./lcov_filtered.info
