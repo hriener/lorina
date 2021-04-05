@@ -140,12 +140,12 @@ inline return_code read_dimacs( std::istream& in, const dimacs_reader& reader, d
     {
       if ( diag )
         diag->report( diagnostic_level::error,
-                      fmt::format( "Missing problem specification line\n" ) );
+                      fmt::format( "missing problem specification line\n" ) );
       ++errors;
       return false;
     }
 
-    auto clauses_begin = std::sregex_iterator(line.begin(), line.end(), dimacs_regex::clause);
+    auto clauses_begin = std::sregex_iterator( line.begin(), line.end(), dimacs_regex::clause );
     auto clauses_end = std::sregex_iterator();
 
     if ( std::distance( clauses_begin, clauses_end ) == 0u )
@@ -153,9 +153,9 @@ inline return_code read_dimacs( std::istream& in, const dimacs_reader& reader, d
       if ( diag )
       {
         diag->report( diagnostic_level::error,
-                      fmt::format( "Could not understand line line\n"
-                                  "in line {0}: `{1}`",
-                                  loc, line, std::string( m[1] ) ) );
+                      fmt::format( "could not understand line\n"
+                                   "in line {0}: `{1}`",
+                                   loc, line, std::string( m[1] ) ) );
       }
       ++errors;
       return false;
