@@ -1,7 +1,7 @@
 [![Actions Status](https://github.com/hriener/lorina/workflows/Linux%20CI/badge.svg)](https://github.com/hriener/lorina/actions)
 [![Actions Status](https://github.com/hriener/lorina/workflows/MacOS%20CI/badge.svg)](https://github.com/hriener/lorina/actions)
 [![Actions Status](https://github.com/hriener/lorina/workflows/Windows%20CI/badge.svg)](https://github.com/hriener/lorina/actions)
-[![Coverage Status](https://coveralls.io/repos/github/hriener/lorina/badge.svg?branch=master)](https://coveralls.io/github/hriener/lorina?branch=master)
+[![Coverage Status](https://codecov.io/gh/hriener/lorina/branch/master/graph/badge.svg?token=ZAWW94ECYU)](https://codecov.io/gh/hriener/lorina)
 [![Documentation Status](https://readthedocs.org/projects/lorina/badge/?version=latest)](http://lorina.readthedocs.io/en/latest/?badge=latest)
 [![Latest release](https://img.shields.io/github/release/hriener/lorina.svg)](https://github.com/hriener/lorina/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
