@@ -160,3 +160,35 @@ TEST_CASE( "cnf_dimacs missing clause delimiter", "[dimacs]" )
 
   CHECK( result == return_code::parse_error );
 }
+
+TEST_CASE( "cnf_dimacs ununderstandable line", "[dimacs]" )
+{
+  std::string const dimacs =
+      "p cnf 0 1\n"
+      "0\n";
+
+  std::istringstream iss( dimacs );
+
+  dimacs_statistics stats;
+  dimacs_statistics_reader reader( stats );
+  silent_diagnostic_engine diag;
+  auto const result = read_dimacs( iss, reader, &diag );
+
+  CHECK( result == return_code::parse_error );
+}
+
+TEST_CASE( "cnf_dimacs ununderstandable line2", "[dimacs]" )
+{
+  std::string const dimacs =
+      "p cnf 0 1\n"
+      "n o n sense\n";
+
+  std::istringstream iss( dimacs );
+
+  dimacs_statistics stats;
+  dimacs_statistics_reader reader( stats );
+  silent_diagnostic_engine diag;
+  auto const result = read_dimacs( iss, reader, &diag );
+
+  CHECK( result == return_code::parse_error );
+}
