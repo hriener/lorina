@@ -47,9 +47,27 @@ public:
   dimacs_statistics& _stats;
 }; /* dimacs_statistics_reader */
 
+TEST_CASE( "instantiate dimacs reader", "[dimacs]" )
+{
+  std::string const dimacs =
+      "c\n"
+      "c start with comments\n"
+      "c\n"
+      "c\n"
+      "p cnf 5 3\n"
+      "1 -5 4 0\n"
+      "-1 5 3 4 0\n"
+      "-3 -4 0\n";
+
+  std::istringstream iss( dimacs );
+  auto const result = read_dimacs( iss, dimacs_reader{} );
+
+  CHECK( result == return_code::success );
+}
+
 TEST_CASE( "cnf_dimacs", "[dimacs]" )
 {
-  std::string dimacs =
+  std::string const dimacs =
       "c\n"
       "c start with comments\n"
       "c\n"
@@ -63,19 +81,20 @@ TEST_CASE( "cnf_dimacs", "[dimacs]" )
 
   dimacs_statistics stats;
   dimacs_statistics_reader reader( stats );
-  auto result = read_dimacs( iss, reader );
+  silent_diagnostic_engine diag;
+  auto const result = read_dimacs( iss, reader, &diag );
 
   CHECK( result == return_code::success );
   CHECK( stats.format == "cnf" );
   CHECK( stats.number_of_variables == 5 );
   CHECK( stats.number_of_clauses == 3 );
-  std::vector<uint32_t> expected = { 2, 0, 2, 3, 2 };
+  std::vector<uint32_t> const expected = { 2, 0, 2, 3, 2 };
   CHECK( stats.variable_appearance_count == expected );
 }
 
 TEST_CASE( "cnf_dimacs single line of clauses", "[dimacs]" )
 {
-  std::string dimacs =
+  std::string const dimacs =
       "c\n"
       "c start with comments\n"
       "c\n"
@@ -89,19 +108,20 @@ TEST_CASE( "cnf_dimacs single line of clauses", "[dimacs]" )
 
   dimacs_statistics stats;
   dimacs_statistics_reader reader( stats );
-  auto result = read_dimacs( iss, reader );
+  silent_diagnostic_engine diag;
+  auto const result = read_dimacs( iss, reader, &diag );
 
   CHECK( result == return_code::success );
   CHECK( stats.format == "cnf" );
   CHECK( stats.number_of_variables == 5 );
   CHECK( stats.number_of_clauses == 3 );
-  std::vector<uint32_t> expected = { 2, 0, 2, 3, 2 };
+  std::vector<uint32_t> const expected = { 2, 0, 2, 3, 2 };
   CHECK( stats.variable_appearance_count == expected );
 }
 
 TEST_CASE( "cnf_dimacs missing problem specification", "[dimacs]" )
 {
-  std::string dimacs =
+  std::string const dimacs =
       "c\n"
       "c start with comments\n"
       "c\n"
@@ -114,14 +134,15 @@ TEST_CASE( "cnf_dimacs missing problem specification", "[dimacs]" )
 
   dimacs_statistics stats;
   dimacs_statistics_reader reader( stats );
-  auto result = read_dimacs( iss, reader );
+  silent_diagnostic_engine diag;
+  auto const result = read_dimacs( iss, reader, &diag );
 
   CHECK( result == return_code::parse_error );
 }
 
 TEST_CASE( "cnf_dimacs missing clause delimiter", "[dimacs]" )
 {
-  std::string dimacs =
+  std::string const dimacs =
       "c\n"
       "c start with comments\n"
       "c\n"
@@ -134,7 +155,8 @@ TEST_CASE( "cnf_dimacs missing clause delimiter", "[dimacs]" )
 
   dimacs_statistics stats;
   dimacs_statistics_reader reader( stats );
-  auto result = read_dimacs( iss, reader );
+  silent_diagnostic_engine diag;
+  auto const result = read_dimacs( iss, reader, &diag );
 
   CHECK( result == return_code::parse_error );
 }
