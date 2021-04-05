@@ -142,11 +142,10 @@ void diagnostic_engine::emit( diagnostic_level level, const std::string& message
               << message << style::reset << std::endl;
     break;
   case diagnostic_level::fatal:
+  default:
     std::cerr << style::bold << fg::red << "[E] " << fg::reset
               << message << style::reset << std::endl;
     break;
-  default:
-    assert( false );
   }
 }
 
