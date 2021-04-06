@@ -113,7 +113,7 @@ static std::regex clause( R"(((-?[1-9]+)+ +)+0)" );
  * \param diag An optional diagnostic engine with callback methods for parse errors
  * \return Success if parsing has been successful, or parse error if parsing has failed
  */
-inline return_code read_dimacs( std::istream& in, const dimacs_reader& reader, diagnostic_engine* diag = nullptr )
+[[nodiscard]] inline return_code read_dimacs( std::istream& in, const dimacs_reader& reader, diagnostic_engine* diag = nullptr )
 {
   auto loc = 0ul;
   auto errors = 0ul;
@@ -199,7 +199,7 @@ inline return_code read_dimacs( std::istream& in, const dimacs_reader& reader, d
  * \param diag An optional diagnostic engine with callback methods for parse errors
  * \return Success if parsing has been successful, or parse error if parsing has failed
  */
-inline return_code read_dimacs( const std::string& filename, const dimacs_reader& reader, diagnostic_engine* diag = nullptr )
+[[nodiscard]] inline return_code read_dimacs( const std::string& filename, const dimacs_reader& reader, diagnostic_engine* diag = nullptr )
 {
   std::ifstream in( detail::word_exp_filename( filename ), std::ifstream::in );
   if ( !in.is_open() )
