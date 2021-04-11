@@ -508,7 +508,7 @@ public:
    *
    * \param os Output stream
    */
-  verilog_writer( std::ostream& os )
+  explicit verilog_writer( std::ostream& os )
     : _os( os )
   {}
 

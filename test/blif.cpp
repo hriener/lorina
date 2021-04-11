@@ -18,7 +18,7 @@ struct blif_statistics
 class blif_statistics_reader : public blif_reader
 {
 public:
-  blif_statistics_reader( blif_statistics& stats )
+  explicit blif_statistics_reader( blif_statistics& stats )
       : _stats( stats )
   {
   }

@@ -120,7 +120,7 @@ public:
    *
    * \param os Output stream
    */
-  pla_writer( std::ostream& os )
+  explicit pla_writer( std::ostream& os )
     : _os( os )
   {}
 

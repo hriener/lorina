@@ -15,7 +15,7 @@ struct dimacs_statistics
 class dimacs_statistics_reader : public dimacs_reader
 {
 public:
-  dimacs_statistics_reader( dimacs_statistics& stats )
+  explicit dimacs_statistics_reader( dimacs_statistics& stats )
       : _stats( stats )
   {
   }

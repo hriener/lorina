@@ -17,7 +17,7 @@ struct pla_statistics
 class pla_statistics_reader : public pla_reader
 {
 public:
-  pla_statistics_reader( pla_statistics& stats )
+  explicit pla_statistics_reader( pla_statistics& stats )
       : _stats( stats )
   {
   }

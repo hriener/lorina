@@ -17,7 +17,7 @@ struct bench_statistics
 class bench_statistics_reader : public bench_reader
 {
 public:
-  bench_statistics_reader( bench_statistics& stats )
+  explicit bench_statistics_reader( bench_statistics& stats )
       : _stats( stats )
   {
   }
