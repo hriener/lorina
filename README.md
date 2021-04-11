@@ -1,6 +1,7 @@
 [![Actions Status](https://github.com/hriener/lorina/workflows/Linux%20CI/badge.svg)](https://github.com/hriener/lorina/actions)
 [![Actions Status](https://github.com/hriener/lorina/workflows/MacOS%20CI/badge.svg)](https://github.com/hriener/lorina/actions)
 [![Actions Status](https://github.com/hriener/lorina/workflows/Windows%20CI/badge.svg)](https://github.com/hriener/lorina/actions)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/a00baa65ac514b17b7594b49d2058a0c)](https://www.codacy.com/gh/hriener/lorina/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=hriener/lorina&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://codecov.io/gh/hriener/lorina/branch/master/graph/badge.svg?token=ZAWW94ECYU)](https://codecov.io/gh/hriener/lorina)
 [![Documentation Status](https://readthedocs.org/projects/lorina/badge/?version=latest)](http://lorina.readthedocs.io/en/latest/?badge=latest)
 [![Latest release](https://img.shields.io/github/release/hriener/lorina.svg)](https://github.com/hriener/lorina/releases)
