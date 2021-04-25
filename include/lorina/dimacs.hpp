@@ -139,8 +139,9 @@ static std::regex clause( R"(((-?[1-9]+)+ +)+0)" );
     if ( found_spec == false ) 
     {
       if ( diag )
-        diag->report( diagnostic_level::error,
-                      fmt::format( "missing problem specification line\n" ) );
+      {
+        diag->report( diag_id::ERR_DIMACS_MISSING_SPEC );
+      }
       ++errors;
       return false;
     }
@@ -152,10 +153,7 @@ static std::regex clause( R"(((-?[1-9]+)+ +)+0)" );
     {
       if ( diag )
       {
-        diag->report( diagnostic_level::error,
-                      fmt::format( "could not understand line\n"
-                                   "in line {0}: `{1}`",
-                                   loc, line, std::string( m[1] ) ) );
+        diag->report( diag_id::ERR_PARSE_LINE ).add_argument( line );
       }
       ++errors;
       return false;
@@ -163,17 +161,19 @@ static std::regex clause( R"(((-?[1-9]+)+ +)+0)" );
 
     for ( std::sregex_iterator i = clauses_begin; i != clauses_end; ++i ) 
     {
-        std::smatch match = *i;
-        std::stringstream ss( match[0].str() );
-        std::string lit_str;
-        std::vector<int> clause;
-        while ( std::getline( ss, lit_str, ' ' ) ) {
-            int lit = std::atol( lit_str.c_str() );
-            if ( lit != 0 ) {
-              clause.push_back( lit );
-            }
+      std::smatch match = *i;
+      std::stringstream ss( match[0].str() );
+      std::string lit_str;
+      std::vector<int> clause;
+      while ( std::getline( ss, lit_str, ' ' ) )
+      {
+        int const lit = std::atol( lit_str.c_str() );
+        if ( lit != 0 )
+        {
+          clause.push_back( lit );
         }
-        reader.on_clause( clause );
+      }
+      reader.on_clause( clause );
     } 
     return true;
   } );
@@ -206,8 +206,7 @@ static std::regex clause( R"(((-?[1-9]+)+ +)+0)" );
   {
     if ( diag )
     {
-      diag->report( diagnostic_level::fatal,
-                    fmt::format( "could not open file `{0}`", filename ) );
+      diag->report( diag_id::ERR_FILE_OPEN ).add_argument( filename );
     }
     return return_code::parse_error;
   }

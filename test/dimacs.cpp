@@ -81,7 +81,8 @@ TEST_CASE( "cnf_dimacs", "[dimacs]" )
 
   dimacs_statistics stats;
   dimacs_statistics_reader reader( stats );
-  silent_diagnostic_engine diag;
+  diagnostic_consumer consumer;
+  diagnostic_engine diag( &consumer );
   auto const result = read_dimacs( iss, reader, &diag );
 
   CHECK( result == return_code::success );
@@ -108,7 +109,8 @@ TEST_CASE( "cnf_dimacs single line of clauses", "[dimacs]" )
 
   dimacs_statistics stats;
   dimacs_statistics_reader reader( stats );
-  silent_diagnostic_engine diag;
+  diagnostic_consumer consumer;
+  diagnostic_engine diag( &consumer );
   auto const result = read_dimacs( iss, reader, &diag );
 
   CHECK( result == return_code::success );
@@ -134,7 +136,8 @@ TEST_CASE( "cnf_dimacs missing problem specification", "[dimacs]" )
 
   dimacs_statistics stats;
   dimacs_statistics_reader reader( stats );
-  silent_diagnostic_engine diag;
+  diagnostic_consumer consumer;
+  diagnostic_engine diag( &consumer );
   auto const result = read_dimacs( iss, reader, &diag );
 
   CHECK( result == return_code::parse_error );
@@ -155,7 +158,8 @@ TEST_CASE( "cnf_dimacs missing clause delimiter", "[dimacs]" )
 
   dimacs_statistics stats;
   dimacs_statistics_reader reader( stats );
-  silent_diagnostic_engine diag;
+  diagnostic_consumer consumer;
+  diagnostic_engine diag( &consumer );
   auto const result = read_dimacs( iss, reader, &diag );
 
   CHECK( result == return_code::parse_error );
@@ -171,7 +175,8 @@ TEST_CASE( "cnf_dimacs ununderstandable line", "[dimacs]" )
 
   dimacs_statistics stats;
   dimacs_statistics_reader reader( stats );
-  silent_diagnostic_engine diag;
+  diagnostic_consumer consumer;
+  diagnostic_engine diag( &consumer );
   auto const result = read_dimacs( iss, reader, &diag );
 
   CHECK( result == return_code::parse_error );
@@ -187,7 +192,8 @@ TEST_CASE( "cnf_dimacs ununderstandable line2", "[dimacs]" )
 
   dimacs_statistics stats;
   dimacs_statistics_reader reader( stats );
-  silent_diagnostic_engine diag;
+  diagnostic_consumer consumer;
+  diagnostic_engine diag( &consumer );
   auto const result = read_dimacs( iss, reader, &diag );
 
   CHECK( result == return_code::parse_error );

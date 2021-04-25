@@ -294,10 +294,9 @@ static std::regex term( R"(^([01\-]+)\s+([01\-]+)$)" );
         }
 
         if ( diag )
-          diag->report( diagnostic_level::error,
-                        fmt::format( "Unsupported keyword `{2}`\n"
-                                     "in line {0}: `{1}`",
-                                     loc, line, std::string( m[1] ) ) );
+        {
+          diag->report( diag_id::ERR_UNSUPPORTED_KEYWORD ).add_argument( line );
+        }
         ++errors;
         return true; /* understood error case, go on parsing */
       }
@@ -312,10 +311,9 @@ static std::regex term( R"(^([01\-]+)\s+([01\-]+)$)" );
     }
 
     if ( diag )
-      diag->report( diagnostic_level::error,
-                    fmt::format( "Unable to parse line\n"
-                                 "line {0}: `{1}`",
-                                 loc, line ) );
+    {
+      diag->report( diag_id::ERR_PARSE_LINE ).add_argument( line );
+    }
     ++errors;
     return true; /* understood error case, go on parsing */
   } );
@@ -347,8 +345,7 @@ static std::regex term( R"(^([01\-]+)\s+([01\-]+)$)" );
   {
     if ( diag )
     {
-      diag->report( diagnostic_level::fatal,
-                    fmt::format( "could not open file `{0}`", filename ) );
+      diag->report( diag_id::ERR_FILE_OPEN ).add_argument( filename );
     }
     return return_code::parse_error;
   }

@@ -328,7 +328,8 @@ TEST_CASE( "Parameter definition", "[verilog]" )
     "  output [C -   1:0] c;\n"
     "endmodule";
 
-  lorina::diagnostic_engine diag;
+  lorina::text_diagnostics consumer;
+  lorina::diagnostic_engine diag( &consumer );
   std::istringstream iss( verilog_file );
   simple_verilog_reader reader;
   auto const result = read_verilog( iss, reader, &diag );

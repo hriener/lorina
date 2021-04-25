@@ -263,8 +263,7 @@ static std::regex gate_asgn( R"((.*)\s+=\s+(.*))" );
 
     if ( diag )
     {
-      diag->report( diagnostic_level::error,
-                    fmt::format( "cannot parse line `{0}`", line ) );
+      diag->report( diag_id::ERR_PARSE_LINE ).add_argument( line );
     }
 
     result = return_code::parse_error;
@@ -279,8 +278,9 @@ static std::regex gate_asgn( R"((.*)\s+=\s+(.*))" );
   {
     if ( diag )
     {
-      diag->report( diagnostic_level::error,
-                    fmt::format( "unresolved dependencies: `{0}` requires `{1}`",  r.first, r.second ) );
+      diag->report( diag_id::WRN_UNRESOLVED_DEPENDENCY )
+        .add_argument( r.first )
+        .add_argument( r.second );
     }
   }
 
@@ -304,8 +304,7 @@ static std::regex gate_asgn( R"((.*)\s+=\s+(.*))" );
   {
     if ( diag )
     {
-      diag->report( diagnostic_level::fatal,
-                    fmt::format( "could not open file `{0}`", filename ) );
+      diag->report( diag_id::ERR_FILE_OPEN ).add_argument( filename );
     }
     return return_code::parse_error;
   }

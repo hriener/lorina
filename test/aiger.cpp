@@ -13,7 +13,7 @@ namespace benchmarks
   /* AIGs in binary AIGER format */
   std::vector<std::string> aig_benchmarks{
     "empty", "false", "true", "buffer", "inverter", "and", "half_adder", "toggle_ff", "toggle_ff2",
-    "prio", "counter", "invariant"    
+    "prio", "counter", "invariant"
   };
 
   /* AIGs in ASCII AIGER format */
@@ -30,7 +30,7 @@ namespace benchmarks
     return fmt::format( "{}benchmarks/{}/{}.{}", BENCHMARKS_PATH, subpath, benchmark_name, extension );
 #endif
   }
-  
+
   std::string path( std::string const& benchmark_name, std::string const& extension )
   {
 #ifndef BENCHMARKS_PATH
@@ -48,7 +48,7 @@ namespace benchmarks
     uint64_t number_of_latches{0};
     uint64_t number_of_outputs{0};
     uint64_t number_of_ands{0};
-    
+
     uint64_t number_of_bad_states{0};
     uint64_t number_of_constraints{0};
     uint64_t number_of_justice{0};
@@ -64,7 +64,7 @@ namespace benchmarks
     uint32_t on_constraints_calls{0};
     uint32_t on_justice_calls{0};
     uint32_t on_fairness_calls{0};
-    
+
     /* indices */
     std::vector<std::optional<uint32_t>> indices;
 
@@ -99,9 +99,9 @@ namespace benchmarks
         on_constraints_calls == number_of_constraints &&
         on_justice_calls == number_of_justice &&
         on_fairness_calls == number_of_justice;
-    }    
+    }
   }; /* aig_info */
-  
+
   struct test_reader : public lorina::aiger_reader
   {
   public:
@@ -124,7 +124,7 @@ namespace benchmarks
       info.number_of_justice = j;
       info.number_of_fairness = f;
 
-      /* reserve extra space for a constant 0 at index 0 */      
+      /* reserve extra space for a constant 0 at index 0 */
       info.indices.resize( m+1, std::nullopt );
       info.indices[0] = 0;
       for ( auto index = 1u; index <= i; ++index )
@@ -148,14 +148,14 @@ namespace benchmarks
 
       ++info.on_output_calls;
     }
-    
+
     void on_and( uint32_t index, uint32_t left_lit, uint32_t right_lit ) const override
     {
       (void)left_lit;
       (void)right_lit;
 
       ++info.on_and_calls;
-      
+
        /* ensure that this index is not already in use */
       CHECK( !info.indices[index] );
 
@@ -168,7 +168,7 @@ namespace benchmarks
       (void)init_value;
 
       ++info.on_latch_calls;
-      
+
       /* ensure that this index is not already in use */
       CHECK( !info.indices[index] );
 
@@ -206,7 +206,7 @@ namespace benchmarks
 
       ++info.on_fairness_calls;
     }
-    
+
     void on_comment( std::string const& comment ) const override
     {
       /* setup metadata by interpreting comment as JSON file */
@@ -226,14 +226,16 @@ TEST_CASE( "test ASCII Aiger reader", "[aiger]" )
 
     /* read benchmark with default reader (increases the test coverage for the default visitor)*/
     {
-      lorina::diagnostic_engine diag;
+      lorina::text_diagnostics consumer;
+      lorina::diagnostic_engine diag( &consumer );
       auto const result = lorina::read_ascii_aiger( benchmark_path, lorina::aiger_reader{}, &diag );
       CHECK( result == lorina::return_code::success );
     }
 
-    /* read benchmarks with test reader */    
+    /* read benchmarks with test reader */
     {
-      lorina::diagnostic_engine diag;
+      lorina::text_diagnostics consumer;
+      lorina::diagnostic_engine diag( &consumer );
       benchmarks::aig_info info;
       auto const result = lorina::read_ascii_aiger( benchmark_path, benchmarks::test_reader{info}, &diag );
       CHECK( result == lorina::return_code::success );
@@ -266,17 +268,19 @@ TEST_CASE( "test binary Aiger reader", "[aiger]" )
   for ( const auto& benchmark : benchmarks::aig_benchmarks )
   {
     std::string const benchmark_path = benchmarks::path( "aig", benchmark, "aig" );
-    
+
     /* read benchmark with default reader (increases the test coverage for the default visitor)*/
     {
-      lorina::diagnostic_engine diag;
+      lorina::text_diagnostics consumer;
+      lorina::diagnostic_engine diag( &consumer );
       auto const result = lorina::read_aiger( benchmark_path, lorina::aiger_reader{}, &diag );
       CHECK( result == lorina::return_code::success );
     }
 
-    /* read benchmarks with test reader */    
+    /* read benchmarks with test reader */
     {
-      lorina::diagnostic_engine diag;
+      lorina::text_diagnostics consumer;
+      lorina::diagnostic_engine diag( &consumer );
       benchmarks::aig_info info;
       auto const result = lorina::read_aiger( benchmark_path, benchmarks::test_reader{info}, &diag );
       CHECK( result == lorina::return_code::success );

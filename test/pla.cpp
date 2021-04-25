@@ -128,13 +128,14 @@ TEST_CASE( "diagnostics", "[pla]" )
 
   std::istringstream iss( pla_file );
 
-  silent_diagnostic_engine diag;
+  diagnostic_consumer consumer;
+  diagnostic_engine diag( &consumer );
   pla_statistics stats;
   pla_statistics_reader reader( stats );
   auto result = read_pla( iss, reader, &diag );
 
   CHECK( result == return_code::parse_error );
-  CHECK( diag.number_of_diagnostics == 4 );
+  CHECK( diag.get_num_diagnostics() == 4 );
 }
 
 TEST_CASE( "2bit_adder", "[pla]" )
@@ -163,7 +164,8 @@ TEST_CASE( "2bit_adder", "[pla]" )
 
   std::istringstream iss( pla_file );
 
-  silent_diagnostic_engine diag;
+  diagnostic_consumer consumer;
+  diagnostic_engine diag( &consumer );
   pla_statistics stats;
   pla_statistics_reader reader( stats );
   auto result = read_pla( iss, reader, &diag );

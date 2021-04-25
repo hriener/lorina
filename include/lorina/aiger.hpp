@@ -487,8 +487,7 @@ static std::regex fairness( R"(^f(\d+) (.*)$)" );
   {
     if ( diag )
     {
-      diag->report( diagnostic_level::fatal,
-                    fmt::format( "could not parse AIGER header `{0}`", header_line ) );
+      diag->report( diag_id::ERR_AIGER_HEADER ).add_argument( header_line );
     }
     return return_code::parse_error;
   }
@@ -513,8 +512,7 @@ static std::regex fairness( R"(^f(\d+) (.*)$)" );
     {
       if ( diag )
       {
-        diag->report( diagnostic_level::fatal,
-                      fmt::format( "could not parse declaration of LATCH `{0}`", line ) );
+        diag->report( diag_id::ERR_AIGER_LATCH_DECLARATION ).add_argument( line );
       }
       return return_code::parse_error;
     }
@@ -602,8 +600,7 @@ static std::regex fairness( R"(^f(\d+) (.*)$)" );
     {
       if ( diag )
       {
-        diag->report( diagnostic_level::fatal,
-                      fmt::format( "could not parse declaration of AND gate `{0}`", line ) );
+        diag->report( diag_id::ERR_AIGER_AND_DECLARATION ).add_argument( line );
       }
       return return_code::parse_error;
     }
@@ -677,8 +674,7 @@ static std::regex fairness( R"(^f(\d+) (.*)$)" );
   {
     if ( diag )
     {
-      diag->report( diagnostic_level::fatal,
-                    fmt::format( "could not open file `{0}`", filename ) );
+      diag->report( diag_id::ERR_FILE_OPEN ).add_argument( filename );
     }
     return return_code::parse_error;
   }
@@ -739,8 +735,7 @@ static std::regex fairness( R"(^f(\d+) (.*)$)" );
   {
     if ( diag )
     {
-      diag->report( diagnostic_level::fatal,
-                    fmt::format( "could not parse AIGER header `{0}`", header_line ) );
+      diag->report( diag_id::ERR_AIGER_HEADER ).add_argument( header_line );
     }
     return return_code::parse_error;
   }
@@ -912,8 +907,7 @@ static std::regex fairness( R"(^f(\d+) (.*)$)" );
   {
     if ( diag )
     {
-      diag->report( diagnostic_level::fatal,
-                    fmt::format( "could not open file `{0}`", filename ) );
+      diag->report( diag_id::ERR_FILE_OPEN ).add_argument( filename );
     }
     return return_code::parse_error;
   }

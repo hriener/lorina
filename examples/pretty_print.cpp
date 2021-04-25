@@ -89,7 +89,8 @@ int main( int argc, char** argv )
 
   auto kind = it->second;
 
-  diagnostic_engine diag;
+  text_diagnostics consumer;
+  diagnostic_engine diag( &consumer );
   return_code result;
   switch ( kind )
   {
