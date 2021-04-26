@@ -90,7 +90,7 @@ public:
    */
   diag_id create_id( diagnostic_level level, std::string const& message );
 
-  /*! \brief Create custom diagnostic. */
+  /*! \brief Return the number of emitted diagnostics. */
   uint64_t get_num_diagnostics() const;
 
 private:
