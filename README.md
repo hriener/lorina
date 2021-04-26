@@ -45,16 +45,17 @@ Besides parsing, the reader supports a mechanism to react on parse errors.
 ```c++
 #include <lorina/diagnostics.hpp>
 
-class diagnostics : public diagnostic_engine
+class diagnostics : public diagnostic_consumer
 {
 public:
-  void emit( diagnostic_level level, const std::string& message ) const override
+  void handle_diagnostic( diagnostic_level level, std::string const& message ) const override
   {
     /* ... */
   }
 }; /* diagnostics */
 
-diagnostics diag;
+diagnostics consumer;
+diagnostic_engine diag( &consumer );
 auto const result = read_bench( "network.bench", reader(), &diag );
 assert( result == return_code::success );
 ```

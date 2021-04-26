@@ -38,7 +38,8 @@ TEST_CASE( "instantiate genlib_reader", "[genlib]")
     "GATE buf 2 O=a; PIN * NONINV 1 999 1.0 1.0 1.0 1.0\n"
     ;
 
-  diagnostic_engine diag;
+  text_diagnostics consumer;
+  diagnostic_engine diag( &consumer );
   std::istringstream iss( genlib_file );
   std::vector<gate> gate_definitions;
   CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::success );
@@ -51,7 +52,8 @@ TEST_CASE( "error cases", "[genlib]")
     /* not all required fields have been specified */
     std::string const genlib_file = "GATE zero";
     std::istringstream iss( genlib_file );
-    silent_diagnostic_engine diag;
+    diagnostic_consumer consumer;
+    diagnostic_engine diag( &consumer );
     CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::parse_error );
   }
 
@@ -59,7 +61,8 @@ TEST_CASE( "error cases", "[genlib]")
     /* the keyword `GATE` in the beginning is missing */
     std::string const genlib_file = "zero 0 O=0; PIN * INV 1 999 1 1 1 1";
     std::istringstream iss( genlib_file );
-    silent_diagnostic_engine diag;
+    diagnostic_consumer consumer;
+    diagnostic_engine diag( &consumer );
     CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::parse_error );
   }
 
@@ -67,7 +70,8 @@ TEST_CASE( "error cases", "[genlib]")
     /* the expression is not terminated by a semicolon */
     std::string const genlib_file = "GATE zero 0 O=0 PIN * INV 1 999 1 1 1 1";
     std::istringstream iss( genlib_file );
-    silent_diagnostic_engine diag;
+    diagnostic_consumer consumer;
+    diagnostic_engine diag( &consumer );
     CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::parse_error );
   }
 
@@ -75,7 +79,8 @@ TEST_CASE( "error cases", "[genlib]")
     /* the pin specification does not start with the keyword `PIN` */
     std::string const genlib_file = "GATE zero 0 O=0; a INV 1 999 1 1 1 1 1";
     std::istringstream iss( genlib_file );
-    silent_diagnostic_engine diag;
+    diagnostic_consumer consumer;
+    diagnostic_engine diag( &consumer );
     CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::parse_error );
   }
 
@@ -83,7 +88,8 @@ TEST_CASE( "error cases", "[genlib]")
     /* the phase has been specified with an unknown keyword (NONINV is misspelled)  */
     std::string const genlib_file = "GATE zero 0 O=0; PIN * NOINV 1 999 1 1 1 1\n";
     std::istringstream iss( genlib_file );
-    silent_diagnostic_engine diag;
+    diagnostic_consumer consumer;
+    diagnostic_engine diag( &consumer );
     CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::success );
   }
 
@@ -91,7 +97,8 @@ TEST_CASE( "error cases", "[genlib]")
     /* the PIN spec is incomplete and not all tokens are consumed  */
     std::string const genlib_file = "GATE zero 0 O=0; PIN a 1";
     std::istringstream iss( genlib_file );
-    silent_diagnostic_engine diag;
+    diagnostic_consumer consumer;
+    diagnostic_engine diag( &consumer );
     CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::parse_error );
   }
 }
@@ -105,7 +112,8 @@ TEST_CASE( "read GENLIB format", "[genlib]")
     "GATE buf 2 O=a; PIN * NONINV 1 999 1.0 1.0 1.0 1.0\n"
     ;
 
-  diagnostic_engine diag;
+  text_diagnostics consumer;
+  diagnostic_engine diag( &consumer );
   std::istringstream iss( genlib_file );
   std::vector<gate> gate_definitions;
   test_reader reader( gate_definitions );
@@ -140,7 +148,8 @@ TEST_CASE( "PIN specification", "[genlib]")
     "GATE and3 1 O=a*b*c; PIN * UNKNOWN 1.0 2.0 1.0 1.0 1.0 1.0;\n"
     ;
 
-  diagnostic_engine diag;
+  text_diagnostics consumer;
+  diagnostic_engine diag( &consumer );
   std::istringstream iss( genlib_file );
   std::vector<gate> gate_definitions;
   test_reader reader( gate_definitions );
