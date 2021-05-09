@@ -34,12 +34,87 @@
 
 #include <fmt/format.h>
 #include <map>
+#include <memory>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 
 namespace lorina
 {
+
+namespace detail
+{
+
+struct placement_deleter {
+  template <typename T>
+  void operator()( T* ptr ) const
+  {
+    ptr->~T();
+  }
+};
+
+template <typename T, typename...Args>
+void* make_in_place( void* place, Args&&...args )
+{
+  return ::new ( place ) T( std::forward<Args>(args)... );
+}
+
+} /* detail */
+
+template<typename T>
+class error_or
+{
+public:
+  error_or( std::error_code const& ec )
+    : has_error( true )
+  {
+    ptr = detail::make_in_place<std::error_code>( &storage, ec );
+  }
+
+  error_or( T const& value )
+    : has_error( false )
+  {
+    ptr = detail::make_in_place<T>( &storage, value );
+  }
+
+  operator bool() const
+  {
+    return !has_error;
+  }
+
+  T const& operator*() const
+  {
+    assert( !has_error );
+    return *get_storage();
+  }
+
+  T const* operator->() const
+  {
+    assert( !has_error );
+    return get_storage();
+  }
+
+  std::error_code get_error() const
+  {
+    return has_error ? *get_error_storage() : std::error_code();
+  }
+
+private:
+  T const* get_storage() const
+  {
+    return static_cast<const T*>( ptr );
+  }
+
+  std::error_code const* get_error_storage() const
+  {
+    return static_cast<std::error_code const*>( ptr );
+  }
+
+private:
+  typename std::aligned_union<0, std::error_code, T>::type storage;
+  void *ptr;
+  bool has_error;
+}; /* error_or */
 
 class file_entry
 {
@@ -74,32 +149,32 @@ private:
   std::string path; // path to the file
 };
 
-// class file_entry_ref
-// {
-// public:
-//   file_entry_ref( file_entry const* fe )
-//     : fe( fe )
-//   {
-//   }
-//
-//   uint32_t get_unique_id() const
-//   {
-//     return fe->get_unique_id();
-//   }
-//
-//   std::string get_name() const
-//   {
-//     return fe->get_name();
-//   }
-//
-//   std::string get_path() const
-//   {
-//     return fe->get_path();
-//   }
-//
-// protected:
-//   file_entry const* fe;
-// }; /* file_entry_ref */
+class file_entry_ref
+{
+public:
+  file_entry_ref( file_entry const* fe )
+    : fe( fe )
+  {
+  }
+
+  uint32_t get_unique_id() const
+  {
+    return fe->get_unique_id();
+  }
+
+  std::string get_name() const
+  {
+    return fe->get_name();
+  }
+
+  std::string get_path() const
+  {
+    return fe->get_path();
+  }
+
+protected:
+  file_entry const* fe;
+}; /* file_entry_ref */
 
 class file_manager
 {
@@ -111,7 +186,7 @@ public:
     release_file_entries();
   }
 
-  file_entry* get_file( std::string const& filename )
+  error_or<file_entry_ref> get_file( std::string const& filename )
   {
     file_entry*& fe = seen_file_entries[filename];
     if ( !fe )
@@ -120,7 +195,7 @@ public:
       int pfd = ::open( filename.c_str(), O_RDONLY );
       if ( pfd == -1 )
       {
-        return nullptr;
+        return std::error_code( errno, std::system_category() );
       }
       ::close( pfd );
 
@@ -128,7 +203,7 @@ public:
       fmt::print( "[i] file_manager::alloc 0x{:x}\n", ( uint64_t( fe ) & 0xffff ) );
       fe->unique_id = next_unique_id++;
     }
-    return fe;
+    return file_entry_ref( fe );
   }
 
 private:
