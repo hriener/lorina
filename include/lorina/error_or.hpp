@@ -76,6 +76,14 @@ public:
     new ( get_storage() ) storage_type( std::forward<OtherT>( value ) );
   }
 
+  ~error_or()
+  {
+    if ( !is_error )
+    {
+      get_storage()->~storage_type();
+    }
+  }
+
   operator bool() const
   {
     return !is_error;
