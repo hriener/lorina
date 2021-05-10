@@ -37,5 +37,4 @@ TEST_CASE( "Error or int&", "[error]")
   *e_int += 25;
   CHECK( *e_int == 25 + 42 );
   CHECK( *e_int == i );
-  std::cout << i << std::endl;
 }
