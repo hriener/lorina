@@ -396,6 +396,18 @@ TEST_CASE( "Parameter definition", "[verilog]" )
 TEST_CASE( "Module instantiation with parameters", "[verilog]" )
 {
   std::string const verilog_file =
+    "module mod_mul( x1 , x2 , y1 );\n"
+    "  input x1, x2 ;\n"
+    "  output y1 ;\n"
+    "endmodule\n"
+    "module mod_add( x1 , x2 , y1 );\n"
+    "  input x1, x2 ;\n"
+    "  output o;\n"
+    "endmodule\n"
+    "module mod_sub( x1 , x2 , y1 );\n"
+    "  input x1 , x2 ;\n"
+    "  output y1 ;\n"
+    "endmodule\n"
     "module fp2mult(a0, a1, b0, b1, c0, c1);\n"
     "  parameter N = 5;\n"
     "  parameter M = 29;\n"
@@ -412,9 +424,12 @@ TEST_CASE( "Module instantiation with parameters", "[verilog]" )
     "  mod_sub #(M)    i8(.x1(w4), .x2(w5), .y1(c1));\n"
     "endmodule";
 
+  lorina::text_diagnostics consumer;
+  lorina::diagnostic_engine diag( &consumer );
+
   std::istringstream iss( verilog_file );
   simple_verilog_reader reader;
-  auto result = read_verilog( iss, reader );
+  auto result = read_verilog( iss, reader, &diag );
   CHECK( result == return_code::success );
   CHECK( reader._inputs == 4 );
   CHECK( reader._outputs == 2 );
@@ -455,9 +470,12 @@ TEST_CASE( "Input and output registers", "[verilog]" )
     "    assign y[3] = x[1] ^ t6;\n"
     "endmodule\n";
 
+  lorina::text_diagnostics consumer;
+  lorina::diagnostic_engine diag( &consumer );
+
   std::istringstream iss( verilog_file );
   simple_verilog_reader reader;
-  auto result = read_verilog( iss, reader );
+  auto result = read_verilog( iss, reader, &diag );
   CHECK( result == return_code::success );
   CHECK( reader._inputs == 1 );
   CHECK( reader._outputs == 1 );
