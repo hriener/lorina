@@ -471,3 +471,34 @@ TEST_CASE( "Input and output registers", "[verilog]" )
   CHECK( reader._parameter == 0 );
   CHECK( reader._instantiations == 0 );
 }
+
+TEST_CASE( "Module instantiation without parameters and with output logic", "[verilog]" )
+{
+  std::string const verilog_file =
+    "module buffer( i , o );\n"
+    "  input i;\n"
+    "  output o;\n"
+    "endmodule\n"
+    "module inverter( i , o );\n"
+    "  input i;\n"
+    "  output o;\n"
+    "endmodule\n"
+    "module top( x0 , x1 , y0 );\n"
+    "  input x0 , x1 ;\n"
+    "  output y0 ;\n"
+    "  wire n5 ;\n"
+    "  buffer  buf_n3( .i (x0), .o (n3) );\n"
+    "  buffer  buf_n4( .i (n3), .o (n4) );\n"
+    "  assign n5 = ~x1 & ~n4 ;\n"
+    "  inverter  inv_n6( n5, n6 );\n"
+    "  assign y0 = n6 ;\n"
+    "endmodule\n";
+
+  std::istringstream iss( verilog_file );
+  simple_verilog_reader reader;
+  auto result = read_verilog( iss, reader );
+  CHECK( result == return_code::success );
+  CHECK( reader._inputs == 2 );
+  CHECK( reader._outputs == 1 );
+  CHECK( reader._instantiations == 3 );
+}
