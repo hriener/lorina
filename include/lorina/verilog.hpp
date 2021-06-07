@@ -646,6 +646,39 @@ public:
     _os << "endmodule" << std::endl;
   }
 
+  /*! \brief Callback method for writing a module instantiation.
+   *
+   * \param module_name Module name
+   * \param params List of parameters
+   * \param inst_name Instance name
+   * \param args List of arguments (first: I/O pin name, second: wire name)
+   */
+  virtual void on_module_instantiation( std::string const& module_name, std::vector<std::string> const& params, std::string const& inst_name,
+                                        std::vector<std::pair<std::string,std::string>> const& args ) const
+  {
+    _os << fmt::format( "  {} ", module_name );
+    if ( params.size() > 0u )
+    {
+      _os << "#(";
+      for ( auto i = 0u; i < params.size(); ++i )
+      {
+        _os << params.at( i );
+        if ( i + 1 < params.size() )
+          _os << ", ";
+      }
+      _os << ")";
+    }
+
+    _os << fmt::format( " {}( ", inst_name );
+    for ( auto i = 0u; i < args.size(); ++i )
+    {
+      _os << fmt::format( ".{} ({})", args.at( i ).first, args.at( i ).second );
+      if ( i + 1 < args.size() )
+        _os << ", ";
+    }
+    _os << " );\n";
+  }
+
   /*! \brief Callback method for writing an assignment statement.
    *
    * \param out Output signal

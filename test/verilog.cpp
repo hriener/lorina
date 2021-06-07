@@ -402,7 +402,7 @@ TEST_CASE( "Module instantiation with parameters", "[verilog]" )
     "endmodule\n"
     "module mod_add( x1 , x2 , y1 );\n"
     "  input x1, x2 ;\n"
-    "  output o;\n"
+    "  output y1 ;\n"
     "endmodule\n"
     "module mod_sub( x1 , x2 , y1 );\n"
     "  input x1 , x2 ;\n"
@@ -488,4 +488,38 @@ TEST_CASE( "Input and output registers", "[verilog]" )
   CHECK( reader._comments == 0 );
   CHECK( reader._parameter == 0 );
   CHECK( reader._instantiations == 0 );
+}
+
+TEST_CASE( "Module instantiation without parameters and with output logic", "[verilog]" )
+{
+  std::string const verilog_file =
+    "module buffer( i , o );\n"
+    "  input i;\n"
+    "  output o;\n"
+    "endmodule\n"
+    "module inverter( i , o );\n"
+    "  input i;\n"
+    "  output o;\n"
+    "endmodule\n"
+    "module top( x0 , x1 , y0 );\n"
+    "  input x0 , x1 ;\n"
+    "  output y0 ;\n"
+    "  wire n3 , n4 , n5 , n6 ;\n"
+    "  buffer  buf_n3( .i (x0), .o (n3) );\n"
+    "  buffer  buf_n4( .i (n3), .o (n4) );\n"
+    "  assign n5 = ~x1 & ~n4 ;\n"
+    "  inverter  inv_n6( .i (n5), .o (n6) );\n"
+    "  assign y0 = n6 ;\n"
+    "endmodule\n";
+
+  lorina::text_diagnostics consumer;
+  lorina::diagnostic_engine diag( &consumer );
+
+  std::istringstream iss( verilog_file );
+  simple_verilog_reader reader;
+  auto result = read_verilog( iss, reader, &diag );
+  CHECK( result == return_code::success );
+  CHECK( reader._inputs == 2 );
+  CHECK( reader._outputs == 1 );
+  CHECK( reader._instantiations == 3 );
 }
