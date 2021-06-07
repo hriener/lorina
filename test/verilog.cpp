@@ -508,13 +508,16 @@ TEST_CASE( "Module instantiation without parameters and with output logic", "[ve
     "  buffer  buf_n3( .i (x0), .o (n3) );\n"
     "  buffer  buf_n4( .i (n3), .o (n4) );\n"
     "  assign n5 = ~x1 & ~n4 ;\n"
-    "  inverter  inv_n6( n5, n6 );\n"
+    "  inverter  inv_n6( .i (n5), .o (n6) );\n"
     "  assign y0 = n6 ;\n"
     "endmodule\n";
 
+  lorina::text_diagnostics consumer;
+  lorina::diagnostic_engine diag( &consumer );
+
   std::istringstream iss( verilog_file );
   simple_verilog_reader reader;
-  auto result = read_verilog( iss, reader );
+  auto result = read_verilog( iss, reader, &diag );
   CHECK( result == return_code::success );
   CHECK( reader._inputs == 2 );
   CHECK( reader._outputs == 1 );
