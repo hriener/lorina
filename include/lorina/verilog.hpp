@@ -715,6 +715,12 @@ protected:
 class verilog_parser
 {
 public:
+  struct module_info
+  {
+    std::vector<std::string> outputs;
+  };
+
+public:
   /*! \brief Construct a VERILOG parser
    *
    * \param in Input stream
@@ -858,11 +864,25 @@ public:
     return true;
   }
 
+  bool parse_modules()
+  {
+    while ( get_token( token ) )
+    {
+      if ( token != "module" )
+      {
+        return false;
+      }
+
+      if ( !parse_module() )
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
   bool parse_module()
   {
-    valid = get_token( token );
-    if ( !valid ) return false;
-
     bool success = parse_module_header();
     if ( !success )
     {
@@ -1005,7 +1025,7 @@ public:
     valid = get_token( token );
     if ( !valid ) return false;
 
-    std::string module_name = token;
+    module_name = token;
 
     valid = get_token( token );
     if ( !valid || token != "(" ) return false;
@@ -1124,6 +1144,7 @@ public:
 
     /* callback */
     reader.on_outputs( outputs, size );
+    modules[module_name].outputs = outputs;
 
     return true;
   }
@@ -1226,7 +1247,22 @@ public:
 
   bool parse_module_instantiation()
   {
-    std::string const module_name = token; // name of module
+    std::string const module_name{token}; // name of module
+
+    auto const it = modules.find( module_name );
+    if ( it == std::end( modules ) )
+    {
+      if ( diag )
+      {
+        diag->report( diag_id::ERR_VERILOG_MODULE_INSTANTIATION_UNDECLARED_MODULE )
+          .add_argument( module_name );
+        return false;
+      }
+    }
+
+    /* get module info */
+    auto const& info = modules[module_name];
+
     valid = get_token( token );
     if ( !valid ) return false;
 
@@ -1247,10 +1283,10 @@ public:
       } while ( valid && token == "," );
 
       if ( !valid || token != ")" ) return false;
-    }
 
-    valid = get_token( token );
-    if ( !valid ) return false;
+      valid = get_token( token );
+      if ( !valid ) return false;
+    }
 
     std::string const inst_name = token; // name of instantiation
 
@@ -1261,7 +1297,8 @@ public:
     do
     {
       valid = get_token( token );
-      if ( !valid ) return false; // referes to signal
+
+      if ( !valid ) return false; // refers to signal
       auto const arg0 = token;
 
       valid = get_token( token );
@@ -1278,6 +1315,10 @@ public:
       if ( !valid ) return false;
 
       args.emplace_back( std::make_pair( arg0, arg1 ) );
+      if ( std::find( std::begin( info.outputs ), std::end( info.outputs ), arg0 ) == std::end( info.outputs ) )
+      {
+        on_action.declare_known( arg1 );
+      }
     } while ( token == "," );
 
     if ( !valid || token != ")" ) return false;
@@ -1419,10 +1460,12 @@ private:
 
   std::string token;
   std::queue<std::string> tokens; /* lookahead */
+  std::string module_name;
 
   bool valid = false;
 
   detail::call_in_topological_order<std::vector<std::pair<std::string,bool>>, std::string, std::string> on_action;
+  std::unordered_map<std::string, module_info> modules;
 }; /* verilog_parser */
 
 /*! \brief Reader function for VERILOG format.
@@ -1438,7 +1481,7 @@ private:
 [[nodiscard]] inline return_code read_verilog( std::istream& in, const verilog_reader& reader, diagnostic_engine* diag = nullptr )
 {
   verilog_parser parser( in, reader, diag );
-  auto result = parser.parse_module();
+  auto result = parser.parse_modules();
   if ( !result )
   {
     return return_code::parse_error;
