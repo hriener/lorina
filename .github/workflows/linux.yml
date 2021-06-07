@@ -45,9 +45,9 @@ jobs:
       run: |
         cd build
         ./test/run_tests
-  build-clang9:
+  build-clang11:
     runs-on: ubuntu-20.04
-    name: Clang 9
+    name: Clang 11
     
     steps:
     - uses: actions/checkout@v1
@@ -57,7 +57,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_CXX_COMPILER=clang++-9 -DLORINA_TEST=ON ..
+        cmake -DCMAKE_CXX_COMPILER=clang++-11 -DLORINA_TEST=ON ..
         make run_tests
     - name: Run tests
       run: |
