@@ -397,11 +397,11 @@ TEST_CASE( "Module instantiation with parameters", "[verilog]" )
 {
   std::string const verilog_file =
     "module mod_mul( x1 , x2 , y1 );\n"
-    "  input x1, x2 ;\n"
+    "  input x1 , x2 ;\n"
     "  output y1 ;\n"
     "endmodule\n"
     "module mod_add( x1 , x2 , y1 );\n"
-    "  input x1, x2 ;\n"
+    "  input x1 , x2 ;\n"
     "  output y1 ;\n"
     "endmodule\n"
     "module mod_sub( x1 , x2 , y1 );\n"

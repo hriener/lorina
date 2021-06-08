@@ -23,6 +23,7 @@ enum class diag_id
   ERR_VERILOG_ASSIGNMENT,
   ERR_VERILOG_MODULE_INSTANTIATION_STATEMENT,
   ERR_VERILOG_MODULE_INSTANTIATION_UNDECLARED_MODULE,
+  ERR_VERILOG_MODULE_INSTANTIATION_UNDECLARED_PIN,
   ERR_VERILOG_ASSIGNMENT_RHS,
 
   /* DIMACS */
@@ -63,7 +64,8 @@ static std::pair<diagnostic_level, std::string> const diag_info[] = {
   { diagnostic_level::fatal, "cannot parse wire declaration" },
   { diagnostic_level::fatal, "cannot parse assign statement" },
   { diagnostic_level::fatal, "cannot parse module instantiation statement" },
-  { diagnostic_level::fatal, "undeclared module `{}` instantiated (ensure that the module has been declared before)" },
+  { diagnostic_level::fatal, "cannot instantiate module: module `{}` has not been declared (ensure that the module has been parsed before)" },
+  { diagnostic_level::fatal, "cannot instantiate module: pin `{}` has not been declared in module `{}`" },
   { diagnostic_level::fatal, "cannot parse expression on right-hand side of assign `{}`" },
 
   /* DIMACS */

@@ -750,6 +750,7 @@ class verilog_parser
 public:
   struct module_info
   {
+    std::vector<std::string> inputs;
     std::vector<std::string> outputs;
   };
 
@@ -1122,6 +1123,7 @@ public:
 
     /* callback */
     reader.on_inputs( inputs, size );
+    modules[module_name].inputs = inputs;
 
     for ( const auto& i : inputs )
       on_action.declare_known( i );
@@ -1257,7 +1259,6 @@ public:
       return false;
 
     const std::string lhs = token;
-
     valid = get_token( token );
     if ( !valid || token != "=" ) return false;
 
@@ -1274,12 +1275,12 @@ public:
     }
 
     if ( token != ";" ) return false;
-
     return true;
   }
 
   bool parse_module_instantiation()
   {
+    bool success = true;
     std::string const module_name{token}; // name of module
 
     auto const it = modules.find( module_name );
@@ -1289,8 +1290,8 @@ public:
       {
         diag->report( diag_id::ERR_VERILOG_MODULE_INSTANTIATION_UNDECLARED_MODULE )
           .add_argument( module_name );
-        return false;
       }
+      return false;
     }
 
     /* get module info */
@@ -1332,7 +1333,21 @@ public:
       valid = get_token( token );
 
       if ( !valid ) return false; // refers to signal
-      auto const arg0 = token;
+      std::string const arg0{token};
+
+      /* check if a signal with this name exists in the module declaration */
+      if ( ( std::find( std::begin( info.inputs ), std::end( info.inputs ), arg0.substr( 1, arg0.size() ) ) == std::end( info.inputs ) ) &&
+           ( std::find( std::begin( info.outputs ), std::end( info.outputs ), arg0.substr( 1, arg0.size() ) ) == std::end( info.outputs ) ) )
+      {
+        if ( diag )
+        {
+          diag->report( diag_id::ERR_VERILOG_MODULE_INSTANTIATION_UNDECLARED_PIN )
+            .add_argument( arg0.substr( 1, arg0.size() ) )
+            .add_argument( module_name );
+        }
+
+        success = false;
+      }
 
       valid = get_token( token );
       if ( !valid || token != "(" ) return false; // (
@@ -1362,7 +1377,7 @@ public:
     /* callback */
     reader.on_module_instantiation( module_name, params, inst_name, args );
 
-    return true;
+    return success;
   }
 
   bool parse_rhs_expression( const std::string& lhs )
