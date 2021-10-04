@@ -105,7 +105,7 @@ TEST_CASE( "error cases", "[genlib]")
 
   {
     /* multiple PINs of which one generic  */
-    std::string const genlib_file = "GATE and 0 O=a*b; PIN a NOINV 1 999 1 1 1 1 PIN * NOINV 1 999 1 1 1 1";
+    std::string const genlib_file = "GATE and 0 O=a*b; PIN a NONINV 1 999 1 1 1 1 PIN * NONINV 1 999 1 1 1 1";
     std::istringstream iss( genlib_file );
     diagnostic_consumer consumer;
     diagnostic_engine diag( &consumer );

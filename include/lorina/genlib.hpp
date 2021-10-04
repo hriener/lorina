@@ -302,7 +302,7 @@ private:
     {
       if ( diag )
       {
-        diag->report( diag_id::ERR_GENLIB_PIN ).add_argument( tokens[i] );
+        diag->report( diag_id::ERR_GENLIB_PIN ).add_argument( line );
       }
       return false;
     }
