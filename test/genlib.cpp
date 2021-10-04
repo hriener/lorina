@@ -113,6 +113,16 @@ TEST_CASE( "error cases", "[genlib]")
   }
 
   {
+    /* misspelled GATE in second gate definition  */
+    std::string const genlib_file = "GATE and 0 O=a*b; PIN * NONINV 1 999 1 1 1 1\n"
+                                    "GTE or 0 O=a+b; PIN * NONINV 1 999 1 1 1 1";
+    std::istringstream iss( genlib_file );
+    diagnostic_consumer consumer;
+    diagnostic_engine diag( &consumer );
+    CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::parse_error );
+  }
+
+  {
     /* empty genlib  */
     std::string const genlib_file = "";
     std::istringstream iss( genlib_file );
