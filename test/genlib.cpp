@@ -113,9 +113,9 @@ TEST_CASE( "error cases", "[genlib]")
   }
 
   {
-    /* misspelled GATE in second gate definition  */
-    std::string const genlib_file = "GATE and 0 O=a*b; PIN * NONINV 1 999 1 1 1 1\n"
-                                    "GTE or 0 O=a+b; PIN * NONINV 1 999 1 1 1 1";
+    /* misspelled GATE with two gates definition  */
+    std::string const genlib_file = "GTE and 0 O=a*b; PIN * NONINV 1 999 1 1 1 1\n"
+                                    "GATE or 0 O=a+b; PIN * NONINV 1 999 1 1 1 1";
     std::istringstream iss( genlib_file );
     diagnostic_consumer consumer;
     diagnostic_engine diag( &consumer );
@@ -186,6 +186,7 @@ TEST_CASE( "PIN specification", "[genlib]")
   std::string const genlib_file =
     "GATE and2 1 O=a*b; PIN a INV 1.0 2.0 1.1 1.2 1.3 1.4 \n"
     "\tPIN b INV 1.0 2.0 1.0 1.0 1.0 1.0;\n"
+    "#GATE zero 0 O=0;\n"
     "GATE and3 1 O=a*b*c; PIN * UNKNOWN 1.0 2.0 1.0 1.0 1.0 1.0;\n"
     ;
 
