@@ -102,6 +102,24 @@ TEST_CASE( "error cases", "[genlib]")
     diagnostic_engine diag( &consumer );
     CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::parse_error );
   }
+
+  {
+    /* multiple PINs of which one generic  */
+    std::string const genlib_file = "GATE and 0 O=a*b; PIN a NOINV 1 999 1 1 1 1 PIN * NOINV 1 999 1 1 1 1";
+    std::istringstream iss( genlib_file );
+    diagnostic_consumer consumer;
+    diagnostic_engine diag( &consumer );
+    CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::parse_error );
+  }
+
+  {
+    /* empty genlib  */
+    std::string const genlib_file = "";
+    std::istringstream iss( genlib_file );
+    diagnostic_consumer consumer;
+    diagnostic_engine diag( &consumer );
+    CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::success );
+  }
 }
 
 TEST_CASE( "read GENLIB format", "[genlib]")
@@ -111,6 +129,7 @@ TEST_CASE( "read GENLIB format", "[genlib]")
     "GATE one 0	O=1;\n"
     "GATE inv1 1 O=!a; PIN * INV 1 999 1 1 1 1\n"
     "GATE buf 2 Y=a; PIN * NONINV 1 999 1.0 1.0 1.0 1.0\n"
+    "GATE and2 2 Y=a * b; PIN * UNKNOWN 1.0 2.0 1.0 1.0 1.0 1.0;\n"
     ;
 
   text_diagnostics consumer;
@@ -120,7 +139,7 @@ TEST_CASE( "read GENLIB format", "[genlib]")
   test_reader reader( gate_definitions );
   CHECK( read_genlib( iss, reader, &diag ) == return_code::success );
 
-  CHECK( gate_definitions.size() == 4u );
+  CHECK( gate_definitions.size() == 5u );
   CHECK( gate_definitions[0u].name == "zero" );
   CHECK( gate_definitions[0u].expression == "0" );
   CHECK( gate_definitions[0u].area == 0.0 );
@@ -144,6 +163,12 @@ TEST_CASE( "read GENLIB format", "[genlib]")
   CHECK( gate_definitions[3u].area == 2.0 );
   CHECK( gate_definitions[3u].pins.size() == 1u );
   CHECK( gate_definitions[3u].output_pin == "Y" );
+
+  CHECK( gate_definitions[4u].name == "and2" );
+  CHECK( gate_definitions[4u].expression == "a * b" );
+  CHECK( gate_definitions[4u].area == 2.0 );
+  CHECK( gate_definitions[4u].pins.size() == 1u );
+  CHECK( gate_definitions[4u].output_pin == "Y" );
 }
 
 TEST_CASE( "PIN specification", "[genlib]")
