@@ -98,7 +98,6 @@ public:
       /* skip comments and empty lines */
       if ( line[0] == '#' || line.empty() )
       {
-        std::cout << "line.empty\n";
         continue;
       }
 
