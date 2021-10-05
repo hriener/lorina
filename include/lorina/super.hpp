@@ -98,13 +98,8 @@ public:
       /* skip comments and empty lines */
       if ( line[0] == '#' || line.empty() )
       {
+        std::cout << "line.empty\n";
         continue;
-      }
-
-      /* end of file char */
-      if ( line[0] == '\0' )
-      {
-        return true;
       }
 
       if ( info_lines < 4 )

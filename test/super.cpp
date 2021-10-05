@@ -107,6 +107,15 @@ TEST_CASE( "super error cases", "[super]" )
   }
 
   {
+    /* end of file delimiter */
+    std::string const super_file = "\0";
+    std::istringstream iss( super_file );
+    diagnostic_consumer consumer;
+    diagnostic_engine diag( &consumer );
+    CHECK( read_super( iss, super_reader{}, &diag ) == return_code::success );
+  }
+
+  {
     /* wrong format */
     std::string const super_file =
       "test.genlib\n"
