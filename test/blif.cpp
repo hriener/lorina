@@ -2,6 +2,8 @@
 
 #include <lorina/blif.hpp>
 #include <optional>
+#include <sstream>
+#include <string>
 
 using namespace lorina;
 
