@@ -1,6 +1,8 @@
 #include <catch.hpp>
 
 #include <lorina/verilog.hpp>
+#include <sstream>
+#include <string>
 
 using namespace lorina;
 
