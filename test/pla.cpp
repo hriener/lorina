@@ -1,6 +1,8 @@
 #include <catch.hpp>
 
 #include <lorina/pla.hpp>
+#include <sstream>
+#include <string>
 
 using namespace lorina;
 

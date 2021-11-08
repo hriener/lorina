@@ -1,6 +1,9 @@
 #include <catch.hpp>
 
 #include <lorina/bench.hpp>
+#include <sstream>
+#include <string>
+#include <vector>
 
 using namespace lorina;
 
