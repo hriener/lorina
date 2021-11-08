@@ -21,5 +21,5 @@ The following reader functions are available.
 
    read_bristol
 
-.. doxygenfunction:: lorina::read_bristol(const std::string&, const bristol_reader&, diagnostic_engine *)
-.. doxygenfunction:: lorina::read_bristol(std::istream&, const bristol_reader&, diagnostic_engine *)
+.. doxygenfunction:: lorina::read_bristol(std::istream&, const bristol_reader&, diagnostic_engine*)
+.. doxygenfunction:: lorina::read_bristol(const std::string&, const bristol_reader&, diagnostic_engine*)
