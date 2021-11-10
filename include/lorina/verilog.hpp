@@ -656,7 +656,7 @@ public:
   virtual void on_module_instantiation( std::string const& module_name, std::vector<std::string> const& params, std::string const& inst_name,
                                         std::vector<std::pair<std::string,std::string>> const& args ) const
   {
-    _os << fmt::format( "  {} ", module_name );
+    _os << fmt::format( " {} ", module_name );
     if ( params.size() > 0u )
     {
       _os << "#(";
@@ -765,67 +765,69 @@ public:
     : tok( in )
     , reader( reader )
     , diag( diag )
-    , on_action([&]( std::vector<std::pair<std::string,bool>> inputs, std::string output, std::string type ){
-                  if ( type == "assign" )
-                  {
-                    assert( inputs.size() == 1u );
-                    reader.on_assign( output, inputs[0] );
-                  }
-                  else if ( type == "and2" )
-                  {
-                    assert( inputs.size() == 2u );
-                    reader.on_and( output, inputs[0], inputs[1] );
-                  }
-                  else if ( type == "nand2" )
-                  {
-                    assert( inputs.size() == 2u );
-                    reader.on_nand( output, inputs[0], inputs[1] );
-                  }
-                  else if ( type == "or2" )
-                  {
-                    assert( inputs.size() == 2u );
-                    reader.on_or( output, inputs[0], inputs[1] );
-                  }
-                  else if ( type == "nor2" )
-                  {
-                    assert( inputs.size() == 2u );
-                    reader.on_nor( output, inputs[0], inputs[1] );
-                  }
-                  else if ( type == "xor2" )
-                  {
-                    assert( inputs.size() == 2u );
-                    reader.on_xor( output, inputs[0], inputs[1] );
-                  }
-                  else if ( type == "xnor2" )
-                  {
-                    assert( inputs.size() == 2u );
-                    reader.on_xnor( output, inputs[0], inputs[1] );
-                  }
-                  else if ( type == "and3" )
-                  {
-                    assert( inputs.size() == 3u );
-                    reader.on_and3( output, inputs[0], inputs[1], inputs[2] );
-                  }
-                  else if ( type == "or3" )
-                  {
-                    assert( inputs.size() == 3u );
-                    reader.on_or3( output, inputs[0], inputs[1], inputs[2] );
-                  }
-                  else if ( type == "xor3" )
-                  {
-                    assert( inputs.size() == 3u );
-                    reader.on_xor3( output, inputs[0], inputs[1], inputs[2] );
-                  }
-                  else if ( type == "maj3" )
-                  {
-                    assert( inputs.size() == 3u );
-                    reader.on_maj3( output, inputs[0], inputs[1], inputs[2] );
-                  }
-                  else
-                  {
-                    assert( false );
-                  }
-                })
+    , on_action([&]( std::vector<std::pair<std::string,bool>> const& inputs, std::string output, std::string type,
+		     std::vector<std::string> const& params,
+		     std::vector<std::pair<std::string,std::string>> const& pin_pairs ){
+	if ( type == "assign" )
+	{
+	  assert( inputs.size() == 1u );
+	  reader.on_assign( output, inputs[0] );
+	}
+        else if ( type == "and2" )
+        {
+          assert( inputs.size() == 2u );
+          reader.on_and( output, inputs[0], inputs[1] );
+        }
+        else if ( type == "nand2" )
+        {
+          assert( inputs.size() == 2u );
+          reader.on_nand( output, inputs[0], inputs[1] );
+        }
+        else if ( type == "or2" )
+        {
+          assert( inputs.size() == 2u );
+          reader.on_or( output, inputs[0], inputs[1] );
+        }
+        else if ( type == "nor2" )
+        {
+          assert( inputs.size() == 2u );
+          reader.on_nor( output, inputs[0], inputs[1] );
+        }
+        else if ( type == "xor2" )
+        {
+          assert( inputs.size() == 2u );
+          reader.on_xor( output, inputs[0], inputs[1] );
+        }
+        else if ( type == "xnor2" )
+        {
+          assert( inputs.size() == 2u );
+          reader.on_xnor( output, inputs[0], inputs[1] );
+        }
+        else if ( type == "and3" )
+        {
+          assert( inputs.size() == 3u );
+          reader.on_and3( output, inputs[0], inputs[1], inputs[2] );
+        }
+        else if ( type == "or3" )
+        {
+          assert( inputs.size() == 3u );
+          reader.on_or3( output, inputs[0], inputs[1], inputs[2] );
+        }
+        else if ( type == "xor3" )
+        {
+          assert( inputs.size() == 3u );
+          reader.on_xor3( output, inputs[0], inputs[1], inputs[2] );
+        }
+        else if ( type == "maj3" )
+        {
+          assert( inputs.size() == 3u );
+          reader.on_maj3( output, inputs[0], inputs[1], inputs[2] );
+        }
+        else
+        {
+	  reader.on_module_instantiation( type, params, output, pin_pairs );
+        }
+      })
   {
     on_action.declare_known( "0" );
     on_action.declare_known( "1" );
@@ -1126,15 +1128,21 @@ public:
     modules[module_name].inputs = inputs;
 
     for ( const auto& i : inputs )
+    {
       on_action.declare_known( i );
+    }
 
     if ( std::smatch m; std::regex_match( size, m, verilog_regex::const_size_range ) )
     {
       const auto a = std::stoul( m[1].str() );
       const auto b = std::stoul( m[2].str() );
       for ( auto j = std::min( a, b ); j <= std::max( a, b ); ++j )
+      {
         for ( const auto& i : inputs )
+	{
           on_action.declare_known( fmt::format( "{}[{}]", i, j ) );
+	}
+      }
     }
 
     return true;
@@ -1374,8 +1382,36 @@ public:
     valid = get_token( token );
     if ( !valid || token != ";" ) return false;
 
+    std::vector<std::string> inputs;
+    for ( const auto& input : modules[module_name].inputs )
+    {
+      for ( const auto& a : args )
+      {
+	if ( a.first.substr( 1, a.first.length() - 1 ) == input )
+	{
+	  inputs.emplace_back( a.second );
+	}
+      }
+    }
+
+    std::vector<std::string> outputs;
+    for ( const auto& output : modules[module_name].outputs )
+    {
+      for ( const auto& a : args )
+      {
+	if ( a.first.substr( 1, a.first.length() - 1 ) == output )
+	{
+	  outputs.emplace_back( a.second );
+	}
+      }
+    }
+
     /* callback */
-    reader.on_module_instantiation( module_name, params, inst_name, args );
+    // reader.on_module_instantiation( module_name, params, inst_name, args );
+    on_action.call_deferred( inputs, outputs, inst_name, {}, inst_name,
+			     /* type = */module_name,
+			     /* params = */params,
+			     /* pin pairs = */args );
 
     return success;
   }
@@ -1396,7 +1432,7 @@ public:
     if ( std::regex_match( s, sm, verilog_regex::immediate_assign ) )
     {
       assert( sm.size() == 3u );
-      on_action.call_deferred( { sm[2] }, lhs, {{sm[2], sm[1] == "~"}}, lhs, "assign" );
+      on_action.call_deferred( { sm[2] }, { lhs }, lhs, {{sm[2], sm[1] == "~"}}, lhs, "assign", {}, {} );
     }
     else if ( std::regex_match( s, sm, verilog_regex::binary_expression ) )
     {
@@ -1407,15 +1443,15 @@ public:
 
       if ( op == "&" )
       {
-        on_action.call_deferred( { arg0.first, arg1.first }, lhs, {arg0, arg1}, lhs, "and2" );
+        on_action.call_deferred( { arg0.first, arg1.first }, { lhs }, lhs, {arg0, arg1}, lhs, "and2", {}, {} );
       }
       else if ( op == "|" )
       {
-        on_action.call_deferred( { arg0.first, arg1.first }, lhs, {arg0, arg1}, lhs, "or2" );
+        on_action.call_deferred( { arg0.first, arg1.first }, { lhs }, lhs, {arg0, arg1}, lhs, "or2", {}, {} );
       }
       else if ( op == "^" )
       {
-        on_action.call_deferred( { arg0.first, arg1.first }, lhs, {arg0, arg1}, lhs, "xor2" );
+        on_action.call_deferred( { arg0.first, arg1.first }, { lhs }, lhs, {arg0, arg1}, lhs, "xor2", {}, {} );
       }
       else
       {
@@ -1430,15 +1466,15 @@ public:
       auto op = sm[3];
       if ( op == "&" )
       {
-        on_action.call_deferred( { arg0.first, arg1.first }, lhs, {arg0, arg1}, lhs, "nand2" );
+        on_action.call_deferred( { arg0.first, arg1.first }, { lhs }, lhs, {arg0, arg1}, lhs, "nand2", {}, {} );
       }
       else if ( op == "|" )
       {
-        on_action.call_deferred( { arg0.first, arg1.first }, lhs, {arg0, arg1}, lhs, "nor2" );
+        on_action.call_deferred( { arg0.first, arg1.first }, { lhs }, lhs, {arg0, arg1}, lhs, "nor2", {}, {} );
       }
       else if ( op == "^" )
       {
-        on_action.call_deferred( { arg0.first, arg1.first }, lhs, {arg0, arg1}, lhs, "xnor2" );
+        on_action.call_deferred( { arg0.first, arg1.first }, { lhs }, lhs, {arg0, arg1}, lhs, "xnor2", {}, {} );
       }
       else
       {
@@ -1459,15 +1495,15 @@ public:
 
       if ( op == "&" )
       {
-        on_action.call_deferred( { arg0.first, arg1.first, arg2.first }, lhs, {arg0, arg1, arg2}, lhs, "and3" );
+        on_action.call_deferred( { arg0.first, arg1.first, arg2.first }, { lhs }, lhs, {arg0, arg1, arg2}, lhs, "and3", {}, {} );
       }
       else if ( op == "|" )
       {
-        on_action.call_deferred( { arg0.first, arg1.first, arg2.first }, lhs, {arg0, arg1, arg2}, lhs, "or3" );
+        on_action.call_deferred( { arg0.first, arg1.first, arg2.first }, { lhs }, lhs, {arg0, arg1, arg2}, lhs, "or3", {}, {} );
       }
       else if ( op == "^" )
       {
-        on_action.call_deferred( { arg0.first, arg1.first, arg2.first }, lhs, {arg0, arg1, arg2}, lhs, "xor3" );
+        on_action.call_deferred( { arg0.first, arg1.first, arg2.first }, { lhs }, lhs, {arg0, arg1, arg2}, lhs, "xor3", {}, {} );
       }
       else
       {
@@ -1491,7 +1527,7 @@ public:
       args.push_back( b0 );
       args.push_back( c0 );
 
-      on_action.call_deferred( { a0.first, b0.first, c0.first }, lhs, args, lhs, "maj3" );
+      on_action.call_deferred( { a0.first, b0.first, c0.first }, { lhs }, lhs, args, lhs, "maj3", {}, {} );
     }
     else
     {
@@ -1512,7 +1548,12 @@ private:
 
   bool valid = false;
 
-  detail::call_in_topological_order<std::vector<std::pair<std::string,bool>>, std::string, std::string> on_action;
+  detail::call_in_topological_order<
+    std::vector<std::pair<std::string,bool>>, std::string, std::string,
+    std::vector<std::string>,
+    std::vector<std::pair<std::string, std::string>>
+  > on_action;
+
   std::unordered_map<std::string, module_info> modules;
 }; /* verilog_parser */
 

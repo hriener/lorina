@@ -167,6 +167,7 @@ public:
   mutable std::vector<std::pair<std::string,std::string>> _parameter_definitions;
   mutable std::vector<std::pair<std::vector<std::string>,std::string>> _input_declarations;
   mutable std::vector<std::pair<std::vector<std::string>,std::string>> _output_declarations;
+  mutable std::vector<std::string> _instantiated_modules;
 }; /* simple_verilog_reader */
 
 TEST_CASE( "Check return_code of read_verilog", "[verilog]")
@@ -507,10 +508,10 @@ TEST_CASE( "Module instantiation without parameters and with output logic", "[ve
     "  input x0 , x1 ;\n"
     "  output y0 ;\n"
     "  wire n3 , n4 , n5 , n6 ;\n"
-    "  buffer  buf_n3( .i (x0), .o (n3) );\n"
-    "  buffer  buf_n4( .i (n3), .o (n4) );\n"
+    "  buffer buf_n4( .i (n3), .o (n4) );\n"
+    "  buffer buf_n3( .i (x0), .o (n3) );\n"
     "  assign n5 = ~x1 & ~n4 ;\n"
-    "  inverter  inv_n6( .i (n5), .o (n6) );\n"
+    "  inverter inv_n6( .i (n5), .o (n6) );\n"
     "  assign y0 = n6 ;\n"
     "endmodule\n";
 
@@ -524,4 +525,24 @@ TEST_CASE( "Module instantiation without parameters and with output logic", "[ve
   CHECK( reader._inputs == 2 );
   CHECK( reader._outputs == 1 );
   CHECK( reader._instantiations == 3 );
+
+  for ( auto i = 0u; i < reader._instantiated_modules.size(); ++i )
+  {
+    switch ( i )
+    {
+    case 0:
+      CHECK( reader._instantiated_modules[i] == "buf_n3" );
+      break;
+    case 1:
+      CHECK( reader._instantiated_modules[i] == "buf_n4" );
+      break;
+    case 2:
+      CHECK( reader._instantiated_modules[i] == "inv_n6" );
+      break;
+    default:
+      CHECK( false );
+      break;
+    }
+  }
 }
+
