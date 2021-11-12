@@ -9,6 +9,15 @@ using namespace lorina;
 class simple_verilog_reader : public verilog_reader
 {
 public:
+  struct module_info
+  {
+    std::string module_name;
+    std::string inst_name;
+    std::vector<std::string> params;
+    std::vector<std::pair<std::string,std::string>> args;
+  };
+
+public:
   simple_verilog_reader() {}
 
   void on_module_header( const std::string& module_name, const std::vector<std::string>& inouts ) const override
@@ -140,11 +149,8 @@ public:
   void on_module_instantiation( std::string const& module_name, std::vector<std::string> const& params, std::string const& inst_name,
                                 std::vector<std::pair<std::string,std::string>> const& args ) const override
   {
-    (void)module_name;
-    (void)params;
-    (void)inst_name;
-    (void)args;
     ++_instantiations;
+    _instantiated_modules.emplace_back( module_info{module_name, inst_name, params, args} );
   }
 
   mutable uint32_t _inputs = 0;
@@ -167,6 +173,7 @@ public:
   mutable std::vector<std::pair<std::string,std::string>> _parameter_definitions;
   mutable std::vector<std::pair<std::vector<std::string>,std::string>> _input_declarations;
   mutable std::vector<std::pair<std::vector<std::string>,std::string>> _output_declarations;
+  mutable std::vector<module_info> _instantiated_modules;
 }; /* simple_verilog_reader */
 
 TEST_CASE( "Check return_code of read_verilog", "[verilog]")
@@ -444,6 +451,29 @@ TEST_CASE( "Module instantiation with parameters", "[verilog]" )
   CHECK( reader._comments == 0 );
   CHECK( reader._parameter == 2 );
   CHECK( reader._instantiations == 8 );
+
+  uint32_t cnt{0u};
+  for ( auto i = 0u; i < reader._instantiated_modules.size(); ++i )
+  {
+    if ( reader._instantiated_modules[i].inst_name == "i1" )
+    {
+      CHECK( reader._instantiated_modules[i].module_name == "mod_mul" );
+      CHECK( reader._instantiated_modules[i].args.size() == 3 );
+      CHECK( reader._instantiated_modules[i].params.size() == 1 );
+      CHECK( reader._instantiated_modules[i].params[0] == "M" );
+      cnt++;
+    }
+    else if ( reader._instantiated_modules[i].inst_name == "i4" )
+    {
+      CHECK( reader._instantiated_modules[i].module_name == "mod_add" );
+      CHECK( reader._instantiated_modules[i].args.size() == 3 );
+      CHECK( reader._instantiated_modules[i].params.size() == 2 );
+      CHECK( reader._instantiated_modules[i].params[0] == "M" );
+      CHECK( reader._instantiated_modules[i].params[1] == "N" );
+      cnt++;
+    }
+  }
+  CHECK( cnt == 2 );
 }
 
 TEST_CASE( "Input and output registers", "[verilog]" )
@@ -507,10 +537,10 @@ TEST_CASE( "Module instantiation without parameters and with output logic", "[ve
     "  input x0 , x1 ;\n"
     "  output y0 ;\n"
     "  wire n3 , n4 , n5 , n6 ;\n"
-    "  buffer  buf_n3( .i (x0), .o (n3) );\n"
-    "  buffer  buf_n4( .i (n3), .o (n4) );\n"
+    "  buffer buf_n4( .i (n3), .o (n4) );\n"
+    "  buffer buf_n3( .i (x0), .o (n3) );\n"
     "  assign n5 = ~x1 & ~n4 ;\n"
-    "  inverter  inv_n6( .i (n5), .o (n6) );\n"
+    "  inverter inv_n6( .i (n5), .o (n6) );\n"
     "  assign y0 = n6 ;\n"
     "endmodule\n";
 
@@ -524,4 +554,39 @@ TEST_CASE( "Module instantiation without parameters and with output logic", "[ve
   CHECK( reader._inputs == 2 );
   CHECK( reader._outputs == 1 );
   CHECK( reader._instantiations == 3 );
+  CHECK( reader._instantiated_modules.size() == 3 );
+
+  for ( auto i = 0u; i < reader._instantiated_modules.size(); ++i )
+  {
+    switch ( i )
+    {
+    case 0:
+      CHECK( reader._instantiated_modules[i].module_name == "buffer" );
+      CHECK( reader._instantiated_modules[i].inst_name == "buf_n3" );
+      CHECK( reader._instantiated_modules[i].args[0].first == ".i" );
+      CHECK( reader._instantiated_modules[i].args[0].second == "x0" );
+      CHECK( reader._instantiated_modules[i].args[1].first == ".o" );
+      CHECK( reader._instantiated_modules[i].args[1].second == "n3" );
+      break;
+    case 1:
+      CHECK( reader._instantiated_modules[i].module_name == "buffer" );
+      CHECK( reader._instantiated_modules[i].inst_name == "buf_n4" );
+      CHECK( reader._instantiated_modules[i].args[0].first == ".i" );
+      CHECK( reader._instantiated_modules[i].args[0].second == "n3" );
+      CHECK( reader._instantiated_modules[i].args[1].first == ".o" );
+      CHECK( reader._instantiated_modules[i].args[1].second == "n4" );
+      break;
+    case 2:
+      CHECK( reader._instantiated_modules[i].module_name == "inverter" );
+      CHECK( reader._instantiated_modules[i].inst_name == "inv_n6" );
+      CHECK( reader._instantiated_modules[i].args[0].first == ".i" );
+      CHECK( reader._instantiated_modules[i].args[0].second == "n5" );
+      CHECK( reader._instantiated_modules[i].args[1].first == ".o" );
+      CHECK( reader._instantiated_modules[i].args[1].second == "n6" );
+      break;
+    default:
+      CHECK( false );
+      break;
+    }
+  }
 }
