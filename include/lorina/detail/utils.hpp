@@ -128,7 +128,7 @@ public:
     _known.emplace( known );
   }
 
-  void call_deferred( const std::vector<std::string>& inputs, const std::vector<std::string>& outputs, std::string const& name, Args... params )
+  void call_deferred( const std::vector<std::string>& inputs, const std::vector<std::string>& outputs, Args... params )
   {
     /* do we have all inputs */
     std::unordered_set<std::string> unknown;
@@ -145,7 +145,10 @@ public:
     }
 
     std::tuple<Args...> args = std::make_tuple( params... );
-    _stored_params.emplace( name, args );
+    for ( const auto& output : outputs )
+    {
+      _stored_params.emplace( output, args );
+    }
 
     if ( !unknown.empty() )
     {
@@ -155,8 +158,8 @@ public:
         for ( const auto& output : outputs )
         {
           _triggers[input].insert( output );
+          _waits_for[output].insert( input );
         }
-        _waits_for[name].insert( input );
       }
       return;
     }
@@ -170,7 +173,7 @@ public:
 
   void compute_dependencies( const std::string& output )
   {
-     /* init empty, makes sure nothing is waiting for this output */
+    /* init empty, makes sure nothing is waiting for this output */
     _waits_for[output];
     std::stack<std::string> computed;
     computed.push( output );

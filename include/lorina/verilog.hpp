@@ -1412,10 +1412,6 @@ public:
         return false;
 
       args.emplace_back( std::make_pair( arg0, arg1 ) );
-      if ( std::find( std::begin( info.outputs ), std::end( info.outputs ), arg0 ) == std::end( info.outputs ) )
-      {
-        on_action.declare_known( arg1 );
-      }
     } while ( token == "," );
 
     if ( !valid || token != ")" )
@@ -1451,7 +1447,7 @@ public:
 
     /* callback */
     // reader.on_module_instantiation( module_name, params, inst_name, args );
-    on_action.call_deferred( inputs, outputs, inst_name, {}, inst_name,
+    on_action.call_deferred( inputs, outputs, {}, inst_name,
                              /* type = */ module_name,
                              /* params = */ params,
                              /* pin pairs = */ args );
@@ -1477,7 +1473,7 @@ public:
     if ( std::regex_match( s, sm, verilog_regex::immediate_assign ) )
     {
       assert( sm.size() == 3u );
-      on_action.call_deferred( {sm[2]}, {lhs}, lhs, {{sm[2], sm[1] == "~"}}, lhs, "assign", {}, {} );
+      on_action.call_deferred( {sm[2]}, {lhs}, {{sm[2], sm[1] == "~"}}, lhs, "assign", {}, {} );
     }
     else if ( std::regex_match( s, sm, verilog_regex::binary_expression ) )
     {
@@ -1488,15 +1484,15 @@ public:
 
       if ( op == "&" )
       {
-        on_action.call_deferred( {arg0.first, arg1.first}, {lhs}, lhs, {arg0, arg1}, lhs, "and2", {}, {} );
+        on_action.call_deferred( {arg0.first, arg1.first}, {lhs}, {arg0, arg1}, lhs, "and2", {}, {} );
       }
       else if ( op == "|" )
       {
-        on_action.call_deferred( {arg0.first, arg1.first}, {lhs}, lhs, {arg0, arg1}, lhs, "or2", {}, {} );
+        on_action.call_deferred( {arg0.first, arg1.first}, {lhs}, {arg0, arg1}, lhs, "or2", {}, {} );
       }
       else if ( op == "^" )
       {
-        on_action.call_deferred( {arg0.first, arg1.first}, {lhs}, lhs, {arg0, arg1}, lhs, "xor2", {}, {} );
+        on_action.call_deferred( {arg0.first, arg1.first}, {lhs}, {arg0, arg1}, lhs, "xor2", {}, {} );
       }
       else
       {
@@ -1511,15 +1507,15 @@ public:
       auto op = sm[3];
       if ( op == "&" )
       {
-        on_action.call_deferred( {arg0.first, arg1.first}, {lhs}, lhs, {arg0, arg1}, lhs, "nand2", {}, {} );
+        on_action.call_deferred( {arg0.first, arg1.first}, {lhs}, {arg0, arg1}, lhs, "nand2", {}, {} );
       }
       else if ( op == "|" )
       {
-        on_action.call_deferred( {arg0.first, arg1.first}, {lhs}, lhs, {arg0, arg1}, lhs, "nor2", {}, {} );
+        on_action.call_deferred( {arg0.first, arg1.first}, {lhs}, {arg0, arg1}, lhs, "nor2", {}, {} );
       }
       else if ( op == "^" )
       {
-        on_action.call_deferred( {arg0.first, arg1.first}, {lhs}, lhs, {arg0, arg1}, lhs, "xnor2", {}, {} );
+        on_action.call_deferred( {arg0.first, arg1.first}, {lhs}, {arg0, arg1}, lhs, "xnor2", {}, {} );
       }
       else
       {
@@ -1540,15 +1536,15 @@ public:
 
       if ( op == "&" )
       {
-        on_action.call_deferred( {arg0.first, arg1.first, arg2.first}, {lhs}, lhs, {arg0, arg1, arg2}, lhs, "and3", {}, {} );
+        on_action.call_deferred( {arg0.first, arg1.first, arg2.first}, {lhs}, {arg0, arg1, arg2}, lhs, "and3", {}, {} );
       }
       else if ( op == "|" )
       {
-        on_action.call_deferred( {arg0.first, arg1.first, arg2.first}, {lhs}, lhs, {arg0, arg1, arg2}, lhs, "or3", {}, {} );
+        on_action.call_deferred( {arg0.first, arg1.first, arg2.first}, {lhs}, {arg0, arg1, arg2}, lhs, "or3", {}, {} );
       }
       else if ( op == "^" )
       {
-        on_action.call_deferred( {arg0.first, arg1.first, arg2.first}, {lhs}, lhs, {arg0, arg1, arg2}, lhs, "xor3", {}, {} );
+        on_action.call_deferred( {arg0.first, arg1.first, arg2.first}, {lhs}, {arg0, arg1, arg2}, lhs, "xor3", {}, {} );
       }
       else
       {
@@ -1573,7 +1569,7 @@ public:
       args.push_back( b0 );
       args.push_back( c0 );
 
-      on_action.call_deferred( {a0.first, b0.first, c0.first}, {lhs}, lhs, args, lhs, "maj3", {}, {} );
+      on_action.call_deferred( {a0.first, b0.first, c0.first}, {lhs}, args, lhs, "maj3", {}, {} );
     }
     else
     {

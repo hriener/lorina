@@ -328,7 +328,7 @@ static std::regex end( R"(.end)" );
           return false;
         } );
 
-        on_action.call_deferred( args, { output }, output, args, output, tt );
+        on_action.call_deferred( args, { output }, args, output, tt );
 
         if ( in.eof() )
         {
