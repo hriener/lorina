@@ -139,9 +139,6 @@ public:
 
   void on_parameter( const std::string& name, const std::string& value ) const override
   {
-    (void)name;
-    (void)value;
-
     _parameter_definitions.emplace_back( name, value );
     ++_parameter;
   }

@@ -51,7 +51,7 @@ public:
 
   virtual void on_gate( const std::vector<std::string>& inputs, const std::string& output, const std::string& type ) const override
   {
-    gate_lines.push_back( std::make_tuple( inputs,output,type ) );
+    gate_lines.emplace_back( inputs, output, type );
     ++_stats.number_of_lines;
   }
 
@@ -104,13 +104,17 @@ TEST_CASE( "bench_parse", "[bench]" )
       "n1 = NOT(vdd)\n"
       "n6 = OR(n2, n5)\n"
       "n2 = NOT(input_x[0])\n"
-      "outport[0] = n6\n";
+      "outport[0] = n6\n"
+    ;
+
+  lorina::text_diagnostics consumer;
+  lorina::diagnostic_engine diag( &consumer );
 
   std::istringstream iss( bench_file );
 
   bench_statistics stats;
   bench_statistics_reader reader( stats );
-  auto result = read_bench( iss, reader );
+  auto result = read_bench( iss, reader, &diag );
   CHECK( result == return_code::success );
   CHECK( stats.number_of_inputs == 2 );
   CHECK( stats.number_of_outputs == 2 );
