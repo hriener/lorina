@@ -297,6 +297,9 @@ TEST_CASE( "Parse comments in Verilog file", "[verilog]" )
 {
   std::string verilog_file =
     "// comment at the beginning\n"
+    "/* different comment syntax */\n"
+    "/*multi-line\n"
+    "  comment*/\n"
     "module top( \\y1, \\y2, \\a, \\b, \\c ) ;\n"
     "  input \\a , \\b , \\c ;\n"
     "  output \\y1 , \\y2 ;\n"
