@@ -121,6 +121,33 @@ TEST_CASE( "cnf_dimacs single line of clauses", "[dimacs]" )
   CHECK( stats.variable_appearance_count == expected );
 }
 
+TEST_CASE( "cnf_dimacs variables ending with 0", "[dimacs]" )
+{
+  std::string const dimacs =
+  "c\n"
+  "c start with comments\n"
+  "c\n"
+  "c\n"
+  "p cnf 10 2\n"
+  "1 -10 8 0\n"
+  "-2 3 10 0\n";
+  
+  std::istringstream iss( dimacs );
+  
+  dimacs_statistics stats;
+  dimacs_statistics_reader reader( stats );
+  diagnostic_consumer consumer;
+  diagnostic_engine diag( &consumer );
+  auto const result = read_dimacs( iss, reader, &diag );
+  
+  CHECK( result == return_code::success );
+  CHECK( stats.format == "cnf" );
+  CHECK( stats.number_of_variables == 10 );
+  CHECK( stats.number_of_clauses == 2 );
+  std::vector<uint32_t> const expected = { 1, 1, 1, 0, 0, 0, 0, 1, 0, 2 };
+  CHECK( stats.variable_appearance_count == expected );
+}
+
 TEST_CASE( "cnf_dimacs missing problem specification", "[dimacs]" )
 {
   std::string const dimacs =
