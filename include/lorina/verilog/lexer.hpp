@@ -601,6 +601,7 @@ protected:
           ++state;
           return state;
         }
+        break;
       }
     case 1:
       {
@@ -609,6 +610,7 @@ protected:
           ++state;
           return state;
         }
+        break;
       }
     default:
       break;
