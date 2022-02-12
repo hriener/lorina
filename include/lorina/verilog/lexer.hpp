@@ -59,7 +59,7 @@ struct token
 
 /*! \brief A Verilog lexer.
  *
- * Transformers a sequences of characters into a sequence of tokens.
+ * Transforms a sequences of characters into a sequence of tokens.
  *
  * Example:
  *   std::string source{ ... };
