@@ -9,10 +9,11 @@ using namespace lorina;
 TEST_CASE( "Lexical analysis", "[verilog]")
 {
   std::string source{
+    "/* TEST */\n"
     "module TEST(x,y,z);\n"
-    "  input x, y;\n"
-    "  output z;\n"
-    "  assign z = x & y;\n"
+    "  input x, y; // input\n"
+    "  output z; // output\n"
+    "  assign z = x & y; // assign\n"
     "endmodule"};
 
   std::istringstream in( source );
