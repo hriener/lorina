@@ -12,8 +12,9 @@ TEST_CASE( "Numeral", "[verilog]" )
   sources.emplace_back( "0" );
   sources.emplace_back( "1" );
   sources.emplace_back( "10" );
-  // sources.emplace_back( "8'b11001100" );
-  // sources.emplace_back( "16'h7fff" );
+  sources.emplace_back( "12'o7770" );
+  sources.emplace_back( "8'b110_01100" );
+  sources.emplace_back( "16'h7fff" );
 
   for ( const auto& source : sources )
   {
