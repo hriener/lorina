@@ -611,10 +611,12 @@ public:
     assert( identifier_list < nodes_.size() );
     if ( const ast_identifier_list* node = dynamic_cast<ast_identifier_list*>( nodes_[identifier_list] ) )
     {
+      (void)node;
       return create_node<ast_input_declaration>( node->identifiers() );
     }
     else if ( const ast_identifier* node = dynamic_cast<ast_identifier*>( nodes_[identifier_list] ) )
     {
+      (void)node;
       return create_node<ast_input_declaration>( std::vector<ast_id>( identifier_list ) );
     }
     else
@@ -631,10 +633,12 @@ public:
     const ast_range_expression* range_expr = static_cast<ast_range_expression*>( nodes_[range] );
     if ( const ast_identifier_list* node = dynamic_cast<ast_identifier_list*>( nodes_[identifier_list] ) )
     {
+      (void)node;
       return create_node<ast_input_declaration>( node->identifiers(), range_expr->hi(), range_expr->lo() );
     }
     else if ( const ast_identifier* node = dynamic_cast<ast_identifier*>( nodes_[identifier_list] ) )
     {
+      (void)node;
       return create_node<ast_input_declaration>( std::vector<ast_id>( identifier_list ), range_expr->hi(), range_expr->lo() );
     }
     else
@@ -649,10 +653,12 @@ public:
     assert( identifier_list < nodes_.size() );
     if ( const ast_identifier_list* node = dynamic_cast<ast_identifier_list*>( nodes_[identifier_list] ) )
     {
+      (void)node;
       return create_node<ast_output_declaration>( node->identifiers() );
     }
     else if ( const ast_identifier* node = dynamic_cast<ast_identifier*>( nodes_[identifier_list] ) )
     {
+      (void)node;
       return create_node<ast_output_declaration>( std::vector<ast_id>( identifier_list ) );
     }
     else
@@ -669,10 +675,12 @@ public:
     const ast_range_expression* range_expr = static_cast<ast_range_expression*>( nodes_[range] );
     if ( const ast_identifier_list* node = dynamic_cast<ast_identifier_list*>( nodes_[identifier_list] ) )
     {
+      (void)node;
       return create_node<ast_output_declaration>( node->identifiers(), range_expr->hi(), range_expr->lo() );
     }
     else if ( const ast_identifier* node = dynamic_cast<ast_identifier*>( nodes_[identifier_list] ) )
     {
+      (void)node;
       return create_node<ast_output_declaration>( std::vector<ast_id>( identifier_list ), range_expr->hi(), range_expr->lo() );
     }
     else
@@ -687,10 +695,12 @@ public:
     assert( identifier_list < nodes_.size() );
     if ( const ast_identifier_list* node = dynamic_cast<ast_identifier_list*>( nodes_[identifier_list] ) )
     {
+      (void)node;
       return create_node<ast_wire_declaration>( node->identifiers() );
     }
     else if ( const ast_identifier* node = dynamic_cast<ast_identifier*>( nodes_[identifier_list] ) )
     {
+      (void)node;
       return create_node<ast_wire_declaration>( std::vector<ast_id>( identifier_list ) );
     }
     else
@@ -707,10 +717,12 @@ public:
     const ast_range_expression* range_expr = static_cast<ast_range_expression*>( nodes_[range] );
     if ( const ast_identifier_list* node = dynamic_cast<ast_identifier_list*>( nodes_[identifier_list] ) )
     {
+      (void)node;
       return create_node<ast_wire_declaration>( node->identifiers(), range_expr->hi(), range_expr->lo() );
     }
     else if ( const ast_identifier* node = dynamic_cast<ast_identifier*>( nodes_[identifier_list] ) )
     {
+      (void)node;
       return create_node<ast_wire_declaration>( std::vector<ast_id>( identifier_list ), range_expr->hi(), range_expr->lo() );
     }
     else
