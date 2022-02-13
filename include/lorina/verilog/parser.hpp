@@ -496,6 +496,7 @@ public:
       if ( token_id_ != Lexer::TID_EOF &&
            token_id_ != Lexer::TID_OP_RPAREN &&
            token_id_ != Lexer::TID_OP_RSQUARED &&
+           token_id_ != Lexer::TID_OP_SEMICOLON &&
            token_id_ != Lexer::TID_OP_COLON &&
            token_id_ != Lexer::TID_OP_COMMA &&
            token_id_ != Lexer::TID_OP_ADD &&
@@ -557,6 +558,7 @@ public:
       if ( token_id_ != Lexer::TID_EOF &&
            token_id_ != Lexer::TID_OP_RPAREN &&
            token_id_ != Lexer::TID_OP_RSQUARED &&
+           token_id_ != Lexer::TID_OP_SEMICOLON &&
            token_id_ != Lexer::TID_OP_COLON &&
            token_id_ != Lexer::TID_OP_COMMA &&
            token_id_ != Lexer::TID_OP_ADD &&
@@ -949,6 +951,90 @@ public:
 
   error:
     fmt::print("[e] could not parse module instantiation.\n");
+    return verilog_ast_graph::ast_or_error();
+  }
+
+  /* \brief Consume a parameter declaration
+   *
+   * A parameter declaration assigns an arithmetic expression to an identifier.
+   *
+   * Production rule:
+   *   PARAMETER_DECLARATION ::= `parameter` IDENTIFIER `=` ARITHMETIC_EXPR `;`
+   *
+   * Examples:
+   *   parameter WORD = 32;
+   *   parameter SIZE = 10;
+   */
+  inline verilog_ast_graph::ast_or_error consume_parameter_declaration()
+  {
+    verilog_ast_graph::ast_or_error identifier, expr;
+
+    if ( token_id_ != Lexer::TID_KW_PARAMETER )
+      goto error;
+    token_id_ = lexer_.next_token(); // `parameter`
+
+    identifier = consume_identifier(); // identifier
+    if ( !identifier )
+      goto error;
+
+    if ( token_id_ != Lexer::TID_OP_ASSIGN )
+      goto error;
+    token_id_ = lexer_.next_token(); // `=`
+
+    expr = consume_arithmetic_expression(); // arithmetic expression
+    if ( !expr )
+      goto error;
+
+    if ( token_id_ != Lexer::TID_OP_SEMICOLON )
+      goto error;
+    token_id_ = lexer_.next_token(); // `;`
+
+    return verilog_ast_graph::ast_or_error( ag_.create_parameter_declaration( identifier.ast(), expr.ast() ) );
+
+  error:
+    fmt::print("[e] could not parse parameter declaration.\n");
+    return verilog_ast_graph::ast_or_error();
+  }
+
+  /* \brief Consume an assignment
+   *
+   * An assignment assigns a signal reference to an expression.
+   *
+   * Production rule:
+   *   ASSIGNMENT ::= `assign` SIGNAL_REFERENCE `=` EXPR `;`
+   *
+   * Examples:
+   *   assign maj = a & b | b & c | a & c;
+   *   assign x[2] = x[1] ^ x[0];
+   */
+  inline verilog_ast_graph::ast_or_error consume_assignment()
+  {
+    verilog_ast_graph::ast_or_error lhs, rhs;
+
+    if ( token_id_ != Lexer::TID_KW_ASSIGN )
+      goto error;
+    token_id_ = lexer_.next_token(); // `assign`
+
+    lhs = consume_signal_reference(); // signal reference
+    if ( !lhs )
+      goto error;
+
+    if ( token_id_ != Lexer::TID_OP_ASSIGN )
+      goto error;
+    token_id_ = lexer_.next_token(); // `=`
+
+    rhs = consume_expression(); // expression
+    if ( !lhs )
+      goto error;
+
+    if ( token_id_ != Lexer::TID_OP_SEMICOLON )
+      goto error;
+    token_id_ = lexer_.next_token(); // `;`
+
+    return verilog_ast_graph::ast_or_error( ag_.create_assignment( lhs.ast(), rhs.ast() ) );
+
+  error:
+    fmt::print("[e] could not parse assignment.\n");
     return verilog_ast_graph::ast_or_error();
   }
 

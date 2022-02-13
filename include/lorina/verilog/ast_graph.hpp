@@ -444,6 +444,40 @@ protected:
   std::vector<ast_id> parameters_;
 }; // ast_module_instantiation
 
+/* \brief Parameter declaration
+ *
+ */
+class ast_parameter_declaration : public ast_node
+{
+public:
+  explicit ast_parameter_declaration( ast_id identifier, ast_id expr )
+    : identifier_( identifier )
+    , expr_( expr )
+  {
+  }
+
+protected:
+  ast_id identifier_;
+  ast_id expr_;
+}; // ast_parameter_declaration
+
+/* \brief Assignment statement
+ *
+ */
+class ast_assignment : public ast_node
+{
+public:
+  explicit ast_assignment( ast_id signal, ast_id expr )
+    : signal_( signal )
+    , expr_( expr )
+  {
+  }
+
+protected:
+  ast_id signal_;
+  ast_id expr_;
+}; // ast_assignment
+
 class verilog_ast_graph
 {
 public:
@@ -672,6 +706,16 @@ public:
                                              const std::vector<ast_id>& parameters )
   {
     return create_node<ast_module_instantiation>( module_name, instance_name, port_assignment, parameters );
+  }
+
+  inline ast_id create_parameter_declaration( ast_id identifier, ast_id expr )
+  {
+    return create_node<ast_parameter_declaration>( identifier, expr );
+  }
+
+  inline ast_id create_assignment( ast_id signal, ast_id expr )
+  {
+    return create_node<ast_assignment>( signal, expr );
   }
 
 protected:

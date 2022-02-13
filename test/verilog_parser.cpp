@@ -344,3 +344,54 @@ TEST_CASE( "Module instantiation", "[verilog]" )
     CHECK( ast );
   }
 }
+
+TEST_CASE( "Parameter declaration", "[verilog]" )
+{
+  std::vector<std::string> sources;
+  sources.emplace_back( "parameter WORD = 32;" );
+  sources.emplace_back( "parameter SIZE = 10;" );
+  sources.emplace_back( "parameter SIZE = N - 1;" );
+
+  for ( const auto& source : sources )
+  {
+    std::istringstream in( source );
+    std::noskipws( in );
+
+    using Lexer = verilog_lexer<std::istream_iterator<char>>;
+    Lexer lexer( ( std::istream_iterator<char>(in) ), std::istream_iterator<char>());
+
+    verilog_ast_graph ag;
+
+    text_diagnostics consumer;
+    diagnostic_engine diag( &consumer );
+
+    verilog_parser parser( lexer, ag, &diag );
+    verilog_ast_graph::ast_or_error ast = parser.consume_parameter_declaration();
+    CHECK( ast );
+  }
+}
+
+TEST_CASE( "Assignment", "[verilog]" )
+{
+  std::vector<std::string> sources;
+  sources.emplace_back( "assign maj = a & b | b & c | a & c;" );
+  sources.emplace_back( "assign x[2] = x[0] ^ x[1];" );
+
+  for ( const auto& source : sources )
+  {
+    std::istringstream in( source );
+    std::noskipws( in );
+
+    using Lexer = verilog_lexer<std::istream_iterator<char>>;
+    Lexer lexer( ( std::istream_iterator<char>(in) ), std::istream_iterator<char>());
+
+    verilog_ast_graph ag;
+
+    text_diagnostics consumer;
+    diagnostic_engine diag( &consumer );
+
+    verilog_parser parser( lexer, ag, &diag );
+    verilog_ast_graph::ast_or_error ast = parser.consume_assignment();
+    CHECK( ast );
+  }
+}
