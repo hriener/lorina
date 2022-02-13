@@ -1038,6 +1038,93 @@ public:
     return verilog_ast_graph::ast_or_error();
   }
 
+  inline verilog_ast_graph::ast_or_error consume_module()
+  {
+    verilog_ast_graph::ast_or_error module_name;
+    std::vector<ast_id> args;
+    std::vector<ast_id> decls;
+
+    verilog_ast_graph::ast_or_error identifier, arg, decl_or_stmt;
+
+    /* parse module keyword */
+    if ( token_id_ != Lexer::TID_KW_MODULE )
+      goto error;
+    token_id_ = lexer_.next_token(); // `module`
+
+    /* parse module name */
+    if ( !is_identifier() )
+      goto error;
+    module_name = consume_identifier();
+
+    /* parse sensitivity list */
+    if ( token_id_ != Lexer::TID_OP_LPAREN )
+      goto error;
+    token_id_ = lexer_.next_token(); // `(`
+
+    if ( is_identifier() )
+    {
+      arg = consume_identifier();
+      args.emplace_back( arg.ast() );
+      while ( token_id_ == Lexer::TID_OP_COMMA )
+      {
+        token_id_ = lexer_.next_token(); // `,`
+        arg = consume_identifier();
+        args.emplace_back( arg.ast() );
+      }
+    }
+
+    if ( token_id_ != Lexer::TID_OP_RPAREN )
+      goto error;
+    token_id_ = lexer_.next_token(); // `)`
+
+    if ( token_id_ != Lexer::TID_OP_SEMICOLON )
+      goto error;
+    token_id_ = lexer_.next_token(); // `;`
+
+    while ( token_id_ != Lexer::TID_KW_ENDMODULE )
+    {
+      if ( token_id_ == Lexer::TID_KW_INPUT )
+      {
+        decl_or_stmt = consume_input_declaration();
+      }
+      else if ( token_id_ == Lexer::TID_KW_OUTPUT )
+      {
+        decl_or_stmt = consume_output_declaration();
+      }
+      else if ( token_id_ == Lexer::TID_KW_WIRE )
+      {
+        decl_or_stmt = consume_wire_declaration();
+      }
+      else if ( token_id_ == Lexer::TID_KW_ASSIGN )
+      {
+        decl_or_stmt = consume_assignment();
+      }
+      else if ( token_id_ == Lexer::TID_KW_PARAMETER )
+      {
+        decl_or_stmt = consume_parameter_declaration();
+      }
+      else if ( is_identifier() )
+      {
+        decl_or_stmt = consume_module_instantiation();
+      }
+      else
+      {
+        goto error;
+      }
+      decls.emplace_back( decl_or_stmt.ast() );
+    }
+
+    if ( token_id_ != Lexer::TID_KW_ENDMODULE )
+      goto error;
+    token_id_ = lexer_.next_token(); // `endmodule`
+
+    return verilog_ast_graph::ast_or_error( ag_.create_module( module_name, args, decls ) );
+
+  error:
+    fmt::print("[e] could not parse module.\n");
+    return verilog_ast_graph::ast_or_error();
+  }
+
 protected:
   Lexer& lexer_;
   verilog_ast_graph& ag_;

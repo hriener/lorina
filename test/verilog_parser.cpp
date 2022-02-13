@@ -395,3 +395,116 @@ TEST_CASE( "Assignment", "[verilog]" )
     CHECK( ast );
   }
 }
+
+TEST_CASE( "Module", "[verilog]" )
+{
+  std::vector<std::string> sources;
+  sources.emplace_back(
+      "module proto();\n"
+      "endmodule\n"
+    );
+  sources.emplace_back(
+      "module proto(x);\n"
+      "endmodule\n"
+    );
+  sources.emplace_back(
+      "module proto(x,y);\n"
+      "endmodule\n"
+    );
+  sources.emplace_back(
+      "module buffer(x,y);\n"
+      "  input x;\n"
+      "  output y;\n"
+      "  assign y = x;\n"
+      "endmodule\n"
+    );
+  sources.emplace_back(
+      "module majority(x0,x1,x2,y);\n"
+      "  input x0,x1,x2;\n"
+      "  output y;\n"
+      "  assign y = x0 & x1 | x1 & x2 | x0 & x2;\n"
+      "endmodule\n"
+    );
+  sources.emplace_back(
+      "module majority(x0,x1,x2,x3,x4,y);\n"
+      "  input x0,x1,x2,x3,x4;\n"
+      "  output y;\n"
+      "  assign y = $maj{x0,x1,x2,x3,x4};\n"
+      "endmodule\n"
+    );
+  sources.emplace_back(
+      "module majority(x,y);\n"
+      "  input [2:0] x;\n"
+      "  output y;\n"
+      "  assign y = x[0] & x[1] | x[1] & x[2] | x[0] & x[2];\n"
+      "endmodule\n"
+    );
+  sources.emplace_back(
+      "module full_adder(x,carry,sum);\n"
+      "  input [2:0] x;\n"
+      "  output carry, sum;\n"
+      "  assign sum = x[0]^x[1]^x[2];\n"
+      "  assign carry = $maj{x[0],x[1],x[2]};\n"
+      "endmodule\n"
+    );
+  sources.emplace_back(
+      "module parallel_and(x0,x1,y);\n"
+      "  parameter N = 4;\n"
+      "  input [N-1:0] x0;\n"
+      "  input [N-1:0] x1;\n"
+      "  output [N-1:0] y;\n"
+      "  assign y = x0 & x1;\n"
+      "endmodule\n"
+    );
+  sources.emplace_back(
+      "module top( \\y[0] , \\y[1] , \\x[0] , \\x[1] , \\x[2] );\n"
+      "  input \\x[0] , \\x[1] , \\x[2] ;\n"
+      "  output \\y[0] , \\y[1] ;\n"
+      "  wire zero, _g0, _g1, _g2, _g3, _g4, _g5;\n"
+      "  assign zero = 1'b0;\n"
+      "  assign _g0 = \\x[0] ;\n"
+      "  assign _g1 = ~\\x[2] ;\n"
+      "  assign _g2 = _g0 & _g1;\n"
+      "  assign _g3 = \\x[0] | _g2;\n"
+      "  assign _g4 = _g2 ^ _g3;\n"
+      "  assign _g5 = ~\\x[0] & \\x[1] | ~\\x[0] & \\x[2] | \\x[1] & \\x[2] ;\n"
+      "  assign \\y[0] = _g4;\n"
+      "  assign \\y[1] = _g5;\n"
+      "endmodule\n"
+    );
+  sources.emplace_back(
+      "module fp2mult(a0, a1, b0, b1, c0, c1);\n"
+      "  parameter N = 5;\n"
+      "  parameter M = 29;\n"
+      "  input [N - 1:0] a0, a1, b0, b1;\n"
+      "  output [N - 1:0] c0, c1;\n"
+      "  wire [N - 1:0] w0, w1, w2, w3, w4, w5;\n"
+      "  mod_mul #(M)   i1(.x1(a0), .x2(b0), .y1(w0));\n"
+      "  mod_mul #(M)   i2(.x1(a1), .x2(b1), .y1(w1));\n"
+      "  mod_add #(M)   i3(.x1(a0), .x2(a1), .y1(w2));\n"
+      "  mod_add #(M,N) i4(.x1(b0), .x2(b1), .y1(w3));\n"
+      "  mod_sub #(M)   i5(.x1(w0), .x2(w1), .y1(c0));\n"
+      "  mod_add #(M)   i6(.x1(w0), .x2(w1), .y1(w4));\n"
+      "  mod_mul #(M,N) i7(.x1(w2), .x2(w3), .y1(w5));\n"
+      "  mod_sub #(M)   i8(.x1(w4), .x2(w5), .y1(c1));\n"
+      "endmodule"
+    );
+
+  for ( const auto& source : sources )
+  {
+    std::istringstream in( source );
+    std::noskipws( in );
+
+    using Lexer = verilog_lexer<std::istream_iterator<char>>;
+    Lexer lexer( ( std::istream_iterator<char>(in) ), std::istream_iterator<char>());
+
+    verilog_ast_graph ag;
+
+    text_diagnostics consumer;
+    diagnostic_engine diag( &consumer );
+
+    verilog_parser parser( lexer, ag, &diag );
+    verilog_ast_graph::ast_or_error ast = parser.consume_module();
+    CHECK( ast );
+  }
+}

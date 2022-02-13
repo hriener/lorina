@@ -478,6 +478,25 @@ protected:
   ast_id expr_;
 }; // ast_assignment
 
+/* \brief Module
+ *
+ */
+class ast_module : public ast_node
+{
+public:
+  explicit ast_module( ast_id module_name, const std::vector<ast_id>& args, const std::vector<ast_id>& decls )
+    : module_name_( module_name )
+    , args_( args )
+    , decls_( decls )
+  {
+  }
+
+protected:
+  ast_id module_name_;
+  std::vector<ast_id> args_;
+  std::vector<ast_id> decls_;
+}; // ast_module
+
 class verilog_ast_graph
 {
 public:
@@ -716,6 +735,11 @@ public:
   inline ast_id create_assignment( ast_id signal, ast_id expr )
   {
     return create_node<ast_assignment>( signal, expr );
+  }
+
+  inline ast_id create_module( ast_id module_name, const std::vector<ast_id>& args, const std::vector<ast_id>& decls )
+  {
+    return create_node<ast_module>( module_name, args, decls );
   }
 
 protected:
