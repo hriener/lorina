@@ -846,6 +846,112 @@ public:
     return consume_xor_expression();
   }
 
+  /* \brief Consume module instantiation
+   *
+   * Production rule:
+   *   ParameterAssignment ::= `#` `(` ARITH_EXPR `,` ... `,` ARITH_EXPR `)`
+   *   PortAssignment ::= `.` IDENTIFIER(SIGNAL_REFERENCE) `,` ... `,` `.` IDENTIFIER(SIGNAL_REFERENCE)
+   *   ModuleInstitation ::= IDENTIFIER (ParameterAssignment)? IDENTIFIER `(` PortAssignment `)` `;`
+   *
+   * Example:
+   *   full_adder #(BITWIDTH) fa0(.a(i[0]), .b(i[1]), .c(i[2]), .sum(o[0]), .carry(o[1]));
+   */
+  inline verilog_ast_graph::ast_or_error consume_module_instantiation()
+  {
+    verilog_ast_graph::ast_or_error module_name, instance_name;
+    std::vector<std::pair<ast_id, ast_id>> port_assignment;
+    std::vector<ast_id> parameters;
+
+    /* temporary variables */
+    verilog_ast_graph::ast_or_error parameter, port_name, signal_name;
+
+    /* parse module name */
+    if ( !is_identifier() )
+      goto error;
+    module_name = consume_identifier();
+
+    /* parse parameters (optionally) */
+    if ( token_id_ == Lexer::TID_OP_ROUTE )
+    {
+      token_id_ = lexer_.next_token();
+
+      if ( token_id_ != Lexer::TID_OP_LPAREN )
+        goto error;
+      token_id_ = lexer_.next_token();
+
+      parameter = consume_arithmetic_expression();
+      parameters.emplace_back( parameter.ast() );
+
+      while ( token_id_ == Lexer::TID_OP_COMMA )
+      {
+        token_id_ = lexer_.next_token();
+
+        parameter = consume_arithmetic_expression();
+        parameters.emplace_back( parameter.ast() );
+      }
+
+      if ( token_id_ != Lexer::TID_OP_RPAREN )
+        goto error;
+      token_id_ = lexer_.next_token();
+    }
+
+    /* parse instance name */
+    if ( !is_identifier() )
+      goto error;
+    instance_name = consume_identifier();
+
+    /* parse port assignment */
+    if ( token_id_ != Lexer::TID_OP_LPAREN )
+      goto error;
+    token_id_ = lexer_.next_token();
+
+    while ( token_id_ == Lexer::TID_OP_DOT )
+    {
+      token_id_ = lexer_.next_token();
+
+      /* parse port name */
+      if ( !is_identifier() )
+        goto error;
+      port_name = consume_identifier();
+
+      if ( token_id_ != Lexer::TID_OP_LPAREN )
+        goto error;
+      token_id_ = lexer_.next_token();
+
+      /* parse signal name */
+      if ( !is_identifier() )
+        goto error;
+      signal_name = consume_signal_reference();
+
+      if ( token_id_ != Lexer::TID_OP_RPAREN )
+        goto error;
+      token_id_ = lexer_.next_token();
+
+      port_assignment.emplace_back( std::make_pair( port_name.ast(), signal_name.ast() ) );
+
+      if ( token_id_ == Lexer::TID_OP_COMMA )
+      {
+        token_id_ = lexer_.next_token();
+        continue;
+      }
+    }
+
+    if ( token_id_ != Lexer::TID_OP_RPAREN )
+      goto error;
+    token_id_ = lexer_.next_token();
+
+    if ( token_id_ != Lexer::TID_OP_SEMICOLON )
+      goto error;
+    token_id_ = lexer_.next_token();
+
+    return verilog_ast_graph::ast_or_error(
+             ag_.create_module_instantiation( module_name.ast(), instance_name.ast(), port_assignment, parameters ) );
+
+  error:
+    fmt::print("[e] could not parse module instantiation.\n");
+    return verilog_ast_graph::ast_or_error();
+  }
+
 protected:
   Lexer& lexer_;
   verilog_ast_graph& ag_;

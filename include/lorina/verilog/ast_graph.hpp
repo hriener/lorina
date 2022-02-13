@@ -416,6 +416,34 @@ protected:
   ast_id lo_;
 }; // ast_wire_declaration
 
+/* \brief Module instantiation
+ *
+ * A module instantiation of form
+ *   IDENTIFIER (ParameterAssignment)? IDENTIFIER `(` PortAssignment `)` `;`
+ * with
+ *   ParameterAssignment ::= `#` `(` ARITH_EXPR `,` ... `,` ARITH_EXPR `)`
+ *   PortAssignment ::= `.` IDENTIFIER(SIGNAL_REFERENCE) `,` ... `,` `.` IDENTIFIER(SIGNAL_REFERENCE).
+ */
+class ast_module_instantiation : public ast_node
+{
+public:
+  explicit ast_module_instantiation( ast_id module_name, ast_id instance_name,
+                                     const std::vector<std::pair<ast_id, ast_id>>& port_assignment,
+                                     const std::vector<ast_id>& parameters )
+    : module_name_( module_name )
+    , instance_name_( instance_name )
+    , port_assignment_( port_assignment )
+    , parameters_( parameters )
+  {
+  }
+
+protected:
+  ast_id module_name_;
+  ast_id instance_name_;
+  std::vector<std::pair<ast_id, ast_id>> port_assignment_;
+  std::vector<ast_id> parameters_;
+}; // ast_module_instantiation
+
 class verilog_ast_graph
 {
 public:
@@ -637,6 +665,13 @@ public:
       assert( false && "unknown node type" );
       std::abort();
     }
+  }
+
+  inline ast_id create_module_instantiation( ast_id module_name, ast_id instance_name,
+                                             const std::vector<std::pair<ast_id, ast_id>>& port_assignment,
+                                             const std::vector<ast_id>& parameters )
+  {
+    return create_node<ast_module_instantiation>( module_name, instance_name, port_assignment, parameters );
   }
 
 protected:

@@ -317,3 +317,30 @@ TEST_CASE( "Wire declaration", "[verilog]" )
     CHECK( ast );
   }
 }
+
+TEST_CASE( "Module instantiation", "[verilog]" )
+{
+  std::vector<std::string> sources;
+  sources.emplace_back( "mod_mul #(2) mul0(.i0(a),.i1(b),.o0(c));\n" );
+  sources.emplace_back( "mod_mul #(M)   mul0(.i0(a), .i1(b), .o0(c));\n" );
+  sources.emplace_back( "mod_add #(M,N) add0(.i0(a), .i1(b), .o0(c));\n" );
+  sources.emplace_back( "full_adder #(BITWIDTH) fa(.a(i[0]), .b(i[1]), .c(i[2]), .sum(o[0]), .carry(o[1]));\n" );
+
+  for ( const auto& source : sources )
+  {
+    std::istringstream in( source );
+    std::noskipws( in );
+
+    using Lexer = verilog_lexer<std::istream_iterator<char>>;
+    Lexer lexer( ( std::istream_iterator<char>(in) ), std::istream_iterator<char>());
+
+    verilog_ast_graph ag;
+
+    text_diagnostics consumer;
+    diagnostic_engine diag( &consumer );
+
+    verilog_parser parser( lexer, ag, &diag );
+    verilog_ast_graph::ast_or_error ast = parser.consume_module_instantiation();
+    CHECK( ast );
+  }
+}
