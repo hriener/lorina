@@ -89,6 +89,72 @@ TEST_CASE( "List of identifiers", "[verilog]" )
   }
 }
 
+TEST_CASE( "Signal reference", "[verilog]" )
+{
+  std::vector<std::string> sources;
+  sources.emplace_back( "x" );
+  sources.emplace_back( "x[1]" );
+
+  for ( const auto& source : sources )
+  {
+    std::istringstream in( source );
+    std::noskipws( in );
+
+    using Lexer = verilog_lexer<std::istream_iterator<char>>;
+    Lexer lexer( ( std::istream_iterator<char>(in) ), std::istream_iterator<char>());
+
+    verilog_ast_graph ag;
+
+    text_diagnostics consumer;
+    diagnostic_engine diag( &consumer );
+
+    verilog_parser parser( lexer, ag, &diag );
+    verilog_ast_graph::ast_or_error ast = parser.consume_signal_reference();
+    CHECK( ast );
+  }
+}
+
+TEST_CASE( "Arithmetic expression", "[verilog]" )
+{
+  std::vector<std::string> sources;
+  sources.emplace_back( "x" );
+  sources.emplace_back( "x[0]" );
+  sources.emplace_back( "(x)" );
+
+  sources.emplace_back( "x*y" );
+  sources.emplace_back( "(-x)*y" );
+  sources.emplace_back( "x*(-y)" );
+  sources.emplace_back( "(-x)*(-y)" );
+  sources.emplace_back( "x[0]*y[1]" );
+
+  sources.emplace_back( "x+y" );
+  sources.emplace_back( "(-x)+y" );
+  sources.emplace_back( "x+(-y)" );
+  sources.emplace_back( "(-x)+(-y)" );
+  sources.emplace_back( "x[0]+y[1]" );
+
+  sources.emplace_back( "2*x+1" );
+  sources.emplace_back( "x-1" );
+
+  for ( const auto& source : sources )
+  {
+    std::istringstream in( source );
+    std::noskipws( in );
+
+    using Lexer = verilog_lexer<std::istream_iterator<char>>;
+    Lexer lexer( ( std::istream_iterator<char>(in) ), std::istream_iterator<char>());
+
+    verilog_ast_graph ag;
+
+    text_diagnostics consumer;
+    diagnostic_engine diag( &consumer );
+
+    verilog_parser parser( lexer, ag, &diag );
+    verilog_ast_graph::ast_or_error ast = parser.consume_arithmetic_expression();
+    CHECK( ast );
+  }
+}
+
 TEST_CASE( "Input declaration", "[verilog]" )
 {
   std::vector<std::string> sources;
@@ -96,6 +162,7 @@ TEST_CASE( "Input declaration", "[verilog]" )
   sources.emplace_back( "input a, b, c;" );
   sources.emplace_back( "input [7:0] a;" );
   sources.emplace_back( "input [7:0] a, b, c;" );
+  sources.emplace_back( "input [N-1:0] a;" );
 
   for ( const auto& source : sources )
   {
@@ -123,6 +190,7 @@ TEST_CASE( "Output declaration", "[verilog]" )
   sources.emplace_back( "output a, b, c;" );
   sources.emplace_back( "output [7:0] a;" );
   sources.emplace_back( "output [7:0] a, b, c;" );
+  sources.emplace_back( "output [N-1:0] a;" );
 
   for ( const auto& source : sources )
   {
@@ -150,6 +218,7 @@ TEST_CASE( "Wire declaration", "[verilog]" )
   sources.emplace_back( "wire a, b, c;" );
   sources.emplace_back( "wire [7:0] a;" );
   sources.emplace_back( "wire [7:0] a, b, c;" );
+  sources.emplace_back( "wire [N-1:0] a;" );
 
   for ( const auto& source : sources )
   {

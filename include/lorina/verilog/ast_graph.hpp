@@ -113,6 +113,36 @@ protected:
   std::vector<ast_id> identifiers_;
 }; // ast_identifier_list
 
+/* \brief Array select
+ *
+ * An identifier followed by an bit selector of form
+ *   IDENTIFIER `[` NUMERAL `]`
+ *
+ */
+class ast_array_select : public ast_node
+{
+public:
+  explicit ast_array_select( ast_id array, ast_id index )
+    : array_( array )
+    , index_( index )
+  {
+  }
+
+  inline ast_id array() const
+  {
+    return array_;
+  }
+
+  inline ast_id index() const
+  {
+    return index_;
+  }
+
+protected:
+  ast_id array_;
+  ast_id index_;
+}; // ast_array_select
+
 /* \brief Range expression
  *
  * A pair of a most-significant bit and a least-significant bit of form
@@ -141,6 +171,76 @@ public:
 protected:
   ast_id hi_;
   ast_id lo_;
+};
+
+enum class sign_kind
+{
+  SIGN_MINUS = 1,
+};
+
+/* \brief Sign
+ *
+ */
+class ast_sign : public ast_node
+{
+public:
+  explicit ast_sign( sign_kind kind, ast_id expr )
+    : kind_( kind )
+    , expr_( expr )
+  {}
+
+  inline ast_id expr() const
+  {
+    return expr_;
+  }
+
+  inline sign_kind kind() const
+  {
+    return kind_;
+  }
+
+protected:
+  sign_kind kind_;
+  ast_id expr_;
+}; // ast_sign
+
+enum class expr_kind
+{
+  EXPR_ADD = 1,
+  EXPR_MUL = 2,
+};
+
+/* \brief Expression
+ *
+ */
+class ast_expression : public ast_node
+{
+public:
+  explicit ast_expression( expr_kind kind, ast_id left, ast_id right )
+    : kind_( kind )
+    , left_( left )
+    , right_( right )
+  {}
+
+  inline ast_id left() const
+  {
+    return left_;
+  }
+
+  inline ast_id right() const
+  {
+    return right_;
+  }
+
+  inline expr_kind kind() const
+  {
+    return kind_;
+  }
+
+protected:
+  expr_kind kind_;
+  ast_id left_;
+  ast_id right_;
 };
 
 /* \brief Input declaration
@@ -346,6 +446,26 @@ public:
   inline ast_id create_range_expression( ast_id hi, ast_id lo )
   {
     return create_node<ast_range_expression>( hi, lo );
+  }
+
+  inline ast_id create_array_select( ast_id array, ast_id index )
+  {
+    return create_node<ast_array_select>( array, index );
+  }
+
+  inline ast_id create_sum_expression( ast_id term, ast_id expr )
+  {
+    return create_node<ast_expression>( expr_kind::EXPR_ADD, term, expr );
+  }
+
+  inline ast_id create_negative_sign( ast_id expr )
+  {
+    return create_node<ast_sign>( sign_kind::SIGN_MINUS, expr );
+  }
+
+  inline ast_id create_mul_expression( ast_id term, ast_id expr )
+  {
+    return create_node<ast_expression>( expr_kind::EXPR_MUL, term, expr );
   }
 
   inline ast_id create_input_declaration( ast_id identifier_list )
