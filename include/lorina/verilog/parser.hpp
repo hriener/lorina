@@ -398,7 +398,7 @@ public:
     return token_id_ == Lexer::TID_OP_LPAREN ||
            token_id_ == Lexer::TID_OP_SUB ||
            is_numeral() ||
-           is_identifier();
+           is_signal_reference();
   }
 
   /* \brief Consume arithmetic term
@@ -578,6 +578,272 @@ public:
   inline verilog_ast_graph::ast_or_error consume_arithmetic_expression()
   {
     return consume_sum_expression();
+  }
+
+  /* \brief Test if current token is system function
+   *
+   * \return Returns true iff current token is system function
+   */
+  inline bool is_system_function() const
+  {
+    const token s = lexer_.get( token_id_ );
+    return s.kind == token_kind::TK_IDENTIFIER && s.lexem[0] == '$';
+  }
+
+  /* \brief Test if current token is the start of a term
+   *
+   * \return Returns true iff current token is the start of a term
+   */
+  inline bool is_term() const
+  {
+    return token_id_ == Lexer::TID_OP_LPAREN ||
+           token_id_ == Lexer::TID_OP_BITWISE_NOT ||
+           is_numeral() ||
+           is_signal_reference();
+  }
+
+  /* \brief Consume a term
+   *
+   * A term is either a negated term, an expression, a signal
+   * reference, a numeral, or a system function.
+   *
+   * Production rules:
+   *   Term -> `~` Term | ( Expr ) | SIGNAL_REFERENCE | NUMERAL | SystemFunction { expr, ..., expr }
+   */
+  inline verilog_ast_graph::ast_or_error consume_term()
+  {
+    assert( is_term() );
+
+    /* Term -> ~ Expr */
+    if ( token_id_ == Lexer::TID_OP_BITWISE_NOT )
+    {
+      token_id_ = lexer_.next_token(); // `~`
+
+      verilog_ast_graph::ast_or_error term = consume_term();
+      if ( !term )
+        goto error;
+
+      return verilog_ast_graph::ast_or_error( ag_.create_not_expression( term.ast() ) );
+    }
+
+    /* Term -> ( Expr ) */
+    if ( token_id_ == Lexer::TID_OP_LPAREN )
+    {
+      token_id_ = lexer_.next_token(); // (
+
+      verilog_ast_graph::ast_or_error expr = consume_expression();
+      if ( !expr )
+        goto error;
+
+      if ( token_id_ != Lexer::TID_OP_RPAREN )
+        goto error;
+
+      token_id_ = lexer_.next_token(); // )
+      return expr;
+    }
+
+    /* Term -> SystemFunction { expr , ... , expr } */
+    if ( is_system_function() )
+    {
+      verilog_ast_graph::ast_or_error fun = consume_identifier();
+
+      if ( token_id_ != Lexer::TID_OP_LCURLY )
+        goto error;
+      token_id_ = lexer_.next_token(); // {
+
+      std::vector<ast_id> args;
+      verilog_ast_graph::ast_or_error expr = consume_expression();
+      if ( !expr )
+        goto error;
+      args.emplace_back( expr.ast() );
+
+      while ( token_id_ == Lexer::TID_OP_COMMA )
+      {
+        token_id_ = lexer_.next_token(); // ,
+
+        expr = consume_expression();
+        if ( !expr )
+          goto error;
+
+        args.emplace_back( expr.ast() );
+      }
+
+      if ( token_id_ != Lexer::TID_OP_RCURLY )
+        goto error;
+      token_id_ = lexer_.next_token(); // }
+
+      return verilog_ast_graph::ast_or_error( ag_.create_system_function( fun.ast(), args ) );
+    }
+
+    /* Term -> SignalReference */
+    if ( is_signal_reference() )
+    {
+      return consume_signal_reference();
+    }
+
+    /* Term -> NUMERAL */
+    if ( is_numeral() )
+    {
+      return consume_numeral();
+    }
+
+  error:
+    fmt::print("[e] could not parse term.\n");
+    return verilog_ast_graph::ast_or_error();
+  }
+
+  /* \brief Consume AND expression
+   *
+   * An AND expression is a term optionally followed by a an AND expression.
+   *
+   * Production rules:
+   *   AndExpr -> Term ( `&` AndExpr )?
+   */
+  inline verilog_ast_graph::ast_or_error consume_and_expression()
+  {
+    verilog_ast_graph::ast_or_error term, and_expr_rest;
+
+    /* AndExpr -> Term AndExprRest */
+    if ( !is_term() )
+      goto error;
+
+    term = consume_term();
+    if ( !term )
+      goto error;
+
+    /* AndExprRest -> `&` AndExpr | \eps */
+    if ( token_id_ == Lexer::TID_OP_BITWISE_AND )
+    {
+      token_id_ = lexer_.next_token(); // `&`
+
+      and_expr_rest = consume_and_expression();
+      if ( !and_expr_rest )
+        goto error;
+
+      return verilog_ast_graph::ast_or_error( ag_.create_and_expression( term.ast(), and_expr_rest.ast() ) );
+    }
+    else
+    {
+      if ( token_id_ != Lexer::TID_EOF &&
+           token_id_ != Lexer::TID_OP_RPAREN &&
+           token_id_ != Lexer::TID_OP_RCURLY &&
+           token_id_ != Lexer::TID_OP_COMMA &&
+           token_id_ != Lexer::TID_OP_SEMICOLON &&
+           token_id_ != Lexer::TID_OP_BITWISE_OR &&
+           token_id_ != Lexer::TID_OP_BITWISE_XOR )
+        goto error;
+
+      return term;
+    }
+
+  error:
+    fmt::print("[e] could not parse and expression.\n");
+    return verilog_ast_graph::ast_or_error();
+  }
+
+  /* \brief Consume OR expression
+   *
+   * An OR expression is an AND expression optionally followed by a an OR expression.
+   *
+   * Production rules:
+   *   OrExpr -> AndExpr ( `|` OrExpr )?
+   */
+  inline verilog_ast_graph::ast_or_error consume_or_expression()
+  {
+    verilog_ast_graph::ast_or_error and_expr, or_expr_rest;
+
+    /* OrExpr -> AndExpr OrExprRest */
+    if ( !is_term() )
+      goto error;
+
+    and_expr = consume_and_expression();
+    if ( !and_expr )
+      goto error;
+
+    /* OrExprRest -> `|` OrExpr | \eps */
+    if ( token_id_ == Lexer::TID_OP_BITWISE_OR )
+    {
+      token_id_ = lexer_.next_token(); // `|`
+
+      or_expr_rest = consume_or_expression();
+      if ( !or_expr_rest )
+        goto error;
+
+      return verilog_ast_graph::ast_or_error( ag_.create_or_expression( and_expr.ast(), or_expr_rest.ast() ) );
+    }
+    else
+    {
+      if ( token_id_ != Lexer::TID_EOF &&
+           token_id_ != Lexer::TID_OP_RPAREN &&
+           token_id_ != Lexer::TID_OP_RCURLY &&
+           token_id_ != Lexer::TID_OP_COMMA &&
+           token_id_ != Lexer::TID_OP_SEMICOLON &&
+           token_id_ != Lexer::TID_OP_BITWISE_XOR )
+        goto error;
+
+      return and_expr;
+    }
+
+  error:
+    fmt::print("[e] could not parse or expression.\n");
+    return verilog_ast_graph::ast_or_error();
+  }
+
+  /* \brief Consume XOR expression
+   *
+   * An XOR expression is an OR expression optionally followed by a an XOR expression.
+   *
+   * Production rules:
+   *   XorExpr -> OrExpr ( `^` XorExpr )?
+   */
+  inline verilog_ast_graph::ast_or_error consume_xor_expression()
+  {
+    verilog_ast_graph::ast_or_error or_expr, xor_expr_rest;
+
+    /* XorExpr -> OrExpr XorExprRest */
+    if ( !is_term() )
+      goto error;
+
+    or_expr = consume_or_expression();
+    if ( !or_expr )
+      goto error;
+
+    /* XorrExprRest -> `^` XorExpr | \eps */
+    if ( token_id_ == Lexer::TID_OP_BITWISE_XOR )
+    {
+      token_id_ = lexer_.next_token(); // `^`
+
+      xor_expr_rest = consume_xor_expression();
+      if ( !xor_expr_rest )
+        goto error;
+
+      return verilog_ast_graph::ast_or_error( ag_.create_xor_expression( or_expr.ast(), xor_expr_rest.ast() ) );
+    }
+    else
+    {
+      if ( token_id_ != Lexer::TID_EOF &&
+           token_id_ != Lexer::TID_OP_RPAREN &&
+           token_id_ != Lexer::TID_OP_RCURLY &&
+           token_id_ != Lexer::TID_OP_COMMA &&
+           token_id_ != Lexer::TID_OP_SEMICOLON &&
+           token_id_ != Lexer::TID_OP_BITWISE_XOR )
+        goto error;
+
+      return or_expr;
+    }
+
+  error:
+    fmt::print("[e] could not parse xor expression.\n");
+    return verilog_ast_graph::ast_or_error();
+  }
+
+  /* \brief Consume an expression
+   *
+   * An expression is an alias for a XOR expression.
+   */
+  inline verilog_ast_graph::ast_or_error consume_expression()
+  {
+    return consume_xor_expression();
   }
 
 protected:

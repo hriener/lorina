@@ -208,6 +208,10 @@ enum class expr_kind
 {
   EXPR_ADD = 1,
   EXPR_MUL = 2,
+  EXPR_NOT = 3,
+  EXPR_AND = 4,
+  EXPR_OR = 5,
+  EXPR_XOR = 6,
 };
 
 /* \brief Expression
@@ -216,20 +220,27 @@ enum class expr_kind
 class ast_expression : public ast_node
 {
 public:
+  explicit ast_expression( expr_kind kind, ast_id left )
+    : kind_( kind )
+    , args_( {left} )
+  {}
+
   explicit ast_expression( expr_kind kind, ast_id left, ast_id right )
     : kind_( kind )
-    , left_( left )
-    , right_( right )
-  {}
+    , args_( {left, right} )
+  {
+  }
 
   inline ast_id left() const
   {
-    return left_;
+    assert( args_.size() >= 1 );
+    return args_[0];
   }
 
   inline ast_id right() const
   {
-    return right_;
+    assert( args_.size() >= 2 );
+    return args_[1];
   }
 
   inline expr_kind kind() const
@@ -239,8 +250,29 @@ public:
 
 protected:
   expr_kind kind_;
-  ast_id left_;
-  ast_id right_;
+  std::vector<ast_id> args_;
+};
+
+/* \brief System function
+ *
+ */
+class ast_system_function : public ast_node
+{
+public:
+  explicit ast_system_function( ast_id fun, const std::vector<ast_id>& args )
+    : fun_( fun )
+    , args_( args )
+  {
+  }
+
+  inline ast_id fun() const
+  {
+    return fun_;
+  }
+
+protected:
+  const ast_id fun_;
+  const std::vector<ast_id> args_;
 };
 
 /* \brief Input declaration
@@ -466,6 +498,31 @@ public:
   inline ast_id create_mul_expression( ast_id term, ast_id expr )
   {
     return create_node<ast_expression>( expr_kind::EXPR_MUL, term, expr );
+  }
+
+  inline ast_id create_not_expression( ast_id expr )
+  {
+    return create_node<ast_expression>( expr_kind::EXPR_NOT, expr );
+  }
+
+  inline ast_id create_and_expression( ast_id term, ast_id expr )
+  {
+    return create_node<ast_expression>( expr_kind::EXPR_AND, term, expr );
+  }
+
+  inline ast_id create_or_expression( ast_id term, ast_id expr )
+  {
+    return create_node<ast_expression>( expr_kind::EXPR_OR, term, expr );
+  }
+
+  inline ast_id create_xor_expression( ast_id term, ast_id expr )
+  {
+    return create_node<ast_expression>( expr_kind::EXPR_XOR, term, expr );
+  }
+
+  inline ast_id create_system_function( ast_id fun, const std::vector<ast_id>& args )
+  {
+    return create_node<ast_system_function>( fun, args );
   }
 
   inline ast_id create_input_declaration( ast_id identifier_list )
