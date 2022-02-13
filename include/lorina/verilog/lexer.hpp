@@ -385,11 +385,29 @@ public:
         }
         else if ( last_char_ == 'o' )
         {
-          assert( false );
+          numeral += last_char_;
+          consume(); // o
+          if ( is_oct_numeral_rest( last_char_ ) )
+          {
+            numeral += last_char_;
+            while ( is_oct_numeral_rest( consume() ) )
+            {
+              numeral += last_char_;
+            }
+          }
         }
         else if ( last_char_ == 'h' )
         {
-          assert( false );
+          numeral += last_char_;
+          consume(); // h
+          if ( is_hex_numeral_rest( last_char_ ) )
+          {
+            numeral += last_char_;
+            while ( is_hex_numeral_rest( consume() ) )
+            {
+              numeral += last_char_;
+            }
+          }
         }
       }
 
@@ -524,7 +542,17 @@ protected:
 
   inline bool is_numeral_rest(char ch)
   {
-    return ch >= '0' && ch <= '9';
+    return ( ch >= '0' && ch <= '9' ) || ch == '_';
+  }
+
+  inline bool is_oct_numeral_rest(char ch)
+  {
+    return ( ch >= '0' && ch <= '7' ) || ch == '_';
+  }
+
+  inline bool is_hex_numeral_rest(char ch)
+  {
+    return ( ch >= '0' && ch <= '9' ) || ( ch >= 'A' && ch <= 'F' ) || ( ch >= 'a' && ch <= 'f' ) || ch == '_';
   }
 
   inline bool is_literal_first(char ch)
