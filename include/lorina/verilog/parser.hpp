@@ -234,7 +234,7 @@ public:
       token_id_ = lexer_.next_token(); // `]`
 
       return verilog_ast_graph::ast_or_error(
-               ag_.create_array_select( identifier.ast(), index ) );
+               ag_.create_array_select( identifier.ast(), index.ast() ) );
     }
     else
     {
@@ -1118,7 +1118,7 @@ public:
       goto error;
     token_id_ = lexer_.next_token(); // `endmodule`
 
-    return verilog_ast_graph::ast_or_error( ag_.create_module( module_name, args, decls ) );
+    return verilog_ast_graph::ast_or_error( ag_.create_module( module_name.ast(), args, decls ) );
 
   error:
     fmt::print("[e] could not parse module.\n");
