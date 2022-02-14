@@ -36,6 +36,55 @@
 namespace lorina
 {
 
+class verilog_ast_visitor;
+class verilog_ast_graph;
+
+class ast_node;
+class ast_numeral;
+class ast_identifier;
+class ast_identifier_list;
+class ast_array_select;
+class ast_range_expression;
+class ast_sign;
+class ast_expression;
+class ast_system_function;
+class ast_input_declaration;
+class ast_output_declaration;
+class ast_wire_declaration;
+class ast_module_instantiation;
+class ast_assignment;
+class ast_parameter_declaration;
+class ast_module;
+
+class verilog_ast_visitor
+{
+public:
+  explicit verilog_ast_visitor( const verilog_ast_graph* ag )
+    : ag_( ag )
+  {
+  }
+
+  virtual void visit( const ast_node& node ) { (void)node; }
+  virtual void visit( const ast_numeral& node ) { (void)node; }
+  virtual void visit( const ast_identifier& node ) { (void)node; }
+  virtual void visit( const ast_identifier_list& node ) { (void)node; }
+  virtual void visit( const ast_array_select& node ) { (void)node; }
+  virtual void visit( const ast_range_expression& node ) { (void)node; }
+  virtual void visit( const ast_sign& node ) { (void)node; }
+  virtual void visit( const ast_expression& node ) { (void)node; }
+  virtual void visit( const ast_system_function& node ) { (void)node; }
+  virtual void visit( const ast_input_declaration& node ) { (void)node; }
+  virtual void visit( const ast_output_declaration& node ) { (void)node; }
+  virtual void visit( const ast_wire_declaration& node ) { (void)node; }
+  virtual void visit( const ast_module_instantiation& node ) { (void)node; }
+  virtual void visit( const ast_assignment& node ) { (void)node; }
+  virtual void visit( const ast_module& node ) { (void)node; }
+  virtual void visit( const ast_parameter_declaration& node ) { (void)node; }
+
+protected:
+  const verilog_ast_graph* ag_;
+}; // verilog_ast_visitor
+
 using ast_id = uint32_t;
 
 class ast_node
@@ -44,6 +93,11 @@ public:
   explicit ast_node() = default;
 
   virtual ~ast_node() {}
+
+  virtual void accept( verilog_ast_visitor& v ) const
+  {
+    v.visit( *this );
+  }
 }; // ast_node
 
 /* \brief Numeral
@@ -54,7 +108,7 @@ public:
 class ast_numeral : public ast_node
 {
 public:
-  explicit ast_numeral( const std::string value )
+  explicit ast_numeral( const std::string& value )
     : value_( value )
   {
   }
@@ -64,8 +118,13 @@ public:
     return value_;
   }
 
+  virtual inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
+  }
+
 protected:
-  std::string value_;
+  const std::string value_;
 }; // ast_numeral
 
 /* \brief Identifier
@@ -76,7 +135,7 @@ protected:
 class ast_identifier : public ast_node
 {
 public:
-  explicit ast_identifier( const std::string identifier )
+  explicit ast_identifier( const std::string& identifier )
     : identifier_( identifier )
   {
   }
@@ -84,6 +143,11 @@ public:
   inline std::string identifier() const
   {
     return identifier_;
+  }
+
+  inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
   }
 
 protected:
@@ -109,8 +173,13 @@ public:
     return identifiers_;
   }
 
+  inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
+  }
+
 protected:
-  std::vector<ast_id> identifiers_;
+  const std::vector<ast_id> identifiers_;
 }; // ast_identifier_list
 
 /* \brief Array select
@@ -136,6 +205,11 @@ public:
   inline ast_id index() const
   {
     return index_;
+  }
+
+  virtual inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
   }
 
 protected:
@@ -166,6 +240,11 @@ public:
   inline ast_id lo() const
   {
     return lo_;
+  }
+
+  virtual inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
   }
 
 protected:
@@ -199,6 +278,11 @@ public:
     return kind_;
   }
 
+  virtual inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
+  }
+
 protected:
   sign_kind kind_;
   ast_id expr_;
@@ -223,7 +307,8 @@ public:
   explicit ast_expression( expr_kind kind, ast_id left )
     : kind_( kind )
     , args_( {left} )
-  {}
+  {
+  }
 
   explicit ast_expression( expr_kind kind, ast_id left, ast_id right )
     : kind_( kind )
@@ -248,6 +333,11 @@ public:
     return kind_;
   }
 
+  virtual inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
+  }
+
 protected:
   expr_kind kind_;
   std::vector<ast_id> args_;
@@ -268,6 +358,16 @@ public:
   inline ast_id fun() const
   {
     return fun_;
+  }
+
+  inline std::vector<ast_id> args() const
+  {
+    return args_;
+  }
+
+  virtual inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
   }
 
 protected:
@@ -298,6 +398,16 @@ public:
   {
   }
 
+  inline bool word_level() const
+  {
+    return word_level_;
+  }
+
+  inline bool bit_level() const
+  {
+    return !word_level_;
+  }
+
   inline std::vector<ast_id> identifiers() const
   {
     return identifiers_;
@@ -313,6 +423,11 @@ public:
   {
     assert( word_level_ );
     return lo_;
+  }
+
+  virtual inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
   }
 
 protected:
@@ -345,6 +460,16 @@ public:
   {
   }
 
+  inline bool word_level() const
+  {
+    return word_level_;
+  }
+
+  inline bool bit_level() const
+  {
+    return !word_level_;
+  }
+
   inline std::vector<ast_id> identifiers() const
   {
     return identifiers_;
@@ -360,6 +485,11 @@ public:
   {
     assert( word_level_ );
     return lo_;
+  }
+
+  virtual inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
   }
 
 protected:
@@ -392,6 +522,16 @@ public:
   {
   }
 
+  inline bool word_level() const
+  {
+    return word_level_;
+  }
+
+  inline bool bit_level() const
+  {
+    return !word_level_;
+  }
+
   inline std::vector<ast_id> identifiers() const
   {
     return identifiers_;
@@ -407,6 +547,11 @@ public:
   {
     assert( word_level_ );
     return lo_;
+  }
+
+  virtual inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
   }
 
 protected:
@@ -437,6 +582,31 @@ public:
   {
   }
 
+  ast_id module_name() const
+  {
+    return module_name_;
+  }
+
+  ast_id instance_name() const
+  {
+    return instance_name_;
+  }
+
+  std::vector<std::pair<ast_id, ast_id>> port_assignment() const
+  {
+    return port_assignment_;
+  }
+
+  std::vector<ast_id> parameters() const
+  {
+    return parameters_;
+  }
+
+  virtual inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
+  }
+
 protected:
   ast_id module_name_;
   ast_id instance_name_;
@@ -456,6 +626,21 @@ public:
   {
   }
 
+  ast_id identifier() const
+  {
+    return identifier_;
+  }
+
+  ast_id expr() const
+  {
+    return expr_;
+  }
+
+  virtual inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
+  }
+
 protected:
   ast_id identifier_;
   ast_id expr_;
@@ -471,6 +656,21 @@ public:
     : signal_( signal )
     , expr_( expr )
   {
+  }
+
+  ast_id signal() const
+  {
+    return signal_;
+  }
+
+  ast_id expr() const
+  {
+    return expr_;
+  }
+
+  virtual inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
   }
 
 protected:
@@ -489,6 +689,26 @@ public:
     , args_( args )
     , decls_( decls )
   {
+  }
+
+  ast_id module_name() const
+  {
+    return module_name_;
+  }
+
+  std::vector<ast_id> args() const
+  {
+    return args_;
+  }
+
+  std::vector<ast_id> decls() const
+  {
+    return decls_;
+  }
+
+  virtual inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
   }
 
 protected:
@@ -539,6 +759,23 @@ public:
   virtual ~verilog_ast_graph()
   {
     cleanup();
+  }
+
+  ast_node* node_ptr( ast_id id ) const
+  {
+    return nodes_.at( id );
+  }
+
+  template<typename T>
+  T* node_as_ptr( ast_id id ) const
+  {
+    return static_cast<T*>( node_ptr( id ) );
+  }
+
+  template<typename T>
+  const T& node_as_ref( ast_id id ) const
+  {
+    return *static_cast<T*>( node_ptr( id ) );
   }
 
   inline ast_id create_numeral( const std::string& numeral )
@@ -606,18 +843,19 @@ public:
     return create_node<ast_system_function>( fun, args );
   }
 
-  inline ast_id create_input_declaration( ast_id identifier_list )
+  inline ast_id create_input_declaration( ast_id id )
   {
-    assert( identifier_list < nodes_.size() );
-    if ( const ast_identifier_list* node = dynamic_cast<ast_identifier_list*>( nodes_[identifier_list] ) )
+    assert( id < nodes_.size() );
+
+    ast_node* node = nodes_[id];
+    if ( const ast_identifier_list* list = dynamic_cast<ast_identifier_list*>( node ) )
     {
-      (void)node;
-      return create_node<ast_input_declaration>( node->identifiers() );
+      return create_node<ast_input_declaration>( list->identifiers() );
     }
-    else if ( const ast_identifier* node = dynamic_cast<ast_identifier*>( nodes_[identifier_list] ) )
+    else if ( const ast_identifier* single = dynamic_cast<ast_identifier*>( node ) )
     {
-      (void)node;
-      return create_node<ast_input_declaration>( std::vector<ast_id>( identifier_list ) );
+      (void)single;
+      return create_node<ast_input_declaration, std::vector<ast_id>>( { id } );
     }
     else
     {
@@ -626,20 +864,21 @@ public:
     }
   }
 
-  inline ast_id create_input_declaration( ast_id identifier_list, ast_id range )
+  inline ast_id create_input_declaration( ast_id id, ast_id rid )
   {
-    assert( identifier_list < nodes_.size() );
-    assert( range < nodes_.size() );
-    const ast_range_expression* range_expr = static_cast<ast_range_expression*>( nodes_[range] );
-    if ( const ast_identifier_list* node = dynamic_cast<ast_identifier_list*>( nodes_[identifier_list] ) )
+    assert( id < nodes_.size() );
+    assert( rid < nodes_.size() );
+
+    ast_node* node = nodes_[id];
+    ast_range_expression* range = static_cast<ast_range_expression*>( nodes_[rid] );
+    if ( ast_identifier_list* list = dynamic_cast<ast_identifier_list*>( node ) )
     {
-      (void)node;
-      return create_node<ast_input_declaration>( node->identifiers(), range_expr->hi(), range_expr->lo() );
+      return create_node<ast_input_declaration, std::vector<ast_id>, ast_id, ast_id>( list->identifiers(), range->hi(), range->lo() );
     }
-    else if ( const ast_identifier* node = dynamic_cast<ast_identifier*>( nodes_[identifier_list] ) )
+    else if ( ast_identifier* single = dynamic_cast<ast_identifier*>( node ) )
     {
-      (void)node;
-      return create_node<ast_input_declaration>( std::vector<ast_id>( identifier_list ), range_expr->hi(), range_expr->lo() );
+      (void)single;
+      return create_node<ast_input_declaration, std::vector<ast_id>, ast_id, ast_id>( { id }, range->hi(), range->lo() );
     }
     else
     {
@@ -648,18 +887,19 @@ public:
     }
   }
 
-  inline ast_id create_output_declaration( ast_id identifier_list )
+  inline ast_id create_output_declaration( ast_id id )
   {
-    assert( identifier_list < nodes_.size() );
-    if ( const ast_identifier_list* node = dynamic_cast<ast_identifier_list*>( nodes_[identifier_list] ) )
+    assert( id < nodes_.size() );
+
+    ast_node* node = nodes_[id];
+    if ( const ast_identifier_list* list = dynamic_cast<ast_identifier_list*>( node ) )
     {
-      (void)node;
-      return create_node<ast_output_declaration>( node->identifiers() );
+      return create_node<ast_output_declaration>( list->identifiers() );
     }
-    else if ( const ast_identifier* node = dynamic_cast<ast_identifier*>( nodes_[identifier_list] ) )
+    else if ( const ast_identifier* single = dynamic_cast<ast_identifier*>( node ) )
     {
-      (void)node;
-      return create_node<ast_output_declaration>( std::vector<ast_id>( identifier_list ) );
+      (void)single;
+      return create_node<ast_output_declaration, std::vector<ast_id>>( { id } );
     }
     else
     {
@@ -668,20 +908,21 @@ public:
     }
   }
 
-  inline ast_id create_output_declaration( ast_id identifier_list, ast_id range )
+  inline ast_id create_output_declaration( ast_id id, ast_id rid )
   {
-    assert( identifier_list < nodes_.size() );
-    assert( range < nodes_.size() );
-    const ast_range_expression* range_expr = static_cast<ast_range_expression*>( nodes_[range] );
-    if ( const ast_identifier_list* node = dynamic_cast<ast_identifier_list*>( nodes_[identifier_list] ) )
+    assert( id < nodes_.size() );
+    assert( rid < nodes_.size() );
+
+    ast_node* node = nodes_[id];
+    ast_range_expression* range = static_cast<ast_range_expression*>( nodes_[rid] );
+    if ( ast_identifier_list* list = dynamic_cast<ast_identifier_list*>( node ) )
     {
-      (void)node;
-      return create_node<ast_output_declaration>( node->identifiers(), range_expr->hi(), range_expr->lo() );
+      return create_node<ast_output_declaration, std::vector<ast_id>, ast_id, ast_id>( list->identifiers(), range->hi(), range->lo() );
     }
-    else if ( const ast_identifier* node = dynamic_cast<ast_identifier*>( nodes_[identifier_list] ) )
+    else if ( ast_identifier* single = dynamic_cast<ast_identifier*>( node ) )
     {
-      (void)node;
-      return create_node<ast_output_declaration>( std::vector<ast_id>( identifier_list ), range_expr->hi(), range_expr->lo() );
+      (void)single;
+      return create_node<ast_output_declaration, std::vector<ast_id>, ast_id, ast_id>( { id }, range->hi(), range->lo() );
     }
     else
     {
@@ -690,18 +931,19 @@ public:
     }
   }
 
-  inline ast_id create_wire_declaration( ast_id identifier_list )
+  inline ast_id create_wire_declaration( ast_id id )
   {
-    assert( identifier_list < nodes_.size() );
-    if ( const ast_identifier_list* node = dynamic_cast<ast_identifier_list*>( nodes_[identifier_list] ) )
+    assert( id < nodes_.size() );
+
+    ast_node* node = nodes_[id];
+    if ( const ast_identifier_list* list = dynamic_cast<ast_identifier_list*>( node ) )
     {
-      (void)node;
-      return create_node<ast_wire_declaration>( node->identifiers() );
+      return create_node<ast_wire_declaration>( list->identifiers() );
     }
-    else if ( const ast_identifier* node = dynamic_cast<ast_identifier*>( nodes_[identifier_list] ) )
+    else if ( const ast_identifier* single = dynamic_cast<ast_identifier*>( node ) )
     {
-      (void)node;
-      return create_node<ast_wire_declaration>( std::vector<ast_id>( identifier_list ) );
+      (void)single;
+      return create_node<ast_wire_declaration, std::vector<ast_id>>( { id } );
     }
     else
     {
@@ -710,20 +952,21 @@ public:
     }
   }
 
-  inline ast_id create_wire_declaration( ast_id identifier_list, ast_id range )
+  inline ast_id create_wire_declaration( ast_id id, ast_id rid )
   {
-    assert( identifier_list < nodes_.size() );
-    assert( range < nodes_.size() );
-    const ast_range_expression* range_expr = static_cast<ast_range_expression*>( nodes_[range] );
-    if ( const ast_identifier_list* node = dynamic_cast<ast_identifier_list*>( nodes_[identifier_list] ) )
+    assert( id < nodes_.size() );
+    assert( rid < nodes_.size() );
+
+    ast_node* node = nodes_[id];
+    ast_range_expression* range = static_cast<ast_range_expression*>( nodes_[rid] );
+    if ( ast_identifier_list* list = dynamic_cast<ast_identifier_list*>( node ) )
     {
-      (void)node;
-      return create_node<ast_wire_declaration>( node->identifiers(), range_expr->hi(), range_expr->lo() );
+      return create_node<ast_wire_declaration, std::vector<ast_id>, ast_id, ast_id>( list->identifiers(), range->hi(), range->lo() );
     }
-    else if ( const ast_identifier* node = dynamic_cast<ast_identifier*>( nodes_[identifier_list] ) )
+    else if ( ast_identifier* single = dynamic_cast<ast_identifier*>( node ) )
     {
-      (void)node;
-      return create_node<ast_wire_declaration>( std::vector<ast_id>( identifier_list ), range_expr->hi(), range_expr->lo() );
+      (void)single;
+      return create_node<ast_wire_declaration, std::vector<ast_id>, ast_id, ast_id>( { id }, range->hi(), range->lo() );
     }
     else
     {
@@ -752,6 +995,17 @@ public:
   inline ast_id create_module( ast_id module_name, const std::vector<ast_id>& args, const std::vector<ast_id>& decls )
   {
     return create_node<ast_module>( module_name, args, decls );
+  }
+
+  void print() const
+  {
+    std::cout << "#nodes = " << nodes_.size() << std::endl;
+
+    uint32_t counter{0};
+    for ( const auto& node : nodes_ )
+    {
+      fmt::print( "{} {}\n", counter++, static_cast<void*>(node) );
+    }
   }
 
 protected:
