@@ -150,6 +150,7 @@ TEST_CASE( "Visit arithmetic expression", "[verilog]" )
 
   sources.emplace_back( std::make_pair( "2*x+1", "((2 * x) + 1)" ) );
   sources.emplace_back( std::make_pair( "x-1", "(x + (-1))" ) );
+  sources.emplace_back( std::make_pair( "x-(-1)", "(x + (-(-1)))" ) );
 
   for ( const auto& source : sources )
   {

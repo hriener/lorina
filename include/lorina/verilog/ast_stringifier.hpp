@@ -26,7 +26,7 @@
 
 /*!
   \file ast_stringifier.hpp
-  \brief Translate a Verilog AST into a string
+  \brief Translate a Verilog AST into strings
 
   \author Heinz Riener
 */
@@ -62,12 +62,6 @@ public:
     {
       fmt::print( "{} \"{}\"\n", (void*)s.first, s.second );
     }
-  }
-
-  void visit( const ast_node& node )
-  {
-    (void)node;
-    assert( false );
   }
 
   void visit( const ast_numeral& node )
@@ -133,53 +127,54 @@ public:
     {
     case expr_kind::EXPR_NOT:
       {
-        ag_->node_ptr( node.left() )->accept( *this );
-        emplace( node, fmt::format( "(~{})", str_[ag_->node_ptr( node.left() )] ) );
+        const ast_node* left = ag_->node_ptr( node.left() );
+        left->accept( *this );
+        emplace( node, fmt::format( "(~{})", str_[left] ) );
       }
       break;
     case expr_kind::EXPR_AND:
       {
-        ag_->node_ptr( node.left() )->accept( *this );
-        ag_->node_ptr( node.right() )->accept( *this );
-        emplace( node, fmt::format( "({} & {})",
-                                    str_[ag_->node_ptr( node.left() )],
-                                    str_[ag_->node_ptr( node.right() )] ) );
+        const ast_node* left = ag_->node_ptr( node.left() );
+        const ast_node* right = ag_->node_ptr( node.right() );
+        left->accept( *this );
+        right->accept( *this );
+        emplace( node, fmt::format( "({} & {})", str_[left], str_[right] ) );
       }
       break;
     case expr_kind::EXPR_OR:
       {
-        ag_->node_ptr( node.left() )->accept( *this );
-        ag_->node_ptr( node.right() )->accept( *this );
-        emplace( node, fmt::format( "({} | {})",
-                                    str_[ag_->node_ptr( node.left() )],
-                                    str_[ag_->node_ptr( node.right() )] ) );
+        const ast_node* left = ag_->node_ptr( node.left() );
+        const ast_node* right = ag_->node_ptr( node.right() );
+        left->accept( *this );
+        right->accept( *this );
+        emplace( node, fmt::format( "({} | {})", str_[left], str_[right] ) );
       }
       break;
     case expr_kind::EXPR_XOR:
       {
-        ag_->node_ptr( node.left() )->accept( *this );
-        ag_->node_ptr( node.right() )->accept( *this );
-        emplace( node, fmt::format( "({} ^ {})",
-                                    str_[ag_->node_ptr( node.left() )],
-                                    str_[ag_->node_ptr( node.right() )] ) );
+        const ast_node* left = ag_->node_ptr( node.left() );
+        const ast_node* right = ag_->node_ptr( node.right() );
+        left->accept( *this );
+        right->accept( *this );
+        emplace( node, fmt::format( "({} ^ {})", str_[left], str_[right] ) );
       }
       break;
     case expr_kind::EXPR_ADD:
       {
-        ag_->node_ptr( node.left() )->accept( *this );
-        ag_->node_ptr( node.right() )->accept( *this );
-        emplace( node, fmt::format( "({} + {})",
-                                    str_[ag_->node_ptr( node.left() )],
-                                    str_[ag_->node_ptr( node.right() )] ) );
+        const ast_node* left = ag_->node_ptr( node.left() );
+        const ast_node* right = ag_->node_ptr( node.right() );
+        left->accept( *this );
+        right->accept( *this );
+        emplace( node, fmt::format( "({} + {})", str_[left], str_[right] ) );
       }
       break;
     case expr_kind::EXPR_MUL:
       {
-        ag_->node_ptr( node.left() )->accept( *this );
-        ag_->node_ptr( node.right() )->accept( *this );
-        emplace( node, fmt::format( "({} * {})",
-                                    str_[ag_->node_ptr( node.left() )],
-                                    str_[ag_->node_ptr( node.right() )] ) );
+        const ast_node* left = ag_->node_ptr( node.left() );
+        const ast_node* right = ag_->node_ptr( node.right() );
+        left->accept( *this );
+        right->accept( *this );
+        emplace( node, fmt::format( "({} * {})", str_[left], str_[right] ) );
       }
       break;
     default:
@@ -190,7 +185,7 @@ public:
   void visit( const ast_system_function& node )
   {
     std::vector<std::string> args_strings;
-    for ( const auto& id : node.args() )
+    for ( const ast_id& id : node.args() )
     {
       ag_->node_ptr( id )->accept( *this );
       args_strings.emplace_back( str_[ag_->node_ptr( id )] );
