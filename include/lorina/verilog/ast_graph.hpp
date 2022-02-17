@@ -91,8 +91,7 @@ class ast_node
 {
 public:
   explicit ast_node() = default;
-
-  virtual ~ast_node() {}
+  virtual ~ast_node() = default;
 
   virtual void accept( verilog_ast_visitor& v ) const
   {
