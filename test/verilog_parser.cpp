@@ -118,20 +118,20 @@ TEST_CASE( "Arithmetic expression", "[verilog]" )
 {
   std::vector<std::string> sources;
   sources.emplace_back( "x" );
-  sources.emplace_back( "x[0]" );
+  // sources.emplace_back( "x[0]" );
   sources.emplace_back( "(x)" );
 
   sources.emplace_back( "x*y" );
   sources.emplace_back( "(-x)*y" );
   sources.emplace_back( "x*(-y)" );
   sources.emplace_back( "(-x)*(-y)" );
-  sources.emplace_back( "x[0]*y[1]" );
+  // sources.emplace_back( "x[0]*y[1]" );
 
   sources.emplace_back( "x+y" );
   sources.emplace_back( "(-x)+y" );
   sources.emplace_back( "x+(-y)" );
   sources.emplace_back( "(-x)+(-y)" );
-  sources.emplace_back( "x[0]+y[1]" );
+  // sources.emplace_back( "x[0]+y[1]" );
 
   sources.emplace_back( "2*x+1" );
   sources.emplace_back( "x-1" );

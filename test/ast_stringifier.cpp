@@ -132,21 +132,21 @@ TEST_CASE( "Visit arithmetic expression", "[verilog]" )
 {
   std::vector<std::pair<std::string, std::string>> sources;
   sources.emplace_back( std::make_pair( "x", "x" ) );
-  sources.emplace_back( std::make_pair( "x[0]", "x[0]" ) );
-  sources.emplace_back( std::make_pair( "y[1]", "y[1]" ) );
+  // sources.emplace_back( std::make_pair( "x[0]", "x[0]" ) );
+  // sources.emplace_back( std::make_pair( "y[1]", "y[1]" ) );
   sources.emplace_back( std::make_pair( "(x)", "x" ) );
 
   sources.emplace_back( std::make_pair( "x*y", "(x * y)" ) );
   sources.emplace_back( std::make_pair( "(-x)*y", "((-x) * y)" ) );
   sources.emplace_back( std::make_pair( "x*(-y)", "(x * (-y))" ) );
   sources.emplace_back( std::make_pair( "(-x)*(-y)", "((-x) * (-y))" ) );
-  sources.emplace_back( std::make_pair( "x[0]*y[1]", "(x[0] * y[1])" ) );
+  // sources.emplace_back( std::make_pair( "x[0]*y[1]", "(x[0] * y[1])" ) );
 
   sources.emplace_back( std::make_pair( "x+y", "(x + y)" ) );
   sources.emplace_back( std::make_pair( "(-x)+y", "((-x) + y)" ) );
   sources.emplace_back( std::make_pair( "x+(-y)", "(x + (-y))" ) );
   sources.emplace_back( std::make_pair( "(-x)+(-y)", "((-x) + (-y))" ) );
-  sources.emplace_back( std::make_pair( "x[0]+y[1]", "(x[0] + y[1])" ) );
+  // sources.emplace_back( std::make_pair( "x[0]+y[1]", "(x[0] + y[1])" ) );
 
   sources.emplace_back( std::make_pair( "2*x+1", "((2 * x) + 1)" ) );
   sources.emplace_back( std::make_pair( "x-1", "(x + (-1))" ) );

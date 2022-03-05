@@ -151,6 +151,19 @@ public:
     return verilog_ast_graph::ast_or_error( ag_.create_identifier( identifier ) );
   }
 
+  /* \brief Consume an arithmetic identifier
+   *
+   * \return Returns AST of the identifier or an error
+   */
+  inline verilog_ast_graph::ast_or_error consume_arithmetic_identifier()
+  {
+    assert( is_identifier() );
+
+    const std::string& identifier = lexer_.get( token_id_ ).lexem;
+    token_id_ = lexer_.next_token();
+    return verilog_ast_graph::ast_or_error( ag_.create_arithmetic_identifier( identifier ) );
+  }
+
   /* \brief Consume a list of identifiers
    *
    * A list of identifiers separated by commas
@@ -444,9 +457,9 @@ public:
       }
     }
 
-    if ( is_signal_reference() )
+    if ( is_identifier() )
     {
-      return consume_signal_reference();
+      return consume_arithmetic_identifier();
     }
 
     if ( is_numeral() )
@@ -973,7 +986,7 @@ public:
       goto error;
     token_id_ = lexer_.next_token(); // `parameter`
 
-    identifier = consume_identifier(); // identifier
+    identifier = consume_arithmetic_identifier(); // identifier
     if ( !identifier )
       goto error;
 
@@ -1045,6 +1058,7 @@ public:
     std::vector<ast_id> decls;
 
     verilog_ast_graph::ast_or_error identifier, arg, decl_or_stmt;
+    std::string name;
 
     /* parse module keyword */
     if ( token_id_ != Lexer::TID_KW_MODULE )
@@ -1055,6 +1069,8 @@ public:
     if ( !is_identifier() )
       goto error;
     module_name = consume_identifier();
+
+    name = static_cast<ast_identifier*>( ag_.node_ptr( module_name.ast() ) )->identifier();
 
     /* parse sensitivity list */
     if ( token_id_ != Lexer::TID_OP_LPAREN )
@@ -1118,7 +1134,7 @@ public:
       goto error;
     token_id_ = lexer_.next_token(); // `endmodule`
 
-    return verilog_ast_graph::ast_or_error( ag_.create_module( module_name.ast(), args, decls ) );
+    return verilog_ast_graph::ast_or_error( ag_.create_module( name, args, decls ) );
 
   error:
     fmt::print("[e] could not parse module.\n");

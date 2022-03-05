@@ -33,6 +33,9 @@
 
 #pragma once
 
+#include <vector>
+#include <unordered_map>
+
 namespace lorina
 {
 
@@ -42,6 +45,7 @@ class verilog_ast_graph;
 class ast_node;
 class ast_numeral;
 class ast_identifier;
+class ast_arithmetic_identifier;
 class ast_identifier_list;
 class ast_array_select;
 class ast_range_expression;
@@ -67,6 +71,7 @@ public:
   virtual void visit( const ast_node& node ) { (void)node; }
   virtual void visit( const ast_numeral& node ) { (void)node; }
   virtual void visit( const ast_identifier& node ) { (void)node; }
+  virtual void visit( const ast_arithmetic_identifier& node ) { (void)node; }
   virtual void visit( const ast_identifier_list& node ) { (void)node; }
   virtual void visit( const ast_array_select& node ) { (void)node; }
   virtual void visit( const ast_range_expression& node ) { (void)node; }
@@ -90,16 +95,58 @@ using ast_id = uint32_t;
 class ast_node
 {
 public:
-  explicit ast_node() = default;
+  explicit ast_node( ast_id id )
+    : id_( id )
+  {
+  }
+
+  explicit ast_node( ast_id id, const std::vector<ast_id>& children )
+    : id_( id )
+    , children_( children )
+  {
+  }
+
   virtual ~ast_node() = default;
+
+  ast_id id() const
+  {
+    return id_;
+  }
 
   virtual void accept( verilog_ast_visitor& v ) const
   {
     v.visit( *this );
   }
+
+  bool is_leaf() const
+  {
+    return children_.size() == 0u;
+  }
+
+  template<typename Fn>
+  void foreach_child( Fn&& fn )
+  {
+    for ( ast_id& child : children_ )
+    {
+      fn( child );
+    }
+  }
+
+  template<typename Fn>
+  void foreach_child( Fn&& fn ) const
+  {
+    for ( const ast_id& child : children_ )
+    {
+      fn( child );
+    }
+  }
+
+protected:
+  uint32_t id_;
+  std::vector<ast_id> children_;
 }; // ast_node
 
-/* \brief Numeral
+/* \brief Numeral (leaf)
  *
  * A numeral.
  *
@@ -107,8 +154,9 @@ public:
 class ast_numeral : public ast_node
 {
 public:
-  explicit ast_numeral( const std::string& value )
-    : value_( value )
+  explicit ast_numeral( ast_id id, const std::string& value )
+    : ast_node( id )
+    , value_( value )
   {
   }
 
@@ -126,7 +174,7 @@ protected:
   const std::string value_;
 }; // ast_numeral
 
-/* \brief Identifier
+/* \brief Identifier (leaf)
  *
  * An identifier.
  *
@@ -134,8 +182,9 @@ protected:
 class ast_identifier : public ast_node
 {
 public:
-  explicit ast_identifier( const std::string& identifier )
-    : identifier_( identifier )
+  explicit ast_identifier( ast_id id, const std::string& identifier )
+    : ast_node( id )
+    , identifier_( identifier )
   {
   }
 
@@ -153,23 +202,23 @@ protected:
   std::string identifier_;
 }; // ast_identifier
 
-/* \brief Identifier list
+/* \brief Arithmetic identifier (leaf)
  *
- * A list of identifiers of form
- *   IDENTIFIER `,` ... `,` IDENTIFIER
+ * An identifier in an arithmetic expression.
  *
  */
-class ast_identifier_list : public ast_node
+class ast_arithmetic_identifier : public ast_node
 {
 public:
-  explicit ast_identifier_list( const std::vector<ast_id>& identifiers )
-    : identifiers_( identifiers )
+  explicit ast_arithmetic_identifier( ast_id id, const std::string& identifier )
+    : ast_node( id )
+    , identifier_( identifier )
   {
   }
 
-  inline std::vector<ast_id> identifiers() const
+  inline std::string identifier() const
   {
-    return identifiers_;
+    return identifier_;
   }
 
   inline void accept(verilog_ast_visitor& v) const override
@@ -178,7 +227,32 @@ public:
   }
 
 protected:
-  const std::vector<ast_id> identifiers_;
+  std::string identifier_;
+}; // ast_arithmetic_identifier
+
+/* \brief Identifier list (not a leaf)
+ *
+ * A list of identifiers of form
+ *   IDENTIFIER `,` ... `,` IDENTIFIER
+ *
+ */
+class ast_identifier_list : public ast_node
+{
+public:
+  explicit ast_identifier_list( ast_id id, const std::vector<ast_id>& identifiers )
+    : ast_node( id, identifiers )
+  {
+  }
+
+  inline std::vector<ast_id> identifiers() const
+  {
+    return children_;
+  }
+
+  inline void accept(verilog_ast_visitor& v) const override
+  {
+    v.visit( *this );
+  }
 }; // ast_identifier_list
 
 /* \brief Array select
@@ -190,30 +264,25 @@ protected:
 class ast_array_select : public ast_node
 {
 public:
-  explicit ast_array_select( ast_id array, ast_id index )
-    : array_( array )
-    , index_( index )
+  explicit ast_array_select( ast_id id, ast_id array, ast_id index )
+    : ast_node( id, { array, index } )
   {
   }
 
   inline ast_id array() const
   {
-    return array_;
+    return children_[0];
   }
 
   inline ast_id index() const
   {
-    return index_;
+    return children_[1];
   }
 
   virtual inline void accept(verilog_ast_visitor& v) const override
   {
     v.visit( *this );
   }
-
-protected:
-  ast_id array_;
-  ast_id index_;
 }; // ast_array_select
 
 /* \brief Range expression
@@ -225,30 +294,25 @@ protected:
 class ast_range_expression : public ast_node
 {
 public:
-  explicit ast_range_expression( ast_id hi, ast_id lo )
-    : hi_( hi )
-    , lo_( lo )
+  explicit ast_range_expression( ast_id id, ast_id hi, ast_id lo )
+    : ast_node( id, { hi, lo } )
   {
   }
 
   inline ast_id hi() const
   {
-    return hi_;
+    return children_[0];
   }
 
   inline ast_id lo() const
   {
-    return lo_;
+    return children_[1];
   }
 
   virtual inline void accept(verilog_ast_visitor& v) const override
   {
     v.visit( *this );
   }
-
-protected:
-  ast_id hi_;
-  ast_id lo_;
 };
 
 enum class sign_kind
@@ -262,14 +326,14 @@ enum class sign_kind
 class ast_sign : public ast_node
 {
 public:
-  explicit ast_sign( sign_kind kind, ast_id expr )
-    : kind_( kind )
-    , expr_( expr )
+  explicit ast_sign( ast_id id, sign_kind kind, ast_id expr )
+    : ast_node( id, { expr } )
+    , kind_( kind )
   {}
 
   inline ast_id expr() const
   {
-    return expr_;
+    return children_[0];
   }
 
   inline sign_kind kind() const
@@ -284,7 +348,6 @@ public:
 
 protected:
   sign_kind kind_;
-  ast_id expr_;
 }; // ast_sign
 
 enum class expr_kind
@@ -303,28 +366,28 @@ enum class expr_kind
 class ast_expression : public ast_node
 {
 public:
-  explicit ast_expression( expr_kind kind, ast_id left )
-    : kind_( kind )
-    , args_( {left} )
+  explicit ast_expression( ast_id id, expr_kind kind, ast_id left )
+    : ast_node( id, { left } )
+    , kind_( kind )
   {
   }
 
-  explicit ast_expression( expr_kind kind, ast_id left, ast_id right )
-    : kind_( kind )
-    , args_( {left, right} )
+  explicit ast_expression( ast_id id, expr_kind kind, ast_id left, ast_id right )
+    : ast_node( id, { left, right } )
+    , kind_( kind )
   {
   }
 
   inline ast_id left() const
   {
-    assert( args_.size() >= 1 );
-    return args_[0];
+    assert( children_.size() >= 1 );
+    return children_[0];
   }
 
   inline ast_id right() const
   {
-    assert( args_.size() >= 2 );
-    return args_[1];
+    assert( children_.size() >= 2 );
+    return children_[1];
   }
 
   inline expr_kind kind() const
@@ -339,7 +402,6 @@ public:
 
 protected:
   expr_kind kind_;
-  std::vector<ast_id> args_;
 };
 
 /* \brief System function
@@ -348,20 +410,20 @@ protected:
 class ast_system_function : public ast_node
 {
 public:
-  explicit ast_system_function( ast_id fun, const std::vector<ast_id>& args )
-    : fun_( fun )
-    , args_( args )
+  explicit ast_system_function( ast_id id, ast_id fun, const std::vector<ast_id>& args )
+    : ast_node( id, args )
+    , fun_( fun )
   {
+  }
+
+  inline std::vector<ast_id> args() const
+  {
+    return children_;
   }
 
   inline ast_id fun() const
   {
     return fun_;
-  }
-
-  inline std::vector<ast_id> args() const
-  {
-    return args_;
   }
 
   virtual inline void accept(verilog_ast_visitor& v) const override
@@ -371,7 +433,6 @@ public:
 
 protected:
   const ast_id fun_;
-  const std::vector<ast_id> args_;
 };
 
 /* \brief Input declaration
@@ -383,15 +444,15 @@ protected:
 class ast_input_declaration : public ast_node
 {
 public:
-  explicit ast_input_declaration( const std::vector<ast_id>& identifiers )
-    : word_level_( false )
-    , identifiers_( identifiers )
+  explicit ast_input_declaration( ast_id id, const std::vector<ast_id>& identifiers )
+    : ast_node( id, identifiers )
+    , word_level_( false )
   {
   }
 
-  explicit ast_input_declaration( const std::vector<ast_id>& identifiers, ast_id hi, ast_id lo )
-    : word_level_( true )
-    , identifiers_( identifiers )
+  explicit ast_input_declaration( ast_id id, const std::vector<ast_id>& identifiers, ast_id hi, ast_id lo )
+    : ast_node( id, identifiers )
+    , word_level_( true )
     , hi_( hi )
     , lo_( lo )
   {
@@ -409,7 +470,7 @@ public:
 
   inline std::vector<ast_id> identifiers() const
   {
-    return identifiers_;
+    return children_;
   }
 
   inline ast_id hi() const
@@ -431,7 +492,6 @@ public:
 
 protected:
   bool word_level_;
-  std::vector<ast_id> identifiers_;
   ast_id hi_;
   ast_id lo_;
 }; // ast_input_declaration
@@ -445,15 +505,15 @@ protected:
 class ast_output_declaration : public ast_node
 {
 public:
-  explicit ast_output_declaration( const std::vector<ast_id>& identifiers )
-    : word_level_( false )
-    , identifiers_( identifiers )
+  explicit ast_output_declaration( ast_id id, const std::vector<ast_id>& identifiers )
+    : ast_node( id, identifiers )
+    , word_level_( false )
   {
   }
 
-  explicit ast_output_declaration( const std::vector<ast_id>& identifiers, ast_id hi, ast_id lo )
-    : word_level_( true )
-    , identifiers_( identifiers )
+  explicit ast_output_declaration( ast_id id, const std::vector<ast_id>& identifiers, ast_id hi, ast_id lo )
+    : ast_node( id, identifiers )
+    , word_level_( true )
     , hi_( hi )
     , lo_( lo )
   {
@@ -471,7 +531,7 @@ public:
 
   inline std::vector<ast_id> identifiers() const
   {
-    return identifiers_;
+    return children_;
   }
 
   inline ast_id hi() const
@@ -493,7 +553,6 @@ public:
 
 protected:
   bool word_level_;
-  std::vector<ast_id> identifiers_;
   ast_id hi_;
   ast_id lo_;
 }; // ast_output_declaration
@@ -507,15 +566,15 @@ protected:
 class ast_wire_declaration : public ast_node
 {
 public:
-  explicit ast_wire_declaration( const std::vector<ast_id>& identifiers )
-    : word_level_( false )
-    , identifiers_( identifiers )
+  explicit ast_wire_declaration( ast_id id, const std::vector<ast_id>& identifiers )
+    : ast_node( id, identifiers )
+    , word_level_( false )
   {
   }
 
-  explicit ast_wire_declaration( const std::vector<ast_id>& identifiers, ast_id hi, ast_id lo )
-    : word_level_( true )
-    , identifiers_( identifiers )
+  explicit ast_wire_declaration( ast_id id, const std::vector<ast_id>& identifiers, ast_id hi, ast_id lo )
+    : ast_node( id, identifiers )
+    , word_level_( true )
     , hi_( hi )
     , lo_( lo )
   {
@@ -533,7 +592,7 @@ public:
 
   inline std::vector<ast_id> identifiers() const
   {
-    return identifiers_;
+    return children_;
   }
 
   inline ast_id hi() const
@@ -555,7 +614,6 @@ public:
 
 protected:
   bool word_level_;
-  std::vector<ast_id> identifiers_;
   ast_id hi_;
   ast_id lo_;
 }; // ast_wire_declaration
@@ -571,10 +629,11 @@ protected:
 class ast_module_instantiation : public ast_node
 {
 public:
-  explicit ast_module_instantiation( ast_id module_name, ast_id instance_name,
+  explicit ast_module_instantiation( ast_id id, ast_id module_name, ast_id instance_name,
                                      const std::vector<std::pair<ast_id, ast_id>>& port_assignment,
                                      const std::vector<ast_id>& parameters )
-    : module_name_( module_name )
+    : ast_node( id )
+    , module_name_( module_name )
     , instance_name_( instance_name )
     , port_assignment_( port_assignment )
     , parameters_( parameters )
@@ -619,30 +678,25 @@ protected:
 class ast_parameter_declaration : public ast_node
 {
 public:
-  explicit ast_parameter_declaration( ast_id identifier, ast_id expr )
-    : identifier_( identifier )
-    , expr_( expr )
+  explicit ast_parameter_declaration( ast_id id, ast_id identifier, ast_id expr )
+    : ast_node( id, { identifier, expr } )
   {
   }
 
   ast_id identifier() const
   {
-    return identifier_;
+    return children_[0];
   }
 
   ast_id expr() const
   {
-    return expr_;
+    return children_[1];
   }
 
   virtual inline void accept(verilog_ast_visitor& v) const override
   {
     v.visit( *this );
   }
-
-protected:
-  ast_id identifier_;
-  ast_id expr_;
 }; // ast_parameter_declaration
 
 /* \brief Assignment statement
@@ -651,30 +705,25 @@ protected:
 class ast_assignment : public ast_node
 {
 public:
-  explicit ast_assignment( ast_id signal, ast_id expr )
-    : signal_( signal )
-    , expr_( expr )
+  explicit ast_assignment( ast_id id, ast_id signal, ast_id expr )
+    : ast_node( id, { signal, expr } )
   {
   }
 
   ast_id signal() const
   {
-    return signal_;
+    return children_[0];
   }
 
   ast_id expr() const
   {
-    return expr_;
+    return children_[1];
   }
 
   virtual inline void accept(verilog_ast_visitor& v) const override
   {
     v.visit( *this );
   }
-
-protected:
-  ast_id signal_;
-  ast_id expr_;
 }; // ast_assignment
 
 /* \brief Module
@@ -683,14 +732,15 @@ protected:
 class ast_module : public ast_node
 {
 public:
-  explicit ast_module( ast_id module_name, const std::vector<ast_id>& args, const std::vector<ast_id>& decls )
-    : module_name_( module_name )
+  explicit ast_module( ast_id id, const std::string& module_name, const std::vector<ast_id>& args, const std::vector<ast_id>& decls )
+    : ast_node( id )
+    , module_name_( module_name )
     , args_( args )
     , decls_( decls )
   {
   }
 
-  ast_id module_name() const
+  std::string module_name() const
   {
     return module_name_;
   }
@@ -711,7 +761,7 @@ public:
   }
 
 protected:
-  ast_id module_name_;
+  const std::string module_name_;
   std::vector<ast_id> args_;
   std::vector<ast_id> decls_;
 }; // ast_module
@@ -784,7 +834,32 @@ public:
 
   inline ast_id create_identifier( const std::string& identifier )
   {
-    return create_node<ast_identifier>( identifier );
+    auto it = identifier_hash_.find( identifier );
+    if ( it == std::end( identifier_hash_ ) )
+    {
+      auto id = create_node<ast_identifier>( identifier );
+      identifier_hash_.emplace( identifier, id );
+      return id;
+    }
+    else
+    {
+      return it->second;
+    }
+  }
+
+  inline ast_id create_arithmetic_identifier( const std::string& identifier )
+  {
+    auto it = arithmetic_identifier_hash_.find( identifier );
+    if ( it == std::end( arithmetic_identifier_hash_ ) )
+    {
+      auto id = create_node<ast_arithmetic_identifier>( identifier );
+      arithmetic_identifier_hash_.emplace( identifier, id );
+      return id;
+    }
+    else
+    {
+      return it->second;
+    }
   }
 
   inline ast_id create_identifier_list( const std::vector<ast_id>& identifier_list )
@@ -991,7 +1066,7 @@ public:
     return create_node<ast_assignment>( signal, expr );
   }
 
-  inline ast_id create_module( ast_id module_name, const std::vector<ast_id>& args, const std::vector<ast_id>& decls )
+  inline ast_id create_module( const std::string& module_name, const std::vector<ast_id>& args, const std::vector<ast_id>& decls )
   {
     return create_node<ast_module>( module_name, args, decls );
   }
@@ -1012,7 +1087,7 @@ protected:
   inline ast_id create_node( Args... args )
   {
     const uint32_t index = nodes_.size();
-    nodes_.emplace_back( new T( args... ) );
+    nodes_.emplace_back( new T( index, args... ) );
     return index;
   }
 
@@ -1027,6 +1102,12 @@ protected:
 
 protected:
   std::vector<ast_node*> nodes_;
+
+  /* share identifiers */
+  std::unordered_map<std::string, ast_id> identifier_hash_;
+
+  /* share identifiers */
+  std::unordered_map<std::string, ast_id> arithmetic_identifier_hash_;
 }; // verilog_ast_graph
 
 } // namespace lorina

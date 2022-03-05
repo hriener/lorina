@@ -48,7 +48,6 @@ TEST_CASE( "instantiate genlib_reader", "[genlib]")
   CHECK( read_genlib( iss, genlib_reader{}, &diag ) == return_code::success );
 }
 
-
 TEST_CASE( "error cases", "[genlib]")
 {
   {
@@ -152,6 +151,9 @@ TEST_CASE( "read GENLIB format", "[genlib]")
   CHECK( read_genlib( iss, reader, &diag ) == return_code::success );
 
   CHECK( gate_definitions.size() == 5u );
+  if ( gate_definitions.size() != 5u )
+    return;
+
   CHECK( gate_definitions[0u].name == "zero" );
   CHECK( gate_definitions[0u].expression == "0" );
   CHECK( gate_definitions[0u].area == 0.0 );

@@ -51,6 +51,11 @@ public:
     str_.emplace( &node, s );
   }
 
+  std::string string_of( const ast_node& node ) const
+  {
+    return str_.at( &node );
+  }
+
   std::string string_of( ast_id id ) const
   {
     return str_.at( ag_->node_ptr( id ) );
@@ -70,6 +75,11 @@ public:
   }
 
   void visit( const ast_identifier& node )
+  {
+    emplace( node, node.identifier() );
+  }
+
+  void visit( const ast_arithmetic_identifier& node )
   {
     emplace( node, node.identifier() );
   }
@@ -334,8 +344,7 @@ public:
 
   void visit( const ast_module& node )
   {
-    const ast_node* module_name = ag_->node_ptr( node.module_name() );
-    module_name->accept( *this );
+    const std::string& module_name = node.module_name();
 
     std::vector<std::string> args;
     for ( ast_id arg : node.args() )
@@ -355,7 +364,7 @@ public:
 
     emplace( node,
       fmt::format( "module {}({});\n{}endmodule\n",
-        str_[module_name],
+        module_name,
         fmt::join( args, ", " ),
         fmt::join( decls, "" )
       )
