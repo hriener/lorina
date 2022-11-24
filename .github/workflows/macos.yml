@@ -27,24 +27,6 @@ jobs:
       run: |
         cd build
         ./test/run_tests
-  build-clang9:
-    name: Clang 9
-    runs-on: macOS-latest
-
-    steps:
-    - uses: actions/checkout@v1
-      with:
-        submodules: true
-    - name: Build lorina
-      run: |
-        mkdir build
-        cd build
-        cmake -DCMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang++ -DLORINA_TEST=ON ..
-        make run_tests
-    - name: Run tests
-      run: |
-        cd build
-        ./test/run_tests
   build-gcc10:
     name: GNU GCC 10
     runs-on: macOS-latest
@@ -75,7 +57,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang++ -DLORINA_TEST=ON ..
+        cmake -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DLORINA_TEST=ON ..
         make run_tests
     - name: Run tests
       run: |
