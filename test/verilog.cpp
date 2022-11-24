@@ -129,6 +129,15 @@ public:
     ++_maj3;
   }
 
+  void on_mux21( const std::string& lhs, const std::pair<std::string, bool>& op1, const std::pair<std::string, bool>& op2, const std::pair<std::string, bool>& op3 ) const override
+  {
+    (void)lhs;
+    (void)op1;
+    (void)op2;
+    (void)op3;
+    ++_mux21;
+  }
+
   void on_endmodule() const override {}
 
   void on_comment( const std::string& comment ) const override
@@ -163,6 +172,7 @@ public:
   mutable uint32_t _ors3 = 0;
   mutable uint32_t _xors3 = 0;
   mutable uint32_t _maj3 = 0;
+  mutable uint32_t _mux21 = 0;
   mutable uint32_t _comments = 0;
   mutable uint32_t _parameter = 0;
   mutable uint32_t _instantiations = 0;
@@ -210,7 +220,7 @@ TEST_CASE( "Parse a simple Verilog file", "[verilog]" )
     "module top( y1, y2, y3, y4, y5, a, b, c ) ;\n"
     "  input a , b , c ;\n"
     "  output y1 , y2, y3, y4, y5, y6, y7, y8 ;\n"
-    "  wire zero, g0, g1 , g2 , g3 , g4, g5, g6, g7, g8 ;\n"
+    "  wire zero, g0, g1 , g2 , g3 , g4, g5, g6, g7, g8, g9 ;\n"
     "  assign zero = 0 ;\n"
     "  assign g0 = a ;\n"
     "  assign g1 = ~c ;\n"
@@ -221,6 +231,7 @@ TEST_CASE( "Parse a simple Verilog file", "[verilog]" )
     "  assign g6 = ~( a & b );\n"
     "  assign g7 = ~( a | b );\n"
     "  assign g8 = ~( a ^ b );\n"
+    "  assign g9 = g8 ? g3 : g4;"
     "  assign y1 = g4 ;\n"
     "  assign y2 = g5 ;\n"
     "  assign y3 = ~g0 & g1 & g2 ;\n"
@@ -228,7 +239,7 @@ TEST_CASE( "Parse a simple Verilog file", "[verilog]" )
     "  assign y5 = g3 ^ g4 ^ ~g5 ;\n"
     "  assign y6 = g6 ;\n"
     "  assign y7 = g7 ;\n"
-    "  assign y8 = g8 ;\n"
+    "  assign y8 = g9 ;\n"
     "endmodule\n";
 
   {
@@ -246,7 +257,7 @@ TEST_CASE( "Parse a simple Verilog file", "[verilog]" )
     CHECK( result == return_code::success );
     CHECK( reader._inputs == 3 );
     CHECK( reader._outputs == 8 );
-    CHECK( reader._wires == 10 );
+    CHECK( reader._wires == 11 );
     CHECK( reader._aliases == 8 );
     CHECK( reader._ands == 1 );
     CHECK( reader._nands == 1 );
@@ -257,6 +268,7 @@ TEST_CASE( "Parse a simple Verilog file", "[verilog]" )
     CHECK( reader._ors3 == 1 );
     CHECK( reader._xors3 == 1 );
     CHECK( reader._maj3 == 1 );
+    CHECK( reader._mux21 == 1 );
   }
 }
 
