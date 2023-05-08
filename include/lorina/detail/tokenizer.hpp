@@ -74,12 +74,32 @@ public:
     char c;
     while ( get_char( c ) )
     {
-      if ( c == '\n' && _comment_mode )
+      if ( _comment_mode )
       {
-        _comment_mode = false;
-        return tokenizer_return_code::comment;
+        if ( _block_comment_mode )
+        {
+          if ( _block_comment_mode_end_star )
+          {
+            if ( c == '/' )
+            {
+              _comment_mode = false;
+              return tokenizer_return_code::comment;
+            } else {
+              _block_comment_mode_end_star = false;
+            }
+          }
+          else if ( c == '*' )
+          {
+            _block_comment_mode_end_star = true;
+          }
+        }
+        else if( c == '\n')
+        {
+          _comment_mode = false;
+          return tokenizer_return_code::comment;
+        }
       }
-      else if ( !_comment_mode )
+      else
       {
         if ( ( c == ' ' || c == '\\' || c == '\n' ) && !_quote_mode )
         {
@@ -125,9 +145,11 @@ public:
     return ( result == tokenizer_return_code::valid );
   }
 
-  void set_comment_mode( bool value = true )
+  void set_comment_mode( bool value = true, bool block_comment = false )
   {
     _comment_mode = value;
+    _block_comment_mode = value && block_comment;
+    _block_comment_mode_end_star = false;
   }
 
   bool get_comment_mode() const
@@ -139,6 +161,8 @@ protected:
   bool _done = false;
   bool _quote_mode = false;
   bool _comment_mode = false;
+  bool _block_comment_mode = false;
+  bool _block_comment_mode_end_star = false;
   std::istream& _is;
   std::string lookahead;
 }; /* tokenizer */

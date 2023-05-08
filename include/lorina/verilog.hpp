@@ -909,6 +909,10 @@ public:
       {
         tok.set_comment_mode();
       }
+      else if ( token == "/*" && result == detail::tokenizer_return_code::valid )
+      {
+        tok.set_comment_mode(true, true);
+      }
       else if ( result == detail::tokenizer_return_code::comment )
       {
         reader.on_comment( token );
