@@ -82,6 +82,7 @@ public:
           {
             if ( c == '/' )
             {
+              token.pop_back();
               _comment_mode = false;
               return tokenizer_return_code::comment;
             } else {
