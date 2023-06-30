@@ -9,7 +9,7 @@ AIGER format
 .. toctree::
 
    aiger
-  
+
 .. doxygenclass:: lorina::aiger_reader
 
 BENCH format
@@ -97,5 +97,5 @@ VERILOG format
 .. toctree::
 
    verilog
-   
+
 .. doxygenclass:: lorina::verilog_reader
