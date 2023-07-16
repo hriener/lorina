@@ -45,7 +45,7 @@ jobs:
       run: |
         cd build
         ./test/run_tests
-build-clang:
+  build-clang:
     name: Clang 12
     runs-on: macOS-latest
 
