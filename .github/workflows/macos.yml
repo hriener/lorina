@@ -21,7 +21,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_CXX_COMPILER=/usr/local/opt/gcc@9/bin/g++-9 -DLORINA_TEST=ON ..
+        cmake -DCMAKE_CXX_COMPILER=$(which g++-9) -DLORINA_TEST=ON ..
         make run_tests
     - name: Run tests
       run: |
@@ -39,7 +39,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_CXX_COMPILER=/usr/local/opt/gcc@10/bin/g++-10 -DLORINA_TEST=ON ..
+        cmake -DCMAKE_CXX_COMPILER=$(which g++-10) -DLORINA_TEST=ON ..
         make run_tests
     - name: Run tests
       run: |
