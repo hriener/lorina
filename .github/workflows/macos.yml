@@ -9,9 +9,9 @@ on:
     - master
 
 jobs:
-  build-gcc9:
-    name: GNU GCC 9
-    runs-on: macOS-latest
+  build-gcc10:
+    name: GNU GCC 10
+    runs-on: macOS-11
 
     steps:
     - uses: actions/checkout@v1
@@ -21,25 +21,25 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_CXX_COMPILER=/usr/local/opt/gcc@9/bin/g++-9 -DLORINA_TEST=ON ..
+        cmake -DCMAKE_CXX_COMPILER=$(which g++-10) -DLORINA_TEST=ON ..
         make run_tests
     - name: Run tests
       run: |
         cd build
         ./test/run_tests
-  build-gcc10:
-    name: GNU GCC 10
-    runs-on: macOS-latest
+  build-gcc11:
+    name: GNU GCC 11
+    runs-on: macOS-11
 
     steps:
     - uses: actions/checkout@v1
       with:
         submodules: true
-    - name: Build mockturtle
+    - name: Build lorina
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_CXX_COMPILER=/usr/local/opt/gcc@10/bin/g++-10 -DLORINA_TEST=ON ..
+        cmake -DCMAKE_CXX_COMPILER=$(which g++-11) -DLORINA_TEST=ON ..
         make run_tests
     - name: Run tests
       run: |
@@ -53,7 +53,7 @@ jobs:
     - uses: actions/checkout@v1
       with:
         submodules: true
-    - name: Build mockturtle
+    - name: Build lorina
       run: |
         mkdir build
         cd build
