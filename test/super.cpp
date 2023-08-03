@@ -34,7 +34,7 @@ public:
   {
     lib.genlib_name = genlib_name;
     lib.max_num_vars = max_num_vars;
-    lib.num_supergates = max_supergates; 
+    lib.num_supergates = max_supergates;
     lib.num_lines = num_lines;
   }
 
@@ -57,7 +57,7 @@ TEST_CASE( "instantiate super_reader", "[super]")
     "test.genlib\n"
     "3\n"
     "8\n"
-    "14\n"       
+    "14\n"
     "* and 1 0\n"
     "* and 2 3\n"
     "and 2 0\n"
@@ -170,7 +170,7 @@ TEST_CASE( "read SUPER format", "[super]")
     "test.genlib\n"
     "3\n"
     "2\n"
-    "6\n"       
+    "6\n"
     "* and2 1 0\n"
     "* or2 2 1\n"
     "and2 2 0\n"

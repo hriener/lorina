@@ -131,15 +131,15 @@ TEST_CASE( "cnf_dimacs variables ending with 0", "[dimacs]" )
   "p cnf 10 2\n"
   "1 -10 8 0\n"
   "-2 3 10 0\n";
-  
+
   std::istringstream iss( dimacs );
-  
+
   dimacs_statistics stats;
   dimacs_statistics_reader reader( stats );
   diagnostic_consumer consumer;
   diagnostic_engine diag( &consumer );
   auto const result = read_dimacs( iss, reader, &diag );
-  
+
   CHECK( result == return_code::success );
   CHECK( stats.format == "cnf" );
   CHECK( stats.number_of_variables == 10 );

@@ -136,7 +136,7 @@ static std::regex clause( R"(((-?[1-9][0-9]*)+ +)+0)" );
       return true;
     }
 
-    if ( found_spec == false ) 
+    if ( found_spec == false )
     {
       if ( diag )
       {
@@ -159,7 +159,7 @@ static std::regex clause( R"(((-?[1-9][0-9]*)+ +)+0)" );
       return false;
     }
 
-    for ( std::sregex_iterator i = clauses_begin; i != clauses_end; ++i ) 
+    for ( std::sregex_iterator i = clauses_begin; i != clauses_end; ++i )
     {
       std::smatch match = *i;
       std::stringstream ss( match[0].str() );
@@ -174,7 +174,7 @@ static std::regex clause( R"(((-?[1-9][0-9]*)+ +)+0)" );
         }
       }
       reader.on_clause( clause );
-    } 
+    }
     return true;
   } );
 
