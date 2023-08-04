@@ -36,9 +36,9 @@ def lcs(u, v):
     else:
         return ''
 
-# Returns explanation how the string u can by modified to become
+# Returns an explanation how the string u can by modified to become
 # identical to v, (e.g. for 'Hello' and 'Hellwo', the procedure
-# returns Hell+{w}o').
+# returns 'Hell+{w}o').
 def str_diff(u, v):
     result = ''
 
