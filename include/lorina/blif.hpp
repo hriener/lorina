@@ -54,7 +54,7 @@ public:
   using output_cover_t = std::vector<std::pair<std::string, std::string>>;
 
   /*! Latch input values */
-  enum latch_init_value
+  enum latch_init_value : uint8_t
   {
     ZERO = 0 /*!< Initialized with 0 */
   , ONE /*!< Initialized with 1 */
@@ -62,7 +62,7 @@ public:
   , UNKNOWN
   };
 
-  enum latch_type
+  enum latch_type : uint8_t
   {
     FALLING = 0
   , RISING
@@ -189,7 +189,24 @@ public:
     (void)comment;
   }
 }; /* blif_reader */
-
+/*!
+ * \brief Format a latch_init_value as string.
+ *
+ * {fmt} support for latch_init_value.
+ *
+ * @param liv Latch init value.
+ * @return Underlying value of latch_init_value.
+ */
+[[maybe_unused]] inline auto format_as( blif_reader::latch_init_value liv ) { return fmt::underlying( liv ); }
+/*!
+ * \brief Format a latch_type as string.
+ *
+ * {fmt} support for latch_type.
+ *
+ * @param lt Latch type.
+ * @return Underlying value of latch_type.
+ */
+[[maybe_unused]] inline auto format_as( blif_reader::latch_type lt ) { return fmt::underlying( lt ); }
 /*! \brief A BLIF reader for prettyprinting BLIF.
  *
  * Callbacks for prettyprinting of BLIF.
