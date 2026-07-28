@@ -299,3 +299,66 @@ TEST_CASE( "test binary Aiger reader", "[aiger]" )
     }
   }
 }
+
+namespace
+{
+
+/* Records the reset value of every latch, which the shared test reader discards. */
+struct latch_reset_reader : public lorina::aiger_reader
+{
+  explicit latch_reset_reader( std::vector<latch_init_value>& resets ) : _resets( resets ) {}
+
+  void on_latch( uint32_t index, uint32_t next_lit, latch_init_value init_value ) const override
+  {
+    (void)index;
+    (void)next_lit;
+    _resets.push_back( init_value );
+  }
+
+  std::vector<latch_init_value>& _resets;
+};
+
+} /* namespace */
+
+TEST_CASE( "latch reset values in ASCII AIGER", "[aiger]" )
+{
+  using latch_init_value = lorina::aiger_reader::latch_init_value;
+
+  auto const parse = []( std::string const& latch_line ) {
+    std::vector<latch_init_value> resets;
+    std::string const file = "aag 3 1 1 1 1\n2\n" + latch_line + "\n6\n6 2 4\n";
+    std::istringstream in( file );
+    CHECK( lorina::read_ascii_aiger( in, latch_reset_reader{ resets } ) == lorina::return_code::success );
+    REQUIRE( resets.size() == 1u );
+    return resets[0];
+  };
+
+  /* An omitted reset value means 0: the original AIGER format initialized every
+     latch to zero, and the field added in 1.9 is optional. */
+  CHECK( parse( "4 6" ) == latch_init_value::ZERO );
+
+  CHECK( parse( "4 6 0" ) == latch_init_value::ZERO );
+  CHECK( parse( "4 6 1" ) == latch_init_value::ONE );
+
+  /* by convention the latch's own literal denotes an undefined initial value */
+  CHECK( parse( "4 6 4" ) == latch_init_value::NONDETERMINISTIC );
+}
+
+TEST_CASE( "latch reset values in binary AIGER", "[aiger]" )
+{
+  using latch_init_value = lorina::aiger_reader::latch_init_value;
+
+  auto const parse = []( std::string const& latch_line ) {
+    std::vector<latch_init_value> resets;
+    std::string const file = "aig 3 1 1 1 1\n" + latch_line + "\n6\n\x02\x02" "c";
+    std::istringstream in( file );
+    CHECK( lorina::read_aiger( in, latch_reset_reader{ resets } ) == lorina::return_code::success );
+    REQUIRE( resets.size() == 1u );
+    return resets[0];
+  };
+
+  CHECK( parse( "6" ) == latch_init_value::ZERO );
+  CHECK( parse( "6 0" ) == latch_init_value::ZERO );
+  CHECK( parse( "6 1" ) == latch_init_value::ONE );
+  CHECK( parse( "6 4" ) == latch_init_value::NONDETERMINISTIC );
+}
