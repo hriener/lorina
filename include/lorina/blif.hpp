@@ -36,9 +36,9 @@
 #include "common.hpp"
 #include "diagnostics.hpp"
 #include "detail/utils.hpp"
-#include <regex>
 #include <iostream>
 #include <optional>
+#include <regex>
 
 namespace lorina
 {
@@ -277,6 +277,40 @@ static std::regex end( R"(.end)" );
 [[nodiscard]] inline return_code read_blif( std::istream& in, const blif_reader& reader, diagnostic_engine* diag = nullptr )
 {
   return_code result = return_code::success;
+  const auto report_bad_line = [&]( const std::string& line ) {
+    result = return_code::parse_error;
+    if ( diag )
+      diag->report( diag_id::ERR_PARSE_LINE ).add_argument( line );
+  };
+
+  std::string physical_line;
+  const auto read_line = [&]( std::string& line ) {
+    line.clear();
+    bool continued = false;
+    while ( !detail::getline( in, physical_line ).eof() && !in.fail() )
+    {
+      if ( auto const comment = physical_line.find( '#' ); comment != std::string::npos )
+        physical_line.resize( comment );
+      for ( auto& c : physical_line )
+      {
+        if ( c == '\t' || c == '\f' || c == '\v' )
+          c = ' ';
+      }
+      if ( auto const first = physical_line.find_first_not_of( ' ' ); first != std::string::npos )
+      {
+        const auto last = physical_line.find_last_not_of( ' ' );
+        continued = physical_line[last] == '\\';
+        if ( !line.empty() )
+          line += ' ';
+        line.append( physical_line, first, last - first + !continued );
+        if ( !continued )
+          return true;
+      }
+    }
+    if ( continued )
+      report_bad_line( line + '\\' );
+    return false;
+  };
 
   /* Function signature */
   using GateFn = detail::Func<
@@ -315,65 +349,67 @@ static std::regex end( R"(.end)" );
       reader.on_gate( inputs, output, tt );
     } ) ) );
 
-  std::smatch m;
-  detail::foreach_line_in_file_escape( in, [&]( std::string line ) {
+  std::string line;
+  while ( read_line( line ) )
+  {
     redo:
-      /* empty line or comment */
-      if ( line.empty() || line[0] == '#' )
-        return true;
-
       /* names */
-      if ( std::regex_search( line, m, blif_regex::names ) )
+      if ( detail::starts_with( line, ".names " ) )
       {
-        auto args = detail::split( detail::trim_copy( m[1] ), " " );
-        const auto output = *( args.rbegin() );
+        auto args = detail::split( line.substr( 7 ), " " );
+        if ( args.empty() )
+        {
+          report_bad_line( line );
+          continue;
+        }
+        const auto output = args.back();
         args.pop_back();
 
         std::vector<std::pair<std::string, std::string>> tt;
         std::string copy_line;
-        detail::foreach_line_in_file_escape( in, [&]( const std::string& line ) {
-          copy_line = line;
-
-          /* terminate when the next '.' declaration starts */
-          if ( line[0] == '.' )
-            return false;
-
-          /* empty line or comment */
-          if ( line.empty() || line[0] == '#' )
-            return true;
-
-          if ( std::regex_search( line, m, blif_regex::line_of_truthtable ) )
+        bool next_declaration = false;
+        while ( read_line( copy_line ) )
+        {
+          if ( copy_line.front() == '.' )
           {
-            tt.push_back( std::make_pair( detail::trim_copy( m[1] ), detail::trim_copy( m[2] ) ) );
-            return true;
+            next_declaration = true;
+            break;
           }
-
-          return false;
-        } );
+          const auto width = args.size();
+          const char value = copy_line.back();
+          const bool valid_pattern = width == 0u ? copy_line.size() == 1u
+                                                : copy_line.find_first_not_of( "01-" ) == width &&
+                                                      copy_line[width] == ' ' && copy_line.find_first_not_of( ' ', width ) == copy_line.size() - 1u;
+          if ( valid_pattern && ( value == '0' || value == '1' ) &&
+               ( tt.empty() || ( width != 0u && tt.front().second.front() == value ) ) )
+            tt.emplace_back( copy_line.substr( 0, width ), std::string( 1, value ) );
+          else
+            report_bad_line( copy_line );
+        }
 
         on_action.call_deferred<GATE_FN>( args, { output }, std::tuple( args, output, tt ) );
 
-        if ( in.eof() )
+        if ( next_declaration )
         {
-          return true;
-        }
-        else
-        {
-          /* restart parsing with the line of the subparser */
-          line = copy_line;
+          line = std::move( copy_line );
           goto redo;
         }
+        break;
       }
 
       /* .model <string> */
-      if ( std::regex_search( line, m, blif_regex::model ) )
+      if ( detail::starts_with( line, ".model " ) )
       {
-        reader.on_model( detail::trim_copy( m[1] ) );
-        return true;
+        const auto name = line.find_first_not_of( ' ', 7 );
+        if ( name == std::string::npos || line.find( ' ', name ) != std::string::npos )
+          report_bad_line( line );
+        else
+          reader.on_model( line.substr( name ) );
+        continue;
       }
 
       /* .inputs <list of whitespace separated strings> */
-      if ( detail::starts_with( line, ".inputs" ) )
+      if ( line == ".inputs" || detail::starts_with( line, ".inputs " ) )
       {
         std::string const input_declaration = line.substr( 7 );
         for ( const auto& input : detail::split( detail::trim_copy( input_declaration ), " " ) )
@@ -382,11 +418,11 @@ static std::regex end( R"(.end)" );
           on_action.declare_known( s );
           reader.on_input( s );
         }
-        return true;
+        continue;
       }
 
       /* .latch <list of whitespace separated strings> */
-      if ( detail::starts_with( line, ".latch" ) )
+      if ( detail::starts_with( line, ".latch " ) )
       {
         std::string const latch_declaration = line.substr( 6 );
 
@@ -419,40 +455,36 @@ static std::regex end( R"(.end)" );
           reader.on_latch( input, output, type, control, init_value );
           on_action.compute_dependencies<GATE_FN>( { output } );
 
-          return true;
+          continue;
         }
 
-        diag->report( diag_id::ERR_BLIF_LATCH_FORMAT ).add_argument( line );
+        if ( diag )
+          diag->report( diag_id::ERR_BLIF_LATCH_FORMAT ).add_argument( line );
 
         result = return_code::parse_error;
+        continue;
       }
 
       /* .outputs <list of whitespace separated strings> */
-      if ( detail::starts_with( line, ".outputs" ) )
+      if ( line == ".outputs" || detail::starts_with( line, ".outputs " ) )
       {
         std::string const output_declaration = line.substr( 8 );
         for ( const auto& output : detail::split( detail::trim_copy( output_declaration ), " " ) )
         {
           reader.on_output( detail::trim_copy( output ) );
         }
-        return true;
+        continue;
       }
 
       /* .end */
-      if ( std::regex_search( line, m, blif_regex::end ) )
+      if ( line == ".end" )
       {
         reader.on_end();
-        return true;
+        continue;
       }
 
-      if ( diag )
-      {
-        diag->report( diag_id::ERR_PARSE_LINE ).add_argument( line );
-      }
-
-      result = return_code::parse_error;
-      return true;
-    } );
+      report_bad_line( line );
+  }
 
   /* check dangling objects */
   auto const& deps = on_action.unresolved_dependencies();

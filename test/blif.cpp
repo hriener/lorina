@@ -100,6 +100,32 @@ TEST_CASE( "Check return_code of read_blif", "[blif]")
   }
 }
 
+TEST_CASE( "BLIF logical records preserve whitespace and continuation boundaries", "[blif]" )
+{
+  blif_statistics stats;
+  std::istringstream in( ".model top\r\n"
+                         ".inputs a\\\r\n"
+                         "# input list continues\r\n"
+                         "b\tc # another input\r\n"
+                         ".outputs y\r\n"
+                         ".names a b y\r\n"
+                         "11 1 # AND\r\n"
+                         ".end" );
+  REQUIRE( read_blif( in, blif_statistics_reader( stats ) ) == return_code::success );
+  CHECK( stats.number_of_inputs == 3u );
+  CHECK( stats.number_of_outputs == 1u );
+  CHECK( stats.number_of_gates == 1u );
+  CHECK( stats.equal_size_check );
+  CHECK( stats.end_seen );
+}
+
+TEST_CASE( "BLIF rejects incomplete or invalid cover records", "[blif]" )
+{
+  const auto* const rows = GENERATE( "1 1 trailing\n.end\n", "0 1\n1 0\n.end\n", "1 1\\\n" );
+  std::istringstream in( std::string( ".model top\n.inputs a\n.outputs y\n.names a y\n" ) + rows );
+  CHECK( read_blif( in, blif_reader{} ) == return_code::parse_error );
+}
+
 TEST_CASE( "blif_parse", "[blif]" )
 {
   std::string blif_file =
