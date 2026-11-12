@@ -401,10 +401,7 @@ static std::regex end( R"(.end)" );
       if ( detail::starts_with( line, ".model " ) )
       {
         const auto name = line.find_first_not_of( ' ', 7 );
-        if ( name == std::string::npos || line.find( ' ', name ) != std::string::npos )
-          report_bad_line( line );
-        else
-          reader.on_model( line.substr( name ) );
+        reader.on_model( line.substr( name ) );
         continue;
       }
 
@@ -422,7 +419,7 @@ static std::regex end( R"(.end)" );
       }
 
       /* .latch <list of whitespace separated strings> */
-      if ( detail::starts_with( line, ".latch " ) )
+      if ( line == ".latch" || detail::starts_with( line, ".latch " ) )
       {
         std::string const latch_declaration = line.substr( 6 );
 

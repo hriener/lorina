@@ -538,7 +538,14 @@ TEST_CASE( "Module instantiation accepts separately declared ports", "[verilog]"
   simple_verilog_reader reader;
   REQUIRE( read_verilog( in, reader ) == return_code::success );
   REQUIRE_FALSE( reader._instantiated_modules.empty() );
-  CHECK( reader._instantiated_modules.front().args.size() == 4u );
+  const std::vector<std::pair<std::string, std::string>> expected{ { ".z", "z" }, { ".b", "b" }, { ".y", "y" }, { ".a", "a" } };
+  CHECK( reader._instantiated_modules.front().args == expected );
+}
+
+TEST_CASE( "Verilog rejects duplicate module port declarations", "[verilog]" )
+{
+  std::istringstream in( "module cell(a,y); input a; output y; input a; endmodule\n" );
+  CHECK( read_verilog( in, verilog_reader{} ) == return_code::parse_error );
 }
 
 TEST_CASE( "Module instantiation without parameters and with output logic", "[verilog]" )

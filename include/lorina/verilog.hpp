@@ -41,6 +41,7 @@
 #include "verilog_regex.hpp"
 #include <iostream>
 #include <queue>
+#include <unordered_set>
 
 namespace lorina
 {
@@ -1145,6 +1146,7 @@ public:
 
     /* callback */
     modules[module_name] = {};
+    declared_ports.clear();
     reader.on_module_header( module_name, inouts );
 
     return true;
@@ -1189,6 +1191,9 @@ public:
 
       inputs.emplace_back( token );
     }
+
+    if ( !declare_ports( inputs ) )
+      return false;
 
     /* callback */
     reader.on_inputs( inputs, size );
@@ -1256,12 +1261,23 @@ public:
       outputs.emplace_back( token );
     }
 
+    if ( !declare_ports( outputs ) )
+      return false;
+
     /* callback */
     reader.on_outputs( outputs, size );
     auto& formal_outputs = modules[module_name].outputs;
     formal_outputs.insert( formal_outputs.end(), outputs.begin(), outputs.end() );
 
     return true;
+  }
+
+  /*! \brief Record the ports of the current module and reject redeclarations. */
+  bool declare_ports( const std::vector<std::string>& ports )
+  {
+    return std::all_of( ports.begin(), ports.end(), [&]( const auto& port ) {
+      return declared_ports.insert( port ).second;
+    } );
   }
 
   bool parse_wires()
@@ -1719,6 +1735,7 @@ private:
 
   detail::call_in_topological_order<PackedFns, ParamMaps> on_action;
   std::unordered_map<std::string, module_info> modules;
+  std::unordered_set<std::string> declared_ports;
 }; /* verilog_parser */
 
 /*! \brief Reader function for VERILOG format.
