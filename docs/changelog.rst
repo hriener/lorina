@@ -7,10 +7,10 @@ v0.3 (Not yet released)
 * DIMACS reader: ``on_format``, ``on_number_of_variables``, ``onnumber_of_clauses``, ``on_clause``, ``on_end`` (contributed by Bruno Schmitt) `#39 <https://github.com/hriener/lorina/pull/39>`_
 * Bristol reader: ``on_header``, ``on_gate`` `#32 <https://github.com/hriener/lorina/pull/32>`_
 * BLIF reader: ``on_latch`` (contributed by Max Austin) `#28 <https://github.com/hriener/lorina/pull/28>`_
-* BLIF reader: handle comments and continued lines, and validate complete cover rows.
+* BLIF reader: handle comments and continued lines, and validate complete cover rows. Accept empty port lists and add a first-model reader that checks drivers and sinks.
 * Writer visitor: ``verilog_writer``
 * Verilog reader: ``on_module_instantiation``, ``on_parameter``, ``on_inputs``, ``on_outputs``, ``on_wires``, ``on_nand``, ``on_nor``, ``on_xnor``
-* Verilog reader: recognize ports declared across multiple input and output statements.
+* Verilog reader: recognize ports declared across multiple input and output statements and validate decimal input ranges before expansion.
 * Bench reader: ``on_dff_input``, ``on_dff``
 * GENLIB reader: ``on_gate`` (based on code contributed by Shubham Rai) `#41 <https://github.com/hriener/lorina/pull/41>`_
 * Diagnostic infrastructure: ``diagnostic_consumer``, ``text_diagnostics`` `#56 <https://github.com/hriener/lorina/pull/56>`_

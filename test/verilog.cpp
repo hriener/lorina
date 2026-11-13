@@ -616,3 +616,12 @@ TEST_CASE( "Module instantiation without parameters and with output logic", "[ve
     }
   }
 }
+
+TEST_CASE( "Reject invalid decimal Verilog input bounds", "[verilog]" )
+{
+  const auto* range = GENERATE( "4294967296:0", "1:2:3" );
+  CAPTURE( range );
+  simple_verilog_reader reader;
+  std::istringstream in( std::string( "module top(a); input [" ) + range + "] a; endmodule\n" );
+  CHECK( read_verilog( in, reader ) == return_code::parse_error );
+}

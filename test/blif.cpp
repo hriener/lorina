@@ -367,3 +367,23 @@ TEST_CASE( "read a BLIF file containing latch declaration bug that requires upda
   CHECK( stats.number_of_outputs == 1 );
   CHECK( stats.number_of_latches == 3 );
 }
+
+TEST_CASE( "Read the first BLIF model with an empty interface", "[blif]" )
+{
+  const auto* boundary = GENERATE( ".end\n.model ", ".model\f", ".model\v" );
+  std::istringstream in( std::string( ".model first\n.inputs\n.outputs\n" ) + boundary +
+                         "second\n.inputs a\n.outputs a\n.end\n" );
+  blif_statistics stats;
+  REQUIRE( read_blif_model( in, blif_statistics_reader( stats ) ) == return_code::success );
+  CHECK( stats.number_of_inputs == 0u );
+  CHECK( stats.number_of_outputs == 0u );
+}
+
+TEST_CASE( "Reject duplicate drivers and undriven sinks in the first BLIF model", "[blif]" )
+{
+  const auto* body = GENERATE( ".inputs a\n.names a\n1\n", ".outputs missing\n",
+                               ".latch missing state\n.outputs state\n" );
+  CAPTURE( body );
+  std::istringstream in( std::string( ".model top\n" ) + body + ".end\n" );
+  CHECK( read_blif_model( in, blif_reader{} ) == return_code::parse_error );
+}

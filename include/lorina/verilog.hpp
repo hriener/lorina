@@ -39,8 +39,11 @@
 #include "detail/utils.hpp"
 #include "diagnostics.hpp"
 #include "verilog_regex.hpp"
+#include <charconv>
+#include <cstdint>
 #include <iostream>
 #include <queue>
+#include <system_error>
 #include <unordered_set>
 
 namespace lorina
@@ -1195,6 +1198,21 @@ public:
     if ( !declare_ports( inputs ) )
       return false;
 
+    uint32_t first{}, last{};
+    std::smatch range;
+    const auto parse_bound = []( const auto& bound, uint32_t& value ) {
+      const auto digits = bound.str();
+      const auto* end = digits.data() + digits.size();
+      const auto [position, error] = std::from_chars( digits.data(), end, value );
+      return error == std::errc{} && position == end;
+    };
+    const auto expand = std::regex_match( size, range, verilog_regex::const_size_range );
+    if ( expand && ( !parse_bound( range[1], first ) || !parse_bound( range[2], last ) ) )
+      return false;
+    /* Leave nondecimal expressions to the reader, but reject malformed decimal ranges. */
+    if ( !expand && size.find( ':' ) != std::string::npos && size.find_first_not_of( "0123456789:" ) == std::string::npos )
+      return false;
+
     /* callback */
     reader.on_inputs( inputs, size );
     auto& formal_inputs = modules[module_name].inputs;
@@ -1205,16 +1223,17 @@ public:
       on_action.declare_known( i );
     }
 
-    if ( std::smatch m; std::regex_match( size, m, verilog_regex::const_size_range ) )
+    if ( expand )
     {
-      const auto a = std::stoul( m[1].str() );
-      const auto b = std::stoul( m[2].str() );
-      for ( auto j = std::min( a, b ); j <= std::max( a, b ); ++j )
+      const auto upper = std::max( first, last );
+      for ( auto j = std::min( first, last );; ++j )
       {
         for ( const auto& i : inputs )
         {
           on_action.declare_known( fmt::format( "{}[{}]", i, j ) );
         }
+        if ( j == upper )
+          break;
       }
     }
 
