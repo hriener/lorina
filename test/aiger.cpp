@@ -322,3 +322,25 @@ TEST_CASE( "Read binary AIGER properties and names with CRLF records", "[aiger]"
   CHECK( info.on_justice_calls == 1u );
   CHECK( info.on_fairness_calls == 1u );
 }
+
+TEST_CASE( "Decode binary AIGER latch reset values", "[aiger]" )
+{
+  struct latch_reader : lorina::aiger_reader
+  {
+    void on_latch( uint32_t, uint32_t, latch_init_value init ) const override
+    {
+      reset = init;
+    }
+    mutable std::optional<latch_init_value> reset;
+  };
+
+  using reset_value = lorina::aiger_reader::latch_init_value;
+  const auto [record, expected] = GENERATE( table<const char*, reset_value>(
+      { { "0\n", reset_value::ZERO }, { "0 1\n", reset_value::ONE },
+        { "0 2\n", reset_value::NONDETERMINISTIC } } ) );
+  std::istringstream in( std::string( "aig 1 0 1 0 0\n" ) + record );
+  latch_reader reader;
+  REQUIRE( lorina::read_aiger( in, reader ) == lorina::return_code::success );
+  REQUIRE( reader.reset.has_value() );
+  CHECK( *reader.reset == expected );
+}

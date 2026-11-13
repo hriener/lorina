@@ -697,6 +697,7 @@ static std::regex fairness( R"(^f(\d+) (.*)$)" );
  * Reads binary AIGER format from a stream and invokes a callback
  * method for each parsed primitive and each detected parse error.
  * Checks header counts, literal and symbol bounds, latch resets, and gate deltas.
+ * An omitted latch reset means zero.
  * Callbacks may have already received a prefix of the input on failure.
  * Header counts describe the circuit size and can be large even for short inputs.
  *
