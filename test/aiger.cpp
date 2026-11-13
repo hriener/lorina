@@ -299,3 +299,48 @@ TEST_CASE( "test binary Aiger reader", "[aiger]" )
     }
   }
 }
+
+TEST_CASE( "Reject invalid binary AIGER records", "[aiger]" )
+{
+  const auto* data = GENERATE( "aag 1 1 0 0 0\n2\n", "aig 2 1 0 0 0\n", "aig 2 1 1 0 0\n2 2\n",
+                              "aig 1 1 0 1 0\n2 extra\n", "aig 1 1 0 0 0 0 1\n4\n",
+                              "aig 1 1 0 0 0 0 0 1\n1\n" );
+  std::istringstream in( data );
+  CHECK( lorina::read_aiger( in, lorina::aiger_reader{} ) == lorina::return_code::parse_error );
+}
+
+TEST_CASE( "Read binary AIGER properties and names with CRLF records", "[aiger]" )
+{
+  benchmarks::aig_info info;
+  std::istringstream in( "aig 3 2 0 1 1 1 1 1 1\r\n"
+                         "6\r\n4\r\n2\r\n1\r\n4\r\n2\r\n"
+                         "\x02\x02i0 a\r\no0 y\r\nb0 bad\r\nc0 constraint\r\nj0 justice\r\nf0 fairness" );
+  REQUIRE( lorina::read_aiger( in, benchmarks::test_reader( info ) ) == lorina::return_code::success );
+  CHECK( info.number_of_ands == 1u );
+  CHECK( info.on_and_calls == 1u );
+  CHECK( info.on_constraints_calls == 1u );
+  CHECK( info.on_justice_calls == 1u );
+  CHECK( info.on_fairness_calls == 1u );
+}
+
+TEST_CASE( "Decode binary AIGER latch reset values", "[aiger]" )
+{
+  struct latch_reader : lorina::aiger_reader
+  {
+    void on_latch( uint32_t, uint32_t, latch_init_value init ) const override
+    {
+      reset = init;
+    }
+    mutable std::optional<latch_init_value> reset;
+  };
+
+  using reset_value = lorina::aiger_reader::latch_init_value;
+  const auto [record, expected] = GENERATE( table<const char*, reset_value>(
+      { { "0\n", reset_value::ZERO }, { "0 1\n", reset_value::ONE },
+        { "0 2\n", reset_value::NONDETERMINISTIC } } ) );
+  std::istringstream in( std::string( "aig 1 0 1 0 0\n" ) + record );
+  latch_reader reader;
+  REQUIRE( lorina::read_aiger( in, reader ) == lorina::return_code::success );
+  REQUIRE( reader.reset.has_value() );
+  CHECK( *reader.reset == expected );
+}

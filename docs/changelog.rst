@@ -5,6 +5,7 @@ v0.3 (Not yet released)
 -----------------------
 
 * DIMACS reader: ``on_format``, ``on_number_of_variables``, ``onnumber_of_clauses``, ``on_clause``, ``on_end`` (contributed by Bruno Schmitt) `#39 <https://github.com/hriener/lorina/pull/39>`_
+* Binary AIGER reader: validate records as they are read and report parse errors for invalid counts, literals, deltas, and symbol indices. Default omitted latch resets to zero.
 * Bristol reader: ``on_header``, ``on_gate`` `#32 <https://github.com/hriener/lorina/pull/32>`_
 * BLIF reader: ``on_latch`` (contributed by Max Austin) `#28 <https://github.com/hriener/lorina/pull/28>`_
 * Writer visitor: ``verilog_writer``
