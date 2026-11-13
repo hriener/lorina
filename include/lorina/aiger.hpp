@@ -787,14 +787,14 @@ static std::regex fairness( R"(^f(\d+) (.*)$)" );
   if ( !read_literals( outputs, &aiger_reader::on_output ) ||
        !read_literals( bad, &aiger_reader::on_bad_state ) ||
        !read_literals( constraints, &aiger_reader::on_constraint ) )
-    return fail( diag_id::ERR_PARSE_LINE, line );
+    return fail( diag_id::ERR_PARSE_LINE, in.eof() ? "missing AIGER output, bad state, or constraint literal" : line );
 
   std::vector<uint32_t> justice_sizes;
   for ( auto i = 0u; i < justice; ++i )
   {
     uint32_t size{};
     if ( !detail::getline( in, line ) || !parse_number( line, size ) )
-      return fail( diag_id::ERR_PARSE_LINE, line );
+      return fail( diag_id::ERR_PARSE_LINE, in.eof() ? "missing AIGER justice size" : line );
     justice_sizes.push_back( size );
     reader.on_justice_header( i, size );
   }
@@ -806,13 +806,13 @@ static std::regex fairness( R"(^f(\d+) (.*)$)" );
     {
       uint32_t literal{};
       if ( !read_literal( literal ) )
-        return fail( diag_id::ERR_PARSE_LINE, line );
+        return fail( diag_id::ERR_PARSE_LINE, in.eof() ? "missing AIGER justice literal" : line );
       literals.push_back( literal );
     }
     reader.on_justice( i, literals );
   }
   if ( !read_literals( fairness, &aiger_reader::on_fairness ) )
-    return fail( diag_id::ERR_PARSE_LINE, line );
+    return fail( diag_id::ERR_PARSE_LINE, in.eof() ? "missing AIGER fairness literal" : line );
 
   const auto decode_delta = [&]( uint32_t& value ) {
     value = 0u;
