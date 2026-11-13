@@ -100,6 +100,32 @@ TEST_CASE( "Check return_code of read_blif", "[blif]")
   }
 }
 
+TEST_CASE( "BLIF logical records preserve whitespace and continuation boundaries", "[blif]" )
+{
+  blif_statistics stats;
+  std::istringstream in( ".model top\r\n"
+                         ".inputs a\\\r\n"
+                         "# input list continues\r\n"
+                         "b\tc # another input\r\n"
+                         ".outputs y\r\n"
+                         ".names a b y\r\n"
+                         "11 1 # AND\r\n"
+                         ".end" );
+  REQUIRE( read_blif( in, blif_statistics_reader( stats ) ) == return_code::success );
+  CHECK( stats.number_of_inputs == 3u );
+  CHECK( stats.number_of_outputs == 1u );
+  CHECK( stats.number_of_gates == 1u );
+  CHECK( stats.equal_size_check );
+  CHECK( stats.end_seen );
+}
+
+TEST_CASE( "BLIF rejects incomplete or invalid cover records", "[blif]" )
+{
+  const auto* const rows = GENERATE( "1 1 trailing\n.end\n", "0 1\n1 0\n.end\n", "1 1\\\n" );
+  std::istringstream in( std::string( ".model top\n.inputs a\n.outputs y\n.names a y\n" ) + rows );
+  CHECK( read_blif( in, blif_reader{} ) == return_code::parse_error );
+}
+
 TEST_CASE( "blif_parse", "[blif]" )
 {
   std::string blif_file =
@@ -340,4 +366,48 @@ TEST_CASE( "read a BLIF file containing latch declaration bug that requires upda
   CHECK( stats.number_of_inputs == 5 );
   CHECK( stats.number_of_outputs == 1 );
   CHECK( stats.number_of_latches == 3 );
+}
+
+TEST_CASE( "Read the first BLIF model with an empty interface", "[blif]" )
+{
+  const auto* boundary = GENERATE( ".end\n.model ", ".model\f", ".model\v" );
+  std::istringstream in( std::string( ".model first\n.inputs\n.outputs\n" ) + boundary +
+                         "second\n.inputs a\n.outputs a\n.end\n" );
+  blif_statistics stats;
+  REQUIRE( read_blif_model( in, blif_statistics_reader( stats ) ) == return_code::success );
+  CHECK( stats.number_of_inputs == 0u );
+  CHECK( stats.number_of_outputs == 0u );
+  CHECK( stats.end_seen == ( std::string_view( boundary ).substr( 0, 4 ) == ".end" ) );
+}
+
+TEST_CASE( "Reject duplicate drivers and undriven sinks in the first BLIF model", "[blif]" )
+{
+  const auto* body = GENERATE( ".inputs a\n.names a\n1\n", ".outputs missing\n",
+                               ".latch missing state\n.outputs state\n" );
+  CAPTURE( body );
+  std::istringstream in( std::string( ".model top\n" ) + body + ".end\n" );
+  CHECK( read_blif_model( in, blif_reader{} ) == return_code::parse_error );
+}
+
+TEST_CASE( "Keep a directive separate after a continued BLIF line and a blank line", "[blif]" )
+{
+  const auto first_model = GENERATE( false, true );
+  blif_statistics stats;
+  blif_statistics_reader reader( stats );
+  std::istringstream in( ".model top\n.inputs a \\\n\n.outputs a\n.end\n" );
+  const auto result = first_model ? read_blif_model( in, reader ) : read_blif( in, reader );
+  REQUIRE( result == return_code::success );
+  CHECK( stats.number_of_inputs == 1u );
+  CHECK( stats.number_of_outputs == 1u );
+}
+
+TEST_CASE( "Stop delivering BLIF callbacks at a malformed model boundary", "[blif]" )
+{
+  const auto* boundary = GENERATE( ".model", ".end extra" );
+  blif_statistics stats;
+  std::istringstream in( std::string( ".model top\n.inputs a\n.outputs a\n" ) + boundary +
+                         "\n.inputs b\n.outputs b\n.end\n" );
+  CHECK( read_blif_model( in, blif_statistics_reader( stats ) ) == return_code::parse_error );
+  CHECK( stats.number_of_inputs == 1u );
+  CHECK( stats.number_of_outputs == 1u );
 }

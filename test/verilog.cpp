@@ -531,6 +531,23 @@ TEST_CASE( "Input and output registers", "[verilog]" )
   CHECK( reader._instantiations == 0 );
 }
 
+TEST_CASE( "Module instantiation accepts separately declared ports", "[verilog]" )
+{
+  std::istringstream in( "module cell(a,b,y,z); input a; input b; output y; output z; endmodule\n"
+                         "module top(a,b,y,z); input a,b; output y,z; cell c(.z(z),.b(b),.y(y),.a(a)); endmodule\n" );
+  simple_verilog_reader reader;
+  REQUIRE( read_verilog( in, reader ) == return_code::success );
+  REQUIRE_FALSE( reader._instantiated_modules.empty() );
+  const std::vector<std::pair<std::string, std::string>> expected{ { ".z", "z" }, { ".b", "b" }, { ".y", "y" }, { ".a", "a" } };
+  CHECK( reader._instantiated_modules.front().args == expected );
+}
+
+TEST_CASE( "Verilog rejects duplicate module port declarations", "[verilog]" )
+{
+  std::istringstream in( "module cell(a,y); input a; output y; input a; endmodule\n" );
+  CHECK( read_verilog( in, verilog_reader{} ) == return_code::parse_error );
+}
+
 TEST_CASE( "Module instantiation without parameters and with output logic", "[verilog]" )
 {
   std::string const verilog_file =
@@ -598,4 +615,13 @@ TEST_CASE( "Module instantiation without parameters and with output logic", "[ve
       break;
     }
   }
+}
+
+TEST_CASE( "Reject invalid decimal Verilog input bounds", "[verilog]" )
+{
+  const auto* range = GENERATE( "4294967296:0", "1:2:3" );
+  CAPTURE( range );
+  simple_verilog_reader reader;
+  std::istringstream in( std::string( "module top(a); input [" ) + range + "] a; endmodule\n" );
+  CHECK( read_verilog( in, reader ) == return_code::parse_error );
 }

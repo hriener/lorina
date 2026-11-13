@@ -36,9 +36,10 @@
 #include "common.hpp"
 #include "diagnostics.hpp"
 #include "detail/utils.hpp"
-#include <regex>
 #include <iostream>
 #include <optional>
+#include <regex>
+#include <unordered_set>
 
 namespace lorina
 {
@@ -264,7 +265,10 @@ static std::regex line_of_truthtable( R"(([01\-]*)\s*([01\-]))" );
 static std::regex end( R"(.end)" );
 } // namespace blif_regex
 
-/*! \brief Reader function for the BLIF format.
+namespace detail
+{
+
+/*! \brief Read BLIF records, optionally stopping at the first model boundary.
  *
  * Reads BLIF format from a stream and invokes a callback
  * method for each parsed primitive and each detected parse error.
@@ -272,11 +276,63 @@ static std::regex end( R"(.end)" );
  * \param in Input stream
  * \param reader A BLIF reader with callback methods invoked for parsed primitives
  * \param diag An optional diagnostic engine with callback methods for parse errors
+ * \param first_model Stop at the first explicit or implied model boundary
  * \return Success if parsing has been successful, or parse error if parsing has failed
  */
-[[nodiscard]] inline return_code read_blif( std::istream& in, const blif_reader& reader, diagnostic_engine* diag = nullptr )
+[[nodiscard]] inline return_code read_blif_records( std::istream& in, const blif_reader& reader,
+                                                   diagnostic_engine* diag, bool first_model )
 {
   return_code result = return_code::success;
+  const auto report_bad_line = [&]( const std::string& line ) {
+    result = return_code::parse_error;
+    if ( diag )
+      diag->report( diag_id::ERR_PARSE_LINE ).add_argument( line );
+  };
+
+  std::string physical_line;
+  bool pending_line = false;
+  const auto read_line = [&]( std::string& line ) {
+    line.clear();
+    bool continued = false;
+    bool blank = false;
+    while ( pending_line || ( !detail::getline( in, physical_line ).eof() && !in.fail() ) )
+    {
+      pending_line = false;
+      if ( auto const comment = physical_line.find( '#' ); comment != std::string::npos )
+        physical_line.resize( comment );
+      for ( auto& c : physical_line )
+      {
+        if ( c == '\t' || c == '\f' || c == '\v' )
+          c = ' ';
+      }
+      if ( auto const first = physical_line.find_first_not_of( ' ' ); first != std::string::npos )
+      {
+        if ( continued && blank && !line.empty() && physical_line[first] == '.' )
+        {
+          pending_line = true;
+          return true;
+        }
+        const auto last = physical_line.find_last_not_of( ' ' );
+        continued = physical_line[last] == '\\';
+        if ( !line.empty() )
+          line += ' ';
+        line.append( physical_line, first, last - first + !continued );
+        if ( !continued )
+          return true;
+        blank = false;
+      }
+      else
+        blank = true;
+    }
+    if ( continued )
+      report_bad_line( line + '\\' );
+    return false;
+  };
+
+  std::unordered_set<std::string> drivers;
+  std::vector<std::string> sinks;
+  bool seen_record = false;
+  bool seen_model = false;
 
   /* Function signature */
   using GateFn = detail::Func<
@@ -315,78 +371,102 @@ static std::regex end( R"(.end)" );
       reader.on_gate( inputs, output, tt );
     } ) ) );
 
-  std::smatch m;
-  detail::foreach_line_in_file_escape( in, [&]( std::string line ) {
+  std::string line;
+  while ( read_line( line ) )
+  {
     redo:
-      /* empty line or comment */
-      if ( line.empty() || line[0] == '#' )
-        return true;
+      if ( first_model && seen_record && ( line == ".model" || detail::starts_with( line, ".model " ) ) )
+      {
+        if ( line == ".model" )
+          report_bad_line( line );
+        break;
+      }
+      seen_record = true;
 
       /* names */
-      if ( std::regex_search( line, m, blif_regex::names ) )
+      if ( detail::starts_with( line, ".names " ) )
       {
-        auto args = detail::split( detail::trim_copy( m[1] ), " " );
-        const auto output = *( args.rbegin() );
+        auto args = detail::split( line.substr( 7 ), " " );
+        if ( args.empty() )
+        {
+          report_bad_line( line );
+          continue;
+        }
+        const auto output = args.back();
         args.pop_back();
+        const auto unique_driver = !first_model || drivers.insert( output ).second;
+        if ( !unique_driver )
+          report_bad_line( line );
 
         std::vector<std::pair<std::string, std::string>> tt;
         std::string copy_line;
-        detail::foreach_line_in_file_escape( in, [&]( const std::string& line ) {
-          copy_line = line;
-
-          /* terminate when the next '.' declaration starts */
-          if ( line[0] == '.' )
-            return false;
-
-          /* empty line or comment */
-          if ( line.empty() || line[0] == '#' )
-            return true;
-
-          if ( std::regex_search( line, m, blif_regex::line_of_truthtable ) )
+        bool next_declaration = false;
+        while ( read_line( copy_line ) )
+        {
+          if ( copy_line.front() == '.' )
           {
-            tt.push_back( std::make_pair( detail::trim_copy( m[1] ), detail::trim_copy( m[2] ) ) );
-            return true;
+            next_declaration = true;
+            break;
           }
-
-          return false;
-        } );
-
-        on_action.call_deferred<GATE_FN>( args, { output }, std::tuple( args, output, tt ) );
-
-        if ( in.eof() )
-        {
-          return true;
+          const auto width = args.size();
+          const char value = copy_line.back();
+          const bool valid_pattern = width == 0u ? copy_line.size() == 1u
+                                                : copy_line.find_first_not_of( "01-" ) == width &&
+                                                      copy_line[width] == ' ' && copy_line.find_first_not_of( ' ', width ) == copy_line.size() - 1u;
+          if ( valid_pattern && ( value == '0' || value == '1' ) &&
+               ( tt.empty() || ( width != 0u && tt.front().second.front() == value ) ) )
+            tt.emplace_back( copy_line.substr( 0, width ), std::string( 1, value ) );
+          else
+            report_bad_line( copy_line );
         }
-        else
+
+        if ( unique_driver )
+          on_action.call_deferred<GATE_FN>( args, { output }, std::tuple( args, output, tt ) );
+
+        if ( next_declaration )
         {
-          /* restart parsing with the line of the subparser */
-          line = copy_line;
+          line = std::move( copy_line );
           goto redo;
         }
+        break;
       }
 
       /* .model <string> */
-      if ( std::regex_search( line, m, blif_regex::model ) )
+      if ( detail::starts_with( line, ".model " ) )
       {
-        reader.on_model( detail::trim_copy( m[1] ) );
-        return true;
+        const auto name = line.find_first_not_of( ' ', 7 );
+        if ( name == std::string::npos )
+          report_bad_line( line );
+        else
+        {
+          seen_model = true;
+          reader.on_model( line.substr( name ) );
+        }
+        continue;
       }
 
       /* .inputs <list of whitespace separated strings> */
-      if ( detail::starts_with( line, ".inputs" ) )
+      if ( line == ".inputs" || detail::starts_with( line, ".inputs " ) )
       {
         std::string const input_declaration = line.substr( 7 );
         for ( const auto& input : detail::split( detail::trim_copy( input_declaration ), " " ) )
         {
           auto const s = detail::trim_copy( input );
+          if ( s.empty() )
+            continue;
+          if ( first_model && !drivers.insert( s ).second )
+          {
+            report_bad_line( line );
+            continue;
+          }
           on_action.declare_known( s );
           reader.on_input( s );
         }
-        return true;
+        continue;
       }
 
       /* .latch <list of whitespace separated strings> */
-      if ( detail::starts_with( line, ".latch" ) )
+      if ( line == ".latch" || detail::starts_with( line, ".latch " ) )
       {
         std::string const latch_declaration = line.substr( 6 );
 
@@ -395,6 +475,13 @@ static std::regex end( R"(.end)" );
         {
           std::string const& input = latch_elements.at( 0 );
           std::string const& output = latch_elements.at( 1 );
+          if ( first_model && !drivers.insert( output ).second )
+          {
+            report_bad_line( line );
+            continue;
+          }
+          if ( first_model )
+            sinks.push_back( input );
           std::optional<blif_reader::latch_init_value> init_value;
           std::optional<blif_reader::latch_type> type;
           std::optional<std::string> control;
@@ -419,40 +506,56 @@ static std::regex end( R"(.end)" );
           reader.on_latch( input, output, type, control, init_value );
           on_action.compute_dependencies<GATE_FN>( { output } );
 
-          return true;
+          continue;
         }
 
-        diag->report( diag_id::ERR_BLIF_LATCH_FORMAT ).add_argument( line );
+        if ( diag )
+          diag->report( diag_id::ERR_BLIF_LATCH_FORMAT ).add_argument( line );
 
         result = return_code::parse_error;
+        continue;
       }
 
       /* .outputs <list of whitespace separated strings> */
-      if ( detail::starts_with( line, ".outputs" ) )
+      if ( line == ".outputs" || detail::starts_with( line, ".outputs " ) )
       {
         std::string const output_declaration = line.substr( 8 );
         for ( const auto& output : detail::split( detail::trim_copy( output_declaration ), " " ) )
         {
-          reader.on_output( detail::trim_copy( output ) );
+          if ( !output.empty() )
+          {
+            if ( first_model )
+              sinks.push_back( output );
+            reader.on_output( output );
+          }
         }
-        return true;
+        continue;
       }
 
       /* .end */
-      if ( std::regex_search( line, m, blif_regex::end ) )
+      if ( line == ".end" || ( first_model && detail::starts_with( line, ".end " ) ) )
       {
-        reader.on_end();
-        return true;
+        if ( line == ".end" )
+          reader.on_end();
+        else
+          report_bad_line( line );
+        if ( first_model )
+          break;
+        continue;
       }
 
-      if ( diag )
-      {
-        diag->report( diag_id::ERR_PARSE_LINE ).add_argument( line );
-      }
+      report_bad_line( line );
+  }
 
-      result = return_code::parse_error;
-      return true;
-    } );
+  if ( first_model && !seen_model && drivers.empty() )
+    report_bad_line( "expected a BLIF model" );
+  for ( const auto& sink : sinks )
+  {
+    if ( drivers.find( sink ) == drivers.end() )
+      report_bad_line( "undriven BLIF signal " + sink );
+  }
+  if ( in.bad() || in.fail() )
+    result = return_code::parse_error;
 
   /* check dangling objects */
   auto const& deps = on_action.unresolved_dependencies();
@@ -470,6 +573,38 @@ static std::regex end( R"(.end)" );
   }
 
   return result;
+}
+
+} // namespace detail
+
+/*! \brief Read BLIF records from a stream.
+ * \param in Input stream
+ * \param reader Receives parsed declarations and logic
+ * \param diag Optional diagnostic engine
+ * \return Success when all records and signal dependencies are valid
+ */
+[[nodiscard]] inline return_code read_blif( std::istream& in, const blif_reader& reader, diagnostic_engine* diag = nullptr )
+{
+  return detail::read_blif_records( in, reader, diag, false );
+}
+
+/*! \brief Read the first flat BLIF model from a stream.
+ *
+ * The model ends at an explicit .end, at the next .model directive, or at EOF.
+ * The on_end callback is invoked for an explicit .end directive.
+ * The reader may consume the following .model directive to detect the boundary.
+ * Each signal must have one driver, including signals that feed outputs or latches.
+ * A blank or comment-only line before a directive ends a pending continuation.
+ * Hierarchical references are unsupported.
+ * \param in Input stream
+ * \param reader Receives parsed declarations and logic
+ * \param diag Optional diagnostic engine
+ * \return Success when the first model and its signal dependencies are valid
+ */
+[[nodiscard]] inline return_code read_blif_model( std::istream& in, const blif_reader& reader,
+                                                 diagnostic_engine* diag = nullptr )
+{
+  return detail::read_blif_records( in, reader, diag, true );
 }
 
 /*! \brief Reader function for BLIF format.

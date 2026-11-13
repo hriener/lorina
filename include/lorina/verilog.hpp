@@ -39,8 +39,12 @@
 #include "detail/utils.hpp"
 #include "diagnostics.hpp"
 #include "verilog_regex.hpp"
+#include <charconv>
+#include <cstdint>
 #include <iostream>
 #include <queue>
+#include <system_error>
+#include <unordered_set>
 
 namespace lorina
 {
@@ -1144,6 +1148,8 @@ public:
       return false;
 
     /* callback */
+    modules[module_name] = {};
+    declared_ports.clear();
     reader.on_module_header( module_name, inouts );
 
     return true;
@@ -1189,25 +1195,45 @@ public:
       inputs.emplace_back( token );
     }
 
+    if ( !declare_ports( inputs ) )
+      return false;
+
+    uint32_t first{}, last{};
+    std::smatch range;
+    const auto parse_bound = []( const auto& bound, uint32_t& value ) {
+      const auto digits = bound.str();
+      const auto* end = digits.data() + digits.size();
+      const auto [position, error] = std::from_chars( digits.data(), end, value );
+      return error == std::errc{} && position == end;
+    };
+    const auto expand = std::regex_match( size, range, verilog_regex::const_size_range );
+    if ( expand && ( !parse_bound( range[1], first ) || !parse_bound( range[2], last ) ) )
+      return false;
+    /* Leave nondecimal expressions to the reader, but reject malformed decimal ranges. */
+    if ( !expand && size.find( ':' ) != std::string::npos && size.find_first_not_of( "0123456789:" ) == std::string::npos )
+      return false;
+
     /* callback */
     reader.on_inputs( inputs, size );
-    modules[module_name].inputs = inputs;
+    auto& formal_inputs = modules[module_name].inputs;
+    formal_inputs.insert( formal_inputs.end(), inputs.begin(), inputs.end() );
 
     for ( const auto& i : inputs )
     {
       on_action.declare_known( i );
     }
 
-    if ( std::smatch m; std::regex_match( size, m, verilog_regex::const_size_range ) )
+    if ( expand )
     {
-      const auto a = std::stoul( m[1].str() );
-      const auto b = std::stoul( m[2].str() );
-      for ( auto j = std::min( a, b ); j <= std::max( a, b ); ++j )
+      const auto upper = std::max( first, last );
+      for ( auto j = std::min( first, last );; ++j )
       {
         for ( const auto& i : inputs )
         {
           on_action.declare_known( fmt::format( "{}[{}]", i, j ) );
         }
+        if ( j == upper )
+          break;
       }
     }
 
@@ -1254,11 +1280,23 @@ public:
       outputs.emplace_back( token );
     }
 
+    if ( !declare_ports( outputs ) )
+      return false;
+
     /* callback */
     reader.on_outputs( outputs, size );
-    modules[module_name].outputs = outputs;
+    auto& formal_outputs = modules[module_name].outputs;
+    formal_outputs.insert( formal_outputs.end(), outputs.begin(), outputs.end() );
 
     return true;
+  }
+
+  /*! \brief Record the ports of the current module and reject redeclarations. */
+  bool declare_ports( const std::vector<std::string>& ports )
+  {
+    return std::all_of( ports.begin(), ports.end(), [&]( const auto& port ) {
+      return declared_ports.insert( port ).second;
+    } );
   }
 
   bool parse_wires()
@@ -1716,6 +1754,7 @@ private:
 
   detail::call_in_topological_order<PackedFns, ParamMaps> on_action;
   std::unordered_map<std::string, module_info> modules;
+  std::unordered_set<std::string> declared_ports;
 }; /* verilog_parser */
 
 /*! \brief Reader function for VERILOG format.
