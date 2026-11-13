@@ -299,3 +299,26 @@ TEST_CASE( "test binary Aiger reader", "[aiger]" )
     }
   }
 }
+
+TEST_CASE( "Reject invalid binary AIGER records", "[aiger]" )
+{
+  const auto* data = GENERATE( "aag 1 1 0 0 0\n2\n", "aig 2 1 0 0 0\n", "aig 2 1 1 0 0\n2 2\n",
+                              "aig 1 1 0 1 0\n2 extra\n", "aig 1 1 0 0 0 0 1\n4\n",
+                              "aig 1 1 0 0 0 0 0 1\n1\n" );
+  std::istringstream in( data );
+  CHECK( lorina::read_aiger( in, lorina::aiger_reader{} ) == lorina::return_code::parse_error );
+}
+
+TEST_CASE( "Read binary AIGER properties and names with CRLF records", "[aiger]" )
+{
+  benchmarks::aig_info info;
+  std::istringstream in( "aig 3 2 0 1 1 1 1 1 1\r\n"
+                         "6\r\n4\r\n2\r\n1\r\n4\r\n2\r\n"
+                         "\x02\x02i0 a\r\no0 y\r\nb0 bad\r\nc0 constraint\r\nj0 justice\r\nf0 fairness" );
+  REQUIRE( lorina::read_aiger( in, benchmarks::test_reader( info ) ) == lorina::return_code::success );
+  CHECK( info.number_of_ands == 1u );
+  CHECK( info.on_and_calls == 1u );
+  CHECK( info.on_constraints_calls == 1u );
+  CHECK( info.on_justice_calls == 1u );
+  CHECK( info.on_fairness_calls == 1u );
+}

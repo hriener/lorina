@@ -37,6 +37,12 @@
 #include "common.hpp"
 #include "diagnostics.hpp"
 #include "detail/utils.hpp"
+#include <array>
+#include <charconv>
+#include <cstdint>
+#include <limits>
+#include <string_view>
+#include <system_error>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -690,6 +696,9 @@ static std::regex fairness( R"(^f(\d+) (.*)$)" );
  *
  * Reads binary AIGER format from a stream and invokes a callback
  * method for each parsed primitive and each detected parse error.
+ * Checks header counts, literal and symbol bounds, latch resets, and gate deltas.
+ * Callbacks may have already received a prefix of the input on failure.
+ * Header counts describe the circuit size and can be large even for short inputs.
  *
  * \param in Input stream
  * \param reader An AIGER reader with callback methods invoked for parsed primitives
@@ -698,196 +707,166 @@ static std::regex fairness( R"(^f(\d+) (.*)$)" );
  */
 [[nodiscard]] inline return_code read_aiger( std::istream& in, const aiger_reader& reader, diagnostic_engine* diag = nullptr )
 {
-  return_code result = return_code::success;
-
-  std::smatch m;
-  std::string header_line;
-  detail::getline( in, header_line );
-
-  uint32_t _m, _i, _l, _o, _a, _b, _c, _j, _f;
-
-  /* parse header */
-  if ( std::regex_search( header_line, m, aig_regex::header ) )
-  {
-    std::vector<uint32_t> header;
-    for ( const auto& i : m )
-    {
-      if ( i == "" )
-        continue;
-      header.push_back( std::atol( std::string( i ).c_str() ) );
-    }
-
-    assert( header.size() >= 6u );
-    assert( header.size() <= 10u );
-
-    _m = header[1u];
-    _i = header[2u];
-    _l = header[3u];
-    _o = header[4u];
-    _a = header[5u];
-    _b = header.size() > 6 ? header[6u] : 0u;
-    _c = header.size() > 7 ? header[7u] : 0u;
-    _j = header.size() > 8 ? header[8u] : 0u;
-    _f = header.size() > 9 ? header[9u] : 0u;
-    reader.on_header( _m, _i, _l, _o, _a, _b, _c, _j, _f );
-  }
-  else
-  {
-    if ( diag )
-    {
-      diag->report( diag_id::ERR_AIGER_HEADER ).add_argument( header_line );
-    }
-    return return_code::parse_error;
-  }
-
-  std::string line;
-
-  /* inputs */
-  for ( auto i = 0u; i < _i; ++i )
-  {
-    reader.on_input( i, 2u*(i+1) );
-  }
-
-  /* latches */
-  for ( auto i = 0u; i < _l; ++i )
-  {
-    detail::getline( in, line );
-    const auto tokens = detail::split( line, " " );
-    const auto next = std::atoi( tokens[0u].c_str() );
-    aiger_reader::latch_init_value init_value = aiger_reader::latch_init_value::NONDETERMINISTIC;
-    if ( tokens.size() == 2u )
-    {
-      if ( tokens[1u] == "0" )
-      {
-        init_value = aiger_reader::latch_init_value::ZERO;
-      }
-      else if ( tokens[1u] == "1" )
-      {
-        init_value = aiger_reader::latch_init_value::ONE;
-      }
-    }
-
-    reader.on_latch( _i + i + 1u, next, init_value );
-  }
-
-  for ( auto i = 0u; i < _o; ++i )
-  {
-    detail::getline( in, line );
-    reader.on_output( i, std::atol( line.c_str() ) );
-  }
-
-  /* bad state properties */
-  for ( auto i = 0u; i < _b; ++i )
-  {
-    detail::getline( in, line );
-    reader.on_bad_state( i, std::atol( line.c_str() ) );
-  }
-
-  /* constraints */
-  for ( auto i = 0u; i < _c; ++i )
-  {
-    detail::getline( in, line );
-    reader.on_constraint( i, std::atol( line.c_str() ) );
-  }
-
-  /* justice properties */
-  std::vector<uint64_t> justice_sizes;
-  for ( auto i = 0u; i < _j; ++i )
-  {
-    detail::getline( in, line );
-    const auto justice_size = std::atol( line.c_str() );
-    justice_sizes.emplace_back( justice_size );
-    reader.on_justice_header( i, justice_size );
-  }
-
-  for ( auto i = 0u; i < _j; ++i )
-  {
-    std::vector<uint32_t> lits;
-    for ( auto j = 0u; j < justice_sizes[i]; ++j )
-    {
-      detail::getline( in, line );
-      const auto lit = std::atol( line.c_str() );
-      lits.emplace_back( lit );
-    }
-    reader.on_justice( i, lits );
-  }
-
-  /* fairness */
-  for ( auto i = 0u; i < _f; ++i )
-  {
-    detail::getline( in, line );
-    reader.on_fairness( i, std::atol( line.c_str() ) );
-  }
-
-  const auto decode = [&]() {
-    auto i = 0;
-    auto res = 0;
-    while ( true )
-    {
-      auto c = in.get();
-
-      res |= ( ( c & 0x7f ) << ( 7 * i ) );
-      if ( ( c & 0x80 ) == 0 )
-        break;
-
-      ++i;
-    }
-    return res;
+  const auto parse_number = []( std::string_view token, uint32_t& value ) {
+    if ( token.empty() )
+      return false;
+    const auto* end = token.data() + token.size();
+    const auto [position, error] = std::from_chars( token.data(), end, value );
+    return error == std::errc{} && position == end;
   };
 
-  /* and gates */
-  for ( auto i = _i + _l + 1; i < _i + _l + _a + 1; ++i )
+  const auto fail = [&]( diag_id id, std::string const& record ) {
+    if ( diag )
+      diag->report( id ).add_argument( record );
+    return return_code::parse_error;
+  };
+
+  std::string line;
+  detail::getline( in, line );
+  constexpr std::string_view prefix = "aig ";
+  if ( line.compare( 0u, prefix.size(), prefix ) != 0 )
+    return fail( diag_id::ERR_AIGER_HEADER, line );
+
+  std::array<uint32_t, 9> counts{};
+  std::string_view header( line );
+  header.remove_prefix( prefix.size() );
+  for ( size_t field = 0u;; ++field )
   {
-    const auto d1 = decode();
-    const auto d2 = decode();
-    const auto g = i << 1;
-    reader.on_and( i, ( g - d1 ), ( g - d1 - d2 ) );
+    const auto separator = header.find( ' ' );
+    if ( field == counts.size() || !parse_number( header.substr( 0, separator ), counts[field] ) )
+      return fail( diag_id::ERR_AIGER_HEADER, line );
+    if ( separator == std::string_view::npos )
+    {
+      if ( field < 4u )
+        return fail( diag_id::ERR_AIGER_HEADER, line );
+      break;
+    }
+    header.remove_prefix( separator + 1u );
   }
 
-  /* parse names and comments */
-  while ( detail::getline( in, line ) )
+  const auto [variables, inputs, latches, outputs, gates, bad, constraints, justice, fairness] = counts;
+  if ( variables > std::numeric_limits<uint32_t>::max() / 2u ||
+       variables != static_cast<uint64_t>( inputs ) + latches + gates )
+    return fail( diag_id::ERR_AIGER_HEADER, line );
+
+  reader.on_header( variables, inputs, latches, outputs, gates, bad, constraints, justice, fairness );
+  const auto max_literal = 2u * variables + 1u;
+  const auto read_literal = [&]( uint32_t& literal ) {
+    return detail::getline( in, line ) && parse_number( line, literal ) && literal <= max_literal;
+  };
+
+  for ( auto i = 0u; i < inputs; ++i )
+    reader.on_input( i, 2u * ( i + 1u ) );
+
+  for ( auto i = 0u; i < latches; ++i )
   {
-    if ( std::regex_search( line, m, aig_regex::input ) )
+    detail::getline( in, line );
+    const std::string_view record( line );
+    const auto separator = record.find( ' ' );
+    uint32_t next{}, reset{};
+    const auto index = inputs + i + 1u;
+    if ( !parse_number( record.substr( 0, separator ), next ) || next > max_literal ||
+         ( separator != std::string_view::npos &&
+           ( !parse_number( record.substr( separator + 1u ), reset ) || ( reset > 1u && reset != 2u * index ) ) ) )
+      return fail( diag_id::ERR_AIGER_LATCH_DECLARATION, line );
+
+    const auto init = reset == 0u ? aiger_reader::ZERO : reset == 1u ? aiger_reader::ONE : aiger_reader::NONDETERMINISTIC;
+    reader.on_latch( index, next, init );
+  }
+
+  const auto read_literals = [&]( uint32_t count, auto callback ) {
+    for ( auto i = 0u; i < count; ++i )
     {
-      reader.on_input_name( std::atol( std::string( m[1u] ).c_str() ), m[2u] );
+      uint32_t literal{};
+      if ( !read_literal( literal ) )
+        return false;
+      (reader.*callback)( i, literal );
     }
-    else if ( std::regex_search( line, m, aig_regex::latch ) )
+    return true;
+  };
+  if ( !read_literals( outputs, &aiger_reader::on_output ) ||
+       !read_literals( bad, &aiger_reader::on_bad_state ) ||
+       !read_literals( constraints, &aiger_reader::on_constraint ) )
+    return fail( diag_id::ERR_PARSE_LINE, line );
+
+  std::vector<uint32_t> justice_sizes;
+  for ( auto i = 0u; i < justice; ++i )
+  {
+    uint32_t size{};
+    if ( !detail::getline( in, line ) || !parse_number( line, size ) )
+      return fail( diag_id::ERR_PARSE_LINE, line );
+    justice_sizes.push_back( size );
+    reader.on_justice_header( i, size );
+  }
+
+  for ( auto i = 0u; i < justice; ++i )
+  {
+    std::vector<uint32_t> literals;
+    for ( auto j = 0u; j < justice_sizes[i]; ++j )
     {
-      reader.on_latch_name( std::atol( std::string( m[1u] ).c_str() ), m[2u] );
+      uint32_t literal{};
+      if ( !read_literal( literal ) )
+        return fail( diag_id::ERR_PARSE_LINE, line );
+      literals.push_back( literal );
     }
-    else if ( std::regex_search( line, m, aig_regex::output ) )
+    reader.on_justice( i, literals );
+  }
+  if ( !read_literals( fairness, &aiger_reader::on_fairness ) )
+    return fail( diag_id::ERR_PARSE_LINE, line );
+
+  const auto decode_delta = [&]( uint32_t& value ) {
+    value = 0u;
+    for ( unsigned shift = 0u; shift < 32u; shift += 7u )
     {
-      reader.on_output_name( std::atol( std::string( m[1u] ).c_str() ), m[2u] );
+      const auto byte = in.get();
+      if ( byte == std::char_traits<char>::eof() || ( shift == 28u && byte > 0x0f ) )
+        return false;
+      value |= static_cast<uint32_t>( byte & 0x7f ) << shift;
+      if ( ( byte & 0x80 ) == 0 )
+        return true;
     }
-    else if ( std::regex_search( line, m, aig_regex::bad_state ) )
+    return false;
+  };
+  for ( auto i = inputs + latches + 1u; i <= variables; ++i )
+  {
+    const auto lhs = 2u * i;
+    uint32_t first{}, second{};
+    if ( !decode_delta( first ) || first == 0u || first > lhs ||
+         !decode_delta( second ) || second > lhs - first )
+      return fail( diag_id::ERR_AIGER_AND_DECLARATION, std::to_string( lhs ) );
+    reader.on_and( i, lhs - first, lhs - first - second );
+  }
+
+  constexpr std::string_view symbols = "ilobcjf";
+  const std::array<uint32_t, 7> limits{ inputs, latches, outputs, bad, constraints, justice, fairness };
+  constexpr std::array callbacks{ &aiger_reader::on_input_name, &aiger_reader::on_latch_name, &aiger_reader::on_output_name,
+                                  &aiger_reader::on_bad_state_name, &aiger_reader::on_constraint_name,
+                                  &aiger_reader::on_justice_name, &aiger_reader::on_fairness_name };
+  while ( !detail::getline( in, line ).eof() && !in.fail() )
+  {
+    if ( line == "c" )
     {
-      reader.on_bad_state_name( std::atol( std::string( m[1u] ).c_str() ), m[2u] );
-    }
-    else if ( std::regex_search( line, m, aig_regex::constraint ) )
-    {
-      reader.on_constraint_name( std::atol( std::string( m[1u] ).c_str() ), m[2u] );
-    }
-    else if ( std::regex_search( line, m, aig_regex::justice ) )
-    {
-      reader.on_justice_name( std::atol( std::string( m[1u] ).c_str() ), m[2u] );
-    }
-    else if ( std::regex_search( line, m, aig_regex::fairness ) )
-    {
-      reader.on_fairness_name( std::atol( std::string( m[1u] ).c_str() ), m[2u] );
-    }
-    else if ( line == "c" )
-    {
-      std::string comment = "";
-      while ( detail::getline( in, line ) )
-      {
+      std::string comment;
+      while ( !detail::getline( in, line ).eof() && !in.fail() )
         comment += line;
-      }
       reader.on_comment( comment );
       break;
     }
+
+    if ( line.empty() )
+      continue;
+    const auto kind = symbols.find( line.front() );
+    if ( kind == std::string_view::npos )
+      continue;
+    const auto separator = line.find( ' ' );
+    uint32_t index{};
+    if ( separator == std::string::npos ||
+         !parse_number( std::string_view( line ).substr( 1u, separator - 1u ), index ) || index >= limits[kind] )
+      return fail( diag_id::ERR_PARSE_LINE, line );
+    (reader.*callbacks[kind])( index, line.substr( separator + 1u ) );
   }
 
-  return result;
+  return in.bad() || in.fail() ? return_code::parse_error : return_code::success;
 }
 
 /*! \brief Reader function for binary AIGER format.
