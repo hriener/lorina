@@ -307,7 +307,7 @@ namespace detail
       }
       if ( auto const first = physical_line.find_first_not_of( ' ' ); first != std::string::npos )
       {
-        if ( first_model && continued && blank && !line.empty() && physical_line[first] == '.' )
+        if ( continued && blank && !line.empty() && physical_line[first] == '.' )
         {
           pending_line = true;
           return true;
@@ -375,8 +375,12 @@ namespace detail
   while ( read_line( line ) )
   {
     redo:
-      if ( first_model && seen_record && detail::starts_with( line, ".model " ) )
+      if ( first_model && seen_record && ( line == ".model" || detail::starts_with( line, ".model " ) ) )
+      {
+        if ( line == ".model" )
+          report_bad_line( line );
         break;
+      }
       seen_record = true;
 
       /* names */
@@ -529,9 +533,12 @@ namespace detail
       }
 
       /* .end */
-      if ( line == ".end" )
+      if ( line == ".end" || ( first_model && detail::starts_with( line, ".end " ) ) )
       {
-        reader.on_end();
+        if ( line == ".end" )
+          reader.on_end();
+        else
+          report_bad_line( line );
         if ( first_model )
           break;
         continue;

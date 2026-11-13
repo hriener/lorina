@@ -387,3 +387,26 @@ TEST_CASE( "Reject duplicate drivers and undriven sinks in the first BLIF model"
   std::istringstream in( std::string( ".model top\n" ) + body + ".end\n" );
   CHECK( read_blif_model( in, blif_reader{} ) == return_code::parse_error );
 }
+
+TEST_CASE( "Keep a directive separate after a continued BLIF line and a blank line", "[blif]" )
+{
+  const auto first_model = GENERATE( false, true );
+  blif_statistics stats;
+  blif_statistics_reader reader( stats );
+  std::istringstream in( ".model top\n.inputs a \\\n\n.outputs a\n.end\n" );
+  const auto result = first_model ? read_blif_model( in, reader ) : read_blif( in, reader );
+  REQUIRE( result == return_code::success );
+  CHECK( stats.number_of_inputs == 1u );
+  CHECK( stats.number_of_outputs == 1u );
+}
+
+TEST_CASE( "Stop delivering BLIF callbacks at a malformed model boundary", "[blif]" )
+{
+  const auto* boundary = GENERATE( ".model", ".end extra" );
+  blif_statistics stats;
+  std::istringstream in( std::string( ".model top\n.inputs a\n.outputs a\n" ) + boundary +
+                         "\n.inputs b\n.outputs b\n.end\n" );
+  CHECK( read_blif_model( in, blif_statistics_reader( stats ) ) == return_code::parse_error );
+  CHECK( stats.number_of_inputs == 1u );
+  CHECK( stats.number_of_outputs == 1u );
+}
