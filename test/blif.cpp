@@ -377,6 +377,7 @@ TEST_CASE( "Read the first BLIF model with an empty interface", "[blif]" )
   REQUIRE( read_blif_model( in, blif_statistics_reader( stats ) ) == return_code::success );
   CHECK( stats.number_of_inputs == 0u );
   CHECK( stats.number_of_outputs == 0u );
+  CHECK( stats.end_seen == ( std::string_view( boundary ).substr( 0, 4 ) == ".end" ) );
 }
 
 TEST_CASE( "Reject duplicate drivers and undriven sinks in the first BLIF model", "[blif]" )

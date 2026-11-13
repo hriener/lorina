@@ -591,6 +591,7 @@ namespace detail
 /*! \brief Read the first flat BLIF model from a stream.
  *
  * The model ends at an explicit .end, at the next .model directive, or at EOF.
+ * The on_end callback is invoked for an explicit .end directive.
  * The reader may consume the following .model directive to detect the boundary.
  * Each signal must have one driver, including signals that feed outputs or latches.
  * A blank or comment-only line before a directive ends a pending continuation.
